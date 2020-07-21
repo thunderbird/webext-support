@@ -1,0 +1,33 @@
+{
+  "manifest_version": 2,
+  "name": "LegacyBootstrap@thundernestExamples",
+  "description": "Extension containing an experimental API that allows to register a legacy bootstrap.js.",
+  "version": "1",
+  "default_locale": "en_US",
+  "applications": {
+    "gecko": {
+      "id": "LegacyBootstrap@thundernestExamples"
+    }
+  },
+  "background": {
+    "scripts": [
+      "background.js"
+    ]
+  },
+  "experiment_apis": {
+    "WindowListener": {
+      "schema": "api/LegacyBootstrap/schema.json",
+      "parent": {
+        "scopes": [
+          "addon_parent"
+        ],
+        "paths": [
+          [
+            "LegacyBootstrap"
+          ]
+        ],
+        "script": "api/LegacyBootstrap/implementation.js"
+      }
+    }
+  }
+}

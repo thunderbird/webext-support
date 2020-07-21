@@ -1,0 +1,33 @@
+{
+  "manifest_version": 2,
+  "name": "windowListener@thundernestExamples",
+  "description": "Extension containing an experimental API that allows to register JavaScript function to window open and close events.",
+  "version": "1",
+  "default_locale": "en_US",
+  "applications": {
+    "gecko": {
+      "id": "windowListener@thundernestExamples"
+    }
+  },
+  "background": {
+    "scripts": [
+      "background.js"
+    ]
+  },
+  "experiment_apis": {
+    "WindowListener": {
+      "schema": "api/WindowListener/schema.json",
+      "parent": {
+        "scopes": [
+          "addon_parent"
+        ],
+        "paths": [
+          [
+            "WindowListener"
+          ]
+        ],
+        "script": "api/WindowListener/implementation.js"
+      }
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "menuLabel": {
+    "message": "TEST LABEL"
+  },
+  "restartLabel": {
+    "message": "RESTART"
+  },
+  "extensionDescription": {
+    "message": "Advanced example using an experiment to register JavaScript files, which will be loaded into opened windows. These scripts can be used to inject/remove elements for open/closed windows. This example also includes an example JSM module to show how to load and unload it. It also shows how to access localized strings."
+  }
+}
