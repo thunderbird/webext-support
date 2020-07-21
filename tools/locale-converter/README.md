@@ -1,7 +1,7 @@
 # locale-converter.py
 
 This python3 script converts legacy locale files (*.properties and *.dtd)
-to the new WebExt JSON format.
+to the new WebExtension JSON format.
 
 ## Usage on Windows
 
@@ -27,5 +27,5 @@ The script will print a help screen, on how to use it.
 
 ## Contributors
 
-Guenter (neandr@github)
-John (jobisoft@github)
+* Guenter (neandr@github)
+* John (jobisoft@github)
