@@ -18,7 +18,7 @@ Entries like `category`, `interfaces`, `component` and `contract` have to go. Th
 * skin
 * resource
 
-make sure your add-on is still working after this first step in Thunderbird 68.
+Make sure your add-on is still working after this first step in Thunderbird 68.
 
 ### manifest.json
 
@@ -95,14 +95,16 @@ messenger.WindowListener.registerWindow(
     "chrome://quickfolders/content/scripts/messenger.js");
 ```
 
-Each window/URL may be only defined once and for each window only one JavaScript file may be registered. If you had multiple overlays and/or styles for the same window, you have to trigger those things from that single JavaScript file.
+Each window (or better URL) may be only registered once and for each window only one JavaScript file may be registered. If you had multiple overlays and/or styles for the same window, you have to trigger those things from that single JavaScript file now (will be explained below).
 
-So instead of overlaying, this will register a JavaScript file, which will be loaded into the given windows and it will be executes in privileged scope. The WindowListener API expects that these JavaScript files define the functions `onLoad()` and `onUnload()` and calls these when the window is opened (or the add-on is activated while the window is already open) and while the window is closed (or while the add-on is deactivated, while the window is open). A complex but useful example for a JavaScript file injected into `messenger.xul` (again taken from QuickFolders add-on):
+So instead of overlaying, this will register a JavaScript file, which will be loaded into the given windows and it will be executed in the old "legacy" privileged scope. The WindowListener API expects that these JavaScript files define the functions `onLoad()` and `onUnload()` and calls these when the window is opened (or the add-on is activated while the window is already open) and while the window is closed (or while the add-on is deactivated, while the window is open).
+
+A complex but useful example for a JavaScript file injected into `messenger.xul` (again taken from QuickFolders add-on):
 
 ```
 var { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
-// this is a polyfill for old build-in pref function
+// this is a polyfill for the old build-in pref function
 function pref(aName, aDefault) {
   let defaults = Services.prefs.getDefaultBranch("");
   switch (typeof aDefault) {
@@ -163,7 +165,7 @@ function onUnload(window, isAddOnShutDown) {
 }
 ```
 
-As this file is loaded into messenger.xul, we can do a few startup operations, like loading our default prefs. It includes a `pref()` function which does basically what the old internal function was doing. It is used by loading the old defaults file.
+As this file is loaded into `messenger.xul`, we can do a few startup operations, like loading our default prefs. It includes a `pref()` function which does basically what the old internal function was doing. It is used by loading the old defaults file.
 
 In the `onLoad()` function we load all other needed JavaScript files and inject the old XUL content. We need to chunk that up into pieces and manually add it to the document using the built-in `window.MozXULElement.parseXULToFragment()` function. Its first parameter is the XUL string, the second parameter is an array of DTD locale files, which should be used when parsing the XUL string.
 
