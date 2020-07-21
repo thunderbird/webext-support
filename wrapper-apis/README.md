@@ -8,5 +8,5 @@ Please keep in mind, that these wrappers use experimental APIs whose future is u
 
 | API             | Description |
 | --------------- | ----------- |
-| [WindowListener](WindowListener)      |  Update a Legacy Overlay WebExtension (draft)
+| [WindowListener](https://github.com/thundernest/addon-developer-support/wiki/WindowListener-API:-Getting-Started)      |  Update a Legacy Overlay WebExtension (draft)
 | [LegacyBootstrap](LegacyBootstrap)      |  Update a Legacy Bootstrap WebExtension (pre draft)
