@@ -3,6 +3,17 @@
     "namespace": "WindowListener",
     "functions": [
       {
+        "name": "registerDefaultPrefs",
+        "type": "function",
+        "parameters": [
+          {
+            "name": "aPath",
+            "type": "string",
+            "description": "Relative path to the default file."
+          }
+        ]
+      },
+      {
         "name": "registerChromeUrl",
         "type": "function",
         "description": "Register folders which should be available as chrome:// urls (as defined in the legacy chrome.manifest)",

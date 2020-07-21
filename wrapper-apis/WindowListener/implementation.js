@@ -25,6 +25,29 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
     return {
       WindowListener: {
         
+        registerDefaultPrefs(defaultUrl) {
+          let url = context.extension.rootURI.resolve(defaultUrl);
+          let prefsObj = {};
+          prefsObj.Services = ChromeUtils.import("resource://gre/modules/Services.jsm").Services;
+          prefsObj.pref = function(aName, aDefault) {
+            let defaults = Services.prefs.getDefaultBranch("");
+            switch (typeof aDefault) {
+              case "string":
+                  return defaults.setCharPref(aName, aDefault);
+
+              case "number":
+                  return defaults.setIntPref(aName, aDefault);
+              
+              case "boolean":
+                  return defaults.setBoolPref(aName, aDefault);
+                
+              default:
+                throw new Error("Preference <" + aName + "> has an unsupported type <" + typeof aDefault + ">. Allowed are string, number and boolean.");            
+            }
+          }          
+          Services.scriptloader.loadSubScript(url, prefsObj, "UTF-8");
+        },
+        
         registerChromeUrl(chromeData) {
           if (!self.isBackgroundContext) 
             throw new Error("The WindowListener API may only be called from the background page.");
