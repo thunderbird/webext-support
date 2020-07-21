@@ -1,4 +1,4 @@
-## HowTo: Update add-ons for Thunderbird 78 using wrapper APIs
+## Update add-ons for Thunderbird 78 using wrapper APIs
 
 While we encourage authors to follow the WebExtension concept and try to use WebExtension/MailExtension APIs and write dedicated experiments for functions not yet available, we do know that this is not an easy task.
 
