@@ -8,5 +8,5 @@ Please keep in mind, that these wrappers use experimental APIs whose future is u
 
 | API             | Description |
 | --------------- | ----------- |
-| [LegacyBootstrap](LegacyBootstrap)      |  Update a Legacy Bootstrap WebExtension
-| [WindowListener](WindowListener)      |  Update a Legacy Overlay WebExtension
+| [WindowListener](WindowListener)      |  Update a Legacy Overlay WebExtension (draft)
+| [LegacyBootstrap](LegacyBootstrap)      |  Update a Legacy Bootstrap WebExtension (pre draft)
