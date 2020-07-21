@@ -2,9 +2,11 @@
 
 While we encourage authors to follow the WebExtension concept and try to use WebExtension/MailExtension APIs and write dedicated experiments for functions not yet available, we do know that this is not an easy task.
 
-For a quick update, so that you do not loose your user base after TB78.2 will be shipped in September 2020, you can also use one of the following wrapper APIs and focus on creating the needed MailExtension APIs later.
+For a quick update, so that authors do not loose their user base after TB78.2 will be shipped in September 2020, they can also use one of the following wrapper APIs and focus on creating the needed MailExtension APIs later.
+
+Please keep in mind, that these wrappers use experimental APIs whose future is uncertain and which could get disabled in a later ESR as it was done for Firefox. The update using these wrappers should only be the first step. We encourage and try to support authors to continue the upgrade process to a pure MailExtension. Help us to identify and create still missing MailExtensions APIs, as this will allow to build future proof add-ons, which are independent of internal Thunderbird changes.
 
 | API             | Description |
 | --------------- | ----------- |
-| [LegacyBootsrap][LegacyBootsrap]      |  Update Legacy Bootstrap WebExtension
-| [WindowListener][WindowListener]      |  Update Legacy Overlay WebExtension
+| [LegacyBootsrap](LegacyBootsrap)      |  Update a Legacy Bootstrap WebExtension
+| [WindowListener](WindowListener)      |  Update a Legacy Overlay WebExtension
