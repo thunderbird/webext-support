@@ -8,5 +8,5 @@ _Please note that the future of experimental APIs is uncertain and they could be
 
 | API             | Description |
 | --------------- | ----------- |
-| [WindowListener](https://github.com/thundernest/addon-developer-support/wiki/WindowListener-API:-Getting-Started)      |  Update a Legacy Overlay WebExtension (draft)
+| [WindowListener](https://github.com/thundernest/addon-developer-support/wiki/Using-the-WindowListener-API-to-convert-a-Legacy-Overlay-WebExtension-into-a-MailExtension-for-Thunderbird-78)      |  Update a Legacy Overlay WebExtension (draft)
 | [LegacyBootstrap](LegacyBootstrap)      |  Update a Legacy Bootstrap WebExtension (pre draft)
