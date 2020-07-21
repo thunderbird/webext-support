@@ -171,4 +171,4 @@ In the `onLoad()` function we load all other needed JavaScript files and inject 
 
 To load CSS files, add a `<html:link rel="stylesheet" href="...">` element to `window.document.documentElement`.
 
-You should either keep track of the ids of added elements or attach a unique class to all added elements, as you must clean up after yourself now and have to remove all added elements when `onUnload()` is called.
+You should either keep track of the ids of added elements or attach a unique class to all added elements, as you must clean up after yourself now: You have to remove all added elements when `onUnload()` is called.
