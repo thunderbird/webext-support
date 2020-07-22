@@ -1,12 +1,12 @@
 {
   "manifest_version": 2,
-  "name": "LegacyBootstrap@thundernestExamples",
+  "name": "LegacyBootstrap API",
   "description": "Extension containing an experimental API that allows to register a legacy bootstrap.js.",
   "version": "1",
   "default_locale": "en_US",
   "applications": {
     "gecko": {
-      "id": "LegacyBootstrap@thundernestExamples"
+      "id": "LegacyBootstrap@example.thunderbird.net"
     }
   },
   "background": {
