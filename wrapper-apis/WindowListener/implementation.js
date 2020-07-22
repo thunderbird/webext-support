@@ -17,7 +17,6 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
     this.pathToOptionsPage = null;
     this.chromeHandle = null;
     this.openWindows = [];
-    this.namespace = "";
 
     const aomStartup = Cc["@mozilla.org/addons/addon-manager-startup;1"].getService(Ci.amIAddonManagerStartup);
 
@@ -91,11 +90,10 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
             : context.extension.rootURI.resolve(aPath);
         },
         
-        startListening(namespace) {
+        startListening() {
           if (!self.isBackgroundContext) 
             throw new Error("The WindowListener API may only be called from the background page.");
 
-          self.namespace = namespace;
           let urls = Object.keys(self.registeredWindows);
           if (urls.length > 0) {
             // Before registering the window listener, check which windows are already open
@@ -145,6 +143,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
                 if (Object.keys(self.registeredWindows).includes(window.location.href)) {
                   try {
                     // Create add-on specific namespace
+                    let namespace = "AddOnNS" + self.extension.instanceId;
                     window[namespace] = {};
                     // Make extension object available in loaded JavaScript
                     window[namespace].extension = self.extension;
@@ -155,7 +154,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
                     // Load script into add-on specific namespace
                     Services.scriptloader.loadSubScript(self.registeredWindows[window.location.href], window[namespace], "UTF-8");
                     // Call onLoad(window, wasAlreadyOpen)
-                    window[namespace].onLoad(window, self.openWindows.includes(window));
+                    window[namespace].onLoad(window, self.openWindows.includes(window), namespace);
                   } catch (e) {
                     Components.utils.reportError(e)
                   }
@@ -168,7 +167,8 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
                   
                   try {
                     // Call onUnload()
-                    window[self.namespace].onUnload(window, false);
+                    let namespace = "AddOnNS" + self.extension.instanceId;
+                    window[namespace].onUnload(window, false, namespace);
                   } catch (e) {
                     Components.utils.reportError(e)
                   }
@@ -210,7 +210,8 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
         if (this.registeredWindows.hasOwnProperty(window.location.href)) {
           try {
             // Call onUnload()
-            window[this.namespace].onUnload(window, true);
+            let namespace = "AddOnNS" + this.extension.instanceId;
+            window[namespace].onUnload(window, true, namespace);
           } catch (e) {
             Components.utils.reportError(e)
           }

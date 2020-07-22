@@ -45,13 +45,7 @@
       {
         "name": "startListening",
         "type": "function",
-        "parameters": [
-          {
-            "name": "namespace",
-            "type": "string",
-            "description": "All registered JavaScript files will be loaded into an object with the specified name: window[<namespace>]."
-          }
-        ]
+        "parameters": []
       },
       {
         "name": "registerWindow",
