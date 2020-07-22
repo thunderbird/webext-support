@@ -14,6 +14,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
 
     this.registeredWindows = {};
     this.pathToShutdownScript = null;
+    this.pathToOptionsPage = null;
     this.chromeHandle = null;
     this.openWindows = [];
     this.namespace = "";
@@ -24,6 +25,12 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
 
     return {
       WindowListener: {
+        
+        registerOptionsPage(optionsUrl) {
+          self.pathToOptionsPage = optionsUrl.startsWith("chrome://") 
+            ? optionsUrl 
+            : context.extension.rootURI.resolve(optionsUrl);
+        },
         
         registerDefaultPrefs(defaultUrl) {
           let url = context.extension.rootURI.resolve(defaultUrl);
@@ -100,34 +107,71 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
             
             // Register window listener for all pre-registered windows
             ExtensionSupport.registerWindowListener("injectListener", {
-              chromeURLs: Object.keys(self.registeredWindows),
+              // React on all windows, and manually reduce to registered windows,
+              // so we can also inject the revived add-on-options menu if the messenger
+              // window is opened.
+              //chromeURLs: Object.keys(self.registeredWindows),
               onLoadWindow(window) {
-                try {
-                  // Create add-on specific namespace
-                  window[namespace] = {};
-                  // Make extension object available in loaded JavaScript
-                  window[namespace].extension = self.extension;
-                  // Add messenger obj
-                  window[namespace].messenger = Array.from(self.extension.views).find(
-                    view => view.viewType === "background").xulBrowser.contentWindow
-                    .wrappedJSObject.browser;                  
-                  // Load script into add-on specific namespace
-                  Services.scriptloader.loadSubScript(self.registeredWindows[window.location.href], window[namespace], "UTF-8");
-                  // Call onLoad(window, wasAlreadyOpen)
-                  window[namespace].onLoad(window, self.openWindows.includes(window));
-                } catch (e) {
-                  Components.utils.reportError(e)
+                // inject add-on-options menu if it is messenger
+                if (
+                  self.pathToOptionsPage && 
+                  (window.location.href == "chrome://messenger/content/messenger.xul" ||
+                  window.location.href == "chrome://messenger/content/messenger.xhtml")) {
+                  
+                  // add the add-on options menu if needed
+                  if (!window.document.getElementById("addonsManager_prefs_revived")) {
+                    let addonprefs = window.MozXULElement.parseXULToFragment(`
+    <menu id="addonsManager_prefs_revived" label="&addonPrefs.label;">
+      <menupopup id="addonPrefs_revived">
+      </menupopup>
+    </menu>                    
+  `, 
+    ["chrome://messenger/locale/messenger.dtd"]);
+                  let addonsManagerNode = window.document.getElementById("addonsManager");
+                  addonsManagerNode.parentNode.insertBefore(addonprefs, addonsManagerNode.nextSibling);	
+                  }
+                  
+                  // add the options entry
+                  let addonPrefs_revived = window.document.getElementById("addonPrefs_revived");
+                  let id = "addonsManager_prefs_revived_" + self.extension.id;
+                  let icon = self.extension.manifest.icons[16];
+                  let name = self.extension.manifest.name;
+                  let entry = window.MozXULElement.parseXULToFragment(
+                    `<menuitem class="menuitem-iconic" id="${id}" image="${icon}" label="${name}" />`);
+                  addonPrefs_revived.appendChild(entry);
+                  window.document.getElementById(id).addEventListener("command", function() {window.openDialog(self.pathToOptionsPage, "AddonOptions")});
+                }
+                                
+                if (Object.keys(self.registeredWindows).includes(window.location.href)) {
+                  try {
+                    // Create add-on specific namespace
+                    window[namespace] = {};
+                    // Make extension object available in loaded JavaScript
+                    window[namespace].extension = self.extension;
+                    // Add messenger obj
+                    window[namespace].messenger = Array.from(self.extension.views).find(
+                      view => view.viewType === "background").xulBrowser.contentWindow
+                      .wrappedJSObject.browser;                  
+                    // Load script into add-on specific namespace
+                    Services.scriptloader.loadSubScript(self.registeredWindows[window.location.href], window[namespace], "UTF-8");
+                    // Call onLoad(window, wasAlreadyOpen)
+                    window[namespace].onLoad(window, self.openWindows.includes(window));
+                  } catch (e) {
+                    Components.utils.reportError(e)
+                  }
                 }
               },
               onUnloadWindow(window) {
-                //  Remove this window from the list of open windows
-                self.openWindows = self.openWindows.filter(e => (e != window));    
-                
-                try {
-                  // Call onUnload()
-                  window[self.namespace].onUnload(window, false);
-                } catch (e) {
-                  Components.utils.reportError(e)
+                if (Object.keys(self.registeredWindows).includes(window.location.href)) {
+                  //  Remove this window from the list of open windows
+                  self.openWindows = self.openWindows.filter(e => (e != window));    
+                  
+                  try {
+                    // Call onUnload()
+                    window[self.namespace].onUnload(window, false);
+                  } catch (e) {
+                    Components.utils.reportError(e)
+                  }
                 }
               }
             });
@@ -147,6 +191,22 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
     let urls = Object.keys(this.registeredWindows);
     if (urls.length > 0) {          
       for (let window of Services.wm.getEnumerator(null)) {
+
+        //remove our entry in the add-on options menu
+        if (
+          this.pathToOptionsPage && 
+          (window.location.href == "chrome://messenger/content/messenger.xul" ||
+          window.location.href == "chrome://messenger/content/messenger.xhtml")) {            
+          let id = "addonsManager_prefs_revived_" + this.extension.id;
+          window.document.getElementById(id).remove();
+          
+          //do we have to remove the entire add-on options menu?
+          let addonPrefs_revived = window.document.getElementById("addonPrefs_revived");
+          if (addonPrefs_revived.children.length == 0) {
+            window.document.getElementById("addonsManager_prefs_revived").remove();
+          }
+        }
+          
         if (this.registeredWindows.hasOwnProperty(window.location.href)) {
           try {
             // Call onUnload()
