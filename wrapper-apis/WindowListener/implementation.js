@@ -2,7 +2,7 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
- * Version: 1.2
+ * Version: 1.3
  * Author: John Bieling (john@thunderbird.net)
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -18,13 +18,9 @@ var { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 var WindowListener = class extends ExtensionCommon.ExtensionAPI {
   getAPI(context) {
-
     // track if this is the background/main context
     this.isBackgroundContext = (context.viewType == "background");
-    if (this.isBackgroundContext) {
-      context.callOnClose(this);      
-    }
-
+    
     this.namespace = "AddOnNS" + context.extension.instanceId;
     this.menu_addonsManager_id ="addonsManager";
     this.menu_addonsManager_prefs_id = "addonsManager_prefs_revived";
@@ -35,8 +31,9 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
     this.pathToShutdownScript = null;
     this.pathToOptionsPage = null;
     this.chromeHandle = null;
+    this.chromeData = null;
     this.openWindows = [];
-
+  
     const aomStartup = Cc["@mozilla.org/addons/addon-manager-startup;1"].getService(Ci.amIAddonManagerStartup);
     
     let self = this;
@@ -84,7 +81,8 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
             null,
             context.extension.rootURI
           );
-          self.chromeHandle = aomStartup.registerChrome(manifestURI, chromeData);          
+          self.chromeHandle = aomStartup.registerChrome(manifestURI, chromeData);
+          self.chromeData = chromeData;
         },
 
         registerWindow(windowHref, jsFile) {
@@ -229,8 +227,9 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
     };
   }
 
-  close() {
-    // console.log("WindowListener API for <" + this.extension.id + "> is shutting down");
+  onShutdown(isAppShutdown) {
+    if (isAppShutdown)
+      return;
   
     // Unload from all still open windows
     let urls = Object.keys(this.registeredWindows);
@@ -273,7 +272,26 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
     } catch (e) {
       Components.utils.reportError(e)
     }
-    
+
+    // Extract all registered chrome content urls
+    let chromeUrls = [];
+    if (this.chromeData) {
+        for (let chromeEntry of this.chromeData) {
+        if (chromeEntry[0].toLowerCase().trim() == "content") {
+          chromeUrls.push("chrome://" + chromeEntry[1] + "/");
+        }
+      }
+    }
+
+    // Unload JSMs of this add-on    
+    const rootURI = this.extension.rootURI.spec;
+    for (let module of Cu.loadedModules) {
+      if (module.startsWith(rootURI) || (module.startsWith("chrome://") && chromeUrls.find(s => module.startsWith(s)))) {
+        console.log("Unloading: " + module);
+        Cu.unload(module);
+      }
+    }    
+
     // Flush all caches
     Services.obs.notifyObservers(null, "startupcache-invalidate");
     this.registeredWindows = {};
