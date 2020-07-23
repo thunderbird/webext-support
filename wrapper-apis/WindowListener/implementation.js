@@ -2,7 +2,7 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
- * Version: 1.4
+ * Version: 1.5
  * Author: John Bieling (john@thunderbird.net)
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -188,6 +188,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
                   try {
                     // Create add-on specific namespace
                     window[self.namespace] = {};
+                    window[self.namespace].namespace = self.namespace;
                     window[self.namespace].window = window;
                     window[self.namespace].document = window.document;
                     
@@ -200,7 +201,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
                     // Load script into add-on specific namespace
                     Services.scriptloader.loadSubScript(self.registeredWindows[window.location.href], window[self.namespace], "UTF-8");
                     // Call onLoad(window, wasAlreadyOpen)
-                    window[self.namespace].onLoad(window, self.openWindows.includes(window), self.namespace);
+                    window[self.namespace].onLoad(self.openWindows.includes(window));
                   } catch (e) {
                     Components.utils.reportError(e)
                   }
@@ -214,7 +215,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
                   
                   try {
                     // Call onUnload()
-                    window[self.namespace].onUnload(window, false, self.namespace);
+                    window[self.namespace].onUnload(false);
                   } catch (e) {
                     Components.utils.reportError(e)
                   }
@@ -257,7 +258,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
         if (this.registeredWindows.hasOwnProperty(window.location.href)) {
           try {
             // Call onUnload()
-            window[this.namespace].onUnload(window, true, this.namespace);
+            window[this.namespace].onUnload(true);
           } catch (e) {
             Components.utils.reportError(e)
           }
