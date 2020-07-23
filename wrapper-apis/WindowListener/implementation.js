@@ -2,7 +2,7 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
- * Version: 1.3
+ * Version: 1.4
  * Author: John Bieling (john@thunderbird.net)
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -188,6 +188,9 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
                   try {
                     // Create add-on specific namespace
                     window[self.namespace] = {};
+                    window[self.namespace].window = window;
+                    window[self.namespace].document = window.document;
+                    
                     // Make extension object available in loaded JavaScript
                     window[self.namespace].extension = self.extension;
                     // Add messenger obj
