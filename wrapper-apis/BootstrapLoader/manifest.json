@@ -15,7 +15,7 @@
   },
   "experiment_apis": {
     "BootstrapLoader": {
-      "schema": "api/BootstrapLoader/schema.json",
+      "schema": "schema.json",
       "parent": {
         "scopes": [
           "addon_parent"
@@ -25,7 +25,7 @@
             "BootstrapLoader"
           ]
         ],
-        "script": "api/BootstrapLoader/implementation.js"
+        "script": "implementation.js"
       }
     }
   }
