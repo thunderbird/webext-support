@@ -15,7 +15,7 @@ var { ExtensionCommon } = ChromeUtils.import("resource://gre/modules/ExtensionCo
 var { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 var { AddonManager } = ChromeUtils.import("resource://gre/modules/AddonManager.jsm");
 
-var LegacyBootstrap = class extends ExtensionCommon.ExtensionAPI {
+var BootstrapLoader = class extends ExtensionCommon.ExtensionAPI {
   getAPI(context) {
     this.pathToBootstrapScript = null;
     this.chromeHandle = null;
@@ -44,7 +44,7 @@ var LegacyBootstrap = class extends ExtensionCommon.ExtensionAPI {
     let self = this;
 
     return {
-      LegacyBootstrap: {
+      BootstrapLoader: {
 
         registerChromeUrl: async function(chromeData) {
           const aomStartup = Cc["@mozilla.org/addons/addon-manager-startup;1"].getService(Ci.amIAddonManagerStartup);
@@ -125,6 +125,6 @@ var LegacyBootstrap = class extends ExtensionCommon.ExtensionAPI {
       this.chromeHandle = null;
     }
 
-    console.log("LegacyBootstrap for " + this.extension.id + " unloaded!");
+    console.log("BootstrapLoader for " + this.extension.id + " unloaded!");
   }
 };

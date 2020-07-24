@@ -1,9 +1,9 @@
 async function main() {
-  await messenger.LegacyBootstrap.registerChromeUrl([
+  await messenger.BootstrapLoader.registerChromeUrl([
    ["content", "addon_name", "content/"]
   ]);
  
-  await messenger.LegacyBootstrap.registerBootstrapScript("bootstrap.js");
+  await messenger.BootstrapLoader.registerBootstrapScript("bootstrap.js");
 }
 
 main();
