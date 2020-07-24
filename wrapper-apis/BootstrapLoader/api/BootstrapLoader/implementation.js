@@ -30,13 +30,13 @@ var BootstrapLoader = class extends ExtensionCommon.ExtensionAPI {
                       .xulBrowser.contentWindow.wrappedJSObject.browser;        
     
     
-    this.bootstrappedObj.BOOTSTRAP_REASONS = {
+    this.BOOTSTRAP_REASONS = {
       APP_STARTUP: 1,
       APP_SHUTDOWN: 2,
       ADDON_ENABLE: 3,
       ADDON_DISABLE: 4,
       ADDON_INSTALL: 5,
-      ADDON_UNINSTALL: 6,
+      ADDON_UNINSTALL: 6, // not supported
       ADDON_UPGRADE: 7,
       ADDON_DOWNGRADE: 8,
     };
@@ -67,10 +67,15 @@ var BootstrapLoader = class extends ExtensionCommon.ExtensionAPI {
           //make the addon globally awailable in the bootstrapped scope
           self.bootstrappedObj.addon = addon;
           
+          // add BOOTSTRAP_REASONS to scope
+          for (let reason of Object.keys(self.BOOTSTRAP_REASONS)) {
+            self.bootstrappedObj[reason] = self.BOOTSTRAP_REASONS[reason];
+          }
+          
           // Load registered bootstrap scripts and execute its startup() function.
           try {
             if (self.pathToBootstrapScript) Services.scriptloader.loadSubScript(self.pathToBootstrapScript, self.bootstrappedObj, "UTF-8");
-            if (self.bootstrappedObj.startup) self.bootstrappedObj.startup.call(self.bootstrappedObj, self.extension.addonData, self.extension.startupReason);
+            if (self.bootstrappedObj.startup) self.bootstrappedObj.startup.call(self.bootstrappedObj, self.extension.addonData, self.BOOTSTRAP_REASONS[self.extension.startupReason]);
           } catch (e) {
             Components.utils.reportError(e)
           }
@@ -86,8 +91,8 @@ var BootstrapLoader = class extends ExtensionCommon.ExtensionAPI {
         this.bootstrappedObj.shutdown.call(this.bootstrappedObj, 
           this.extension.addonData,
           isAppShutdown 
-            ? this.bootstrappedObj.BOOTSTRAP_REASONS.APP_SHUTDOWN
-            : this.bootstrappedObj.BOOTSTRAP_REASONS.ADDON_DISABLE);
+            ? this.BOOTSTRAP_REASONS.APP_SHUTDOWN
+            : this.BOOTSTRAP_REASONS.ADDON_DISABLE);
       }
     } catch (e) {
       Components.utils.reportError(e)
