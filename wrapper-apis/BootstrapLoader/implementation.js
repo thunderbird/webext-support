@@ -64,7 +64,7 @@ var BootstrapLoader = class extends ExtensionCommon.ExtensionAPI {
 
           // Get the addon object belonging to this extension.
           let addon = await AddonManager.getAddonByID(context.extension.id);
-          //make the addon globally awailable in the bootstrapped scope
+          //make the addon globally available  in the bootstrapped scope
           self.bootstrappedObj.addon = addon;
           
           // add BOOTSTRAP_REASONS to scope
