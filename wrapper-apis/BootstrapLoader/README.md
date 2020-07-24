@@ -1,3 +1,1 @@
-## The BootstrapLoader API
-
-This API is intended to help add-on developers to convert their Legacy Bootstrap WebExtension for TB68 into a MailExtension for TB78.
+Usage description can be found in the [wiki](https://github.com/thundernest/addon-developer-support/wiki/Using-the-BootstrapLoader-API-to-convert-a-Legacy-Bootstrap-WebExtension-into-a-MailExtension-for-Thunderbird-78).
