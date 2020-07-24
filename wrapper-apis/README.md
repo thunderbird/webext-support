@@ -6,7 +6,7 @@ To support developers, we created these wrapper APIs which do not require all of
 
 | API             | Description |
 | --------------- | ----------- |
-| [BootstrapLoader](BootstrapLoader)      |  Update a Legacy Bootstrap WebExtension (draft)
+| [BootstrapLoader](https://github.com/thundernest/addon-developer-support/wiki/Using-the-BootstrapLoader-API-to-convert-a-Legacy-Bootstrap-WebExtension-into-a-MailExtension-for-Thunderbird-78)      |  Update a Legacy Bootstrap WebExtension (draft)
 | [WindowListener](https://github.com/thundernest/addon-developer-support/wiki/Using-the-WindowListener-API-to-convert-a-Legacy-Overlay-WebExtension-into-a-MailExtension-for-Thunderbird-78)      |  Update a Legacy Overlay WebExtension
 
 _Please note: Updating with these wrapper APIs should only be the first step, as it is an [experimental API](https://thunderbird-webextensions.readthedocs.io/en/latest/how-to/experiments.html) which is only a temporary solution. We encourage and try to help add-on developers to continue the upgrade process to a pure MailExtension. After the initial conversion we will create little "rainy day" update guides, to get the legacy components out piece by piece._
