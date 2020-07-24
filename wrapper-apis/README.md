@@ -1,12 +1,12 @@
 ## Update add-ons for Thunderbird 78 using wrapper APIs
 
-We encourage add-on developers to follow the WebExtension concept and try to use WebExtension/MailExtension APIs and write dedicated experiments for functions not yet available. However, we do know that this is not an easy task and many add-on developers struggle to get their add-on running in Thunderbird 78.
+Thunderbird 78 usually requires significant changes to add-ons, such as the locale and preference system as well converting XUL documents to HTML. Furthermore, the new WebExtension technology does not yet provide all the functions which are available to add-ons by using legacy Thunderbird APIs.
 
-The following wrapper APIs are experimental APIs and allow to complete the conversion from a Legacy WebExtension (Thunderbird 68) to a MailExtension (Thunderbird 78) with minimal changes. The table below contains links to the wiki of the addon-developer-support repository with step-by-step descriptions.
-
-_Please note that the future of experimental APIs is uncertain and they could be deactivated in a later ESR like it was done for Firefox. Updating with the WindowListener API should only be the first step. We encourage and try to help add-on developers to continue the upgrade process to a pure MailExtension. Help us to identify and create still missing MailExtensions APIs, as this will allow building future proof add-ons, which are independent of internal Thunderbird changes._
+To support developers, we created these wrapper APIs which do not require all of these changes, just to get the add-on running in Thunderbird 78 again. The goal is to get as many add-ons compatible with the current ESR version, so the users can continue to work with their beloved add-ons.
 
 | API             | Description |
 | --------------- | ----------- |
 | [WindowListener](https://github.com/thundernest/addon-developer-support/wiki/Using-the-WindowListener-API-to-convert-a-Legacy-Overlay-WebExtension-into-a-MailExtension-for-Thunderbird-78)      |  Update a Legacy Overlay WebExtension (draft)
 | [LegacyBootstrap](LegacyBootstrap)      |  Update a Legacy Bootstrap WebExtension (pre draft)
+
+_Please note: Updating with these wrapper APIs should only be the first step, as it is an [experimental API](https://thunderbird-webextensions.readthedocs.io/en/latest/how-to/experiments.html) which is only a temporary solution. We encourage and try to help add-on developers to continue the upgrade process to a pure MailExtension. After the initial conversion we will create little "rainy day" update guides, to get the legacy components out piece by piece._
