@@ -16,19 +16,6 @@ var { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 var { AddonManager } = ChromeUtils.import("resource://gre/modules/AddonManager.jsm");
 
 var LegacyBootstrap = class extends ExtensionCommon.ExtensionAPI {
-  // Build the data obj which we pass to the the startup() and shutdown() method
-  getDataParams(addon) {
-    return {
-      id: this.bootstrappedObj.addon.id,
-      version: this.bootstrappedObj.addon.version,
-      resourceURI: this.bootstrappedObj.addon.resolvedRootURI,
-      signedState:  this.bootstrappedObj.addon.hasOwnProperty("signedState") ? this.bootstrappedObj.addon.signedState : null,
-      temporarilyInstalled: this.bootstrappedObj.addon.hasOwnProperty("location") ? addon.location.isTemporary : null,
-      builtIn: this.bootstrappedObj.addon.hasOwnProperty("location") ? this.bootstrappedObj.addon.location.isBuiltin : null,
-      isSystem: this.bootstrappedObj.addon.hasOwnProperty("location") ? this.bootstrappedObj.addon.location.isSystem : null,
-    };          
-  }
-  
   getAPI(context) {
     this.pathToBootstrapScript = null;
     this.chromeHandle = null;
@@ -43,18 +30,15 @@ var LegacyBootstrap = class extends ExtensionCommon.ExtensionAPI {
                       .xulBrowser.contentWindow.wrappedJSObject.browser;        
     
     
-    this.bootstrappedObj.BOOTSTRAP_REASONS = function () { 
-      return {
-        APP_STARTUP: 1,
-        APP_SHUTDOWN: 2,
-        ADDON_ENABLE: 3,
-        ADDON_DISABLE: 4,
-        //not supported
-        //ADDON_INSTALL: 5,
-        //ADDON_UNINSTALL: 6,
-        //ADDON_UPGRADE: 7,
-        //ADDON_DOWNGRADE: 8,
-      }
+    this.bootstrappedObj.BOOTSTRAP_REASONS = {
+      APP_STARTUP: 1,
+      APP_SHUTDOWN: 2,
+      ADDON_ENABLE: 3,
+      ADDON_DISABLE: 4,
+      ADDON_INSTALL: 5,
+      ADDON_UNINSTALL: 6,
+      ADDON_UPGRADE: 7,
+      ADDON_DOWNGRADE: 8,
     };
     
     let self = this;
@@ -77,9 +61,7 @@ var LegacyBootstrap = class extends ExtensionCommon.ExtensionAPI {
           self.pathToBootstrapScript = aPath.startsWith("chrome://") 
             ? aPath
             : context.extension.rootURI.resolve(aPath);
-          
-          console.log(self.bootstrappedObj.BOOTSTRAP_REASONS);
-          
+
           // Get the addon object belonging to this extension.
           let addon = await AddonManager.getAddonByID(context.extension.id);
           //make the addon globally awailable in the bootstrapped scope
@@ -88,7 +70,7 @@ var LegacyBootstrap = class extends ExtensionCommon.ExtensionAPI {
           // Load registered bootstrap scripts and execute its startup() function.
           try {
             if (self.pathToBootstrapScript) Services.scriptloader.loadSubScript(self.pathToBootstrapScript, self.bootstrappedObj, "UTF-8");
-            if (self.bootstrappedObj.startup) self.bootstrappedObj.startup.call(self.bootstrappedObj, self.getDataParams(), self.bootstrappedObj.BOOTSTRAP_REASONS.ADDON_ENABLE);
+            if (self.bootstrappedObj.startup) self.bootstrappedObj.startup.call(self.bootstrappedObj, self.extension.addonData, self.extension.startupReason);
           } catch (e) {
             Components.utils.reportError(e)
           }
@@ -97,13 +79,13 @@ var LegacyBootstrap = class extends ExtensionCommon.ExtensionAPI {
     };
   }
   
-  onShutdown(isAddonShutdown) {
+  onShutdown(isAppShutdown) {  
     // Execute registered shutdown()
     try {
       if (this.bootstrappedObj.shutdown) {
         this.bootstrappedObj.shutdown.call(this.bootstrappedObj, 
-          this.getDataParams(), 
-          isAddonShutdown 
+          this.extension.addonData,
+          isAppShutdown 
             ? this.bootstrappedObj.BOOTSTRAP_REASONS.APP_SHUTDOWN
             : this.bootstrappedObj.BOOTSTRAP_REASONS.ADDON_DISABLE);
       }
@@ -111,7 +93,8 @@ var LegacyBootstrap = class extends ExtensionCommon.ExtensionAPI {
       Components.utils.reportError(e)
     }
 
-    if (isAddonShutdown)
+    // temporary installed addons always return isAppShutdown = false
+    if (isAppShutdown)
       return;
     
     
