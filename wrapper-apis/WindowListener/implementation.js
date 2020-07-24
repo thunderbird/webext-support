@@ -232,6 +232,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
   }
 
   onShutdown(isAppShutdown) {
+    // temporary installed addons always return isAppShutdown = false
     if (isAppShutdown)
       return;
   
