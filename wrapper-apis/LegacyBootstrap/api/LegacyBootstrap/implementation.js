@@ -1,39 +1,61 @@
+/*
+ * This file is provided by the addon-developer-support repository at
+ * https://github.com/thundernest/addon-developer-support
+ *
+ * Version: 1.0
+ * Author: John Bieling (john@thunderbird.net)
+ * 
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
+ */
+
 // Get various parts of the WebExtension framework that we need.
 var { ExtensionCommon } = ChromeUtils.import("resource://gre/modules/ExtensionCommon.jsm");
 var { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 var { AddonManager } = ChromeUtils.import("resource://gre/modules/AddonManager.jsm");
 
 var LegacyBootstrap = class extends ExtensionCommon.ExtensionAPI {
-  onShutdown() {
-    // This function is called if the extension is disabled or removed, or Thunderbird closes.
-
-    // Execute registered shutdown()
-    try {
-      if (this.bootstrapObj.shutdown) this.bootstrapObj.shutdown.call(this.bootstrapObj, this.addon, this.extension, this.browser);
-    } catch (e) {
-      Components.utils.reportError(e)
-    }
-  
-    // after unloading also flush all caches
-    Services.obs.notifyObservers(null, "startupcache-invalidate");
-
-    if (this.chromeHandle) {
-      this.chromeHandle.destruct();
-      this.chromeHandle = null;
-    }
-
-    console.log("LegacyBootstrap for " + this.extension.id + " unloaded!");
+  // Build the data obj which we pass to the the startup() and shutdown() method
+  getDataParams(addon) {
+    return {
+      id: this.bootstrappedObj.addon.id,
+      version: this.bootstrappedObj.addon.version,
+      resourceURI: this.bootstrappedObj.addon.resolvedRootURI,
+      signedState:  this.bootstrappedObj.addon.hasOwnProperty("signedState") ? this.bootstrappedObj.addon.signedState : null,
+      temporarilyInstalled: this.bootstrappedObj.addon.hasOwnProperty("location") ? addon.location.isTemporary : null,
+      builtIn: this.bootstrappedObj.addon.hasOwnProperty("location") ? this.bootstrappedObj.addon.location.isBuiltin : null,
+      isSystem: this.bootstrappedObj.addon.hasOwnProperty("location") ? this.bootstrappedObj.addon.location.isSystem : null,
+    };          
   }
   
   getAPI(context) {
-    // To be notified of the extension going away, call callOnClose with any object that has a
-    // close function, such as this one.
-    //context.callOnClose(this);
-console.log(context.extension);
     this.pathToBootstrapScript = null;
     this.chromeHandle = null;
-    this.bootstrapObj = {};
-    this.extension = context.extension;
+    this.chromeData = null;    
+    this.bootstrappedObj = {};
+
+    // make the extension object and the messenger object available inside
+    // the bootstrapped scope
+    this.bootstrappedObj.extension = context.extension;
+    this.bootstrappedObj.messenger = Array.from(context.extension.views)
+                      .find(view => view.viewType === "background")
+                      .xulBrowser.contentWindow.wrappedJSObject.browser;        
+    
+    
+    this.bootstrappedObj.BOOTSTRAP_REASONS = function () { 
+      return {
+        APP_STARTUP: 1,
+        APP_SHUTDOWN: 2,
+        ADDON_ENABLE: 3,
+        ADDON_DISABLE: 4,
+        //not supported
+        //ADDON_INSTALL: 5,
+        //ADDON_UNINSTALL: 6,
+        //ADDON_UPGRADE: 7,
+        //ADDON_DOWNGRADE: 8,
+      }
+    };
     
     let self = this;
 
@@ -47,7 +69,8 @@ console.log(context.extension);
             null,
             context.extension.rootURI
           );
-          self.chromeHandle = aomStartup.registerChrome(manifestURI, chromeData);          
+          self.chromeHandle = aomStartup.registerChrome(manifestURI, chromeData);
+          self.chromeData = chromeData;          
         },
        
         registerBootstrapScript: async function(aPath) {
@@ -55,16 +78,17 @@ console.log(context.extension);
             ? aPath
             : context.extension.rootURI.resolve(aPath);
           
-          // Get the browser obj
-          self.browser = Array.from(context.extension.views).find(
-                view => view.viewType === "background").xulBrowser.contentWindow
-                .wrappedJSObject.browser;
+          console.log(self.bootstrappedObj.BOOTSTRAP_REASONS);
+          
           // Get the addon object belonging to this extension.
-          self.addon = await AddonManager.getAddonByID(context.extension.id);
+          let addon = await AddonManager.getAddonByID(context.extension.id);
+          //make the addon globally awailable in the bootstrapped scope
+          self.bootstrappedObj.addon = addon;
+          
           // Load registered bootstrap scripts and execute its startup() function.
           try {
-            if (self.pathToBootstrapScript) Services.scriptloader.loadSubScript(self.pathToBootstrapScript, self.bootstrapObj, "UTF-8");
-            if (self.bootstrapObj.startup) self.bootstrapObj.startup.call(self.bootstrapObj, self.addon, self.extension, self.browser);
+            if (self.pathToBootstrapScript) Services.scriptloader.loadSubScript(self.pathToBootstrapScript, self.bootstrappedObj, "UTF-8");
+            if (self.bootstrappedObj.startup) self.bootstrappedObj.startup.call(self.bootstrappedObj, self.getDataParams(), self.bootstrappedObj.BOOTSTRAP_REASONS.ADDON_ENABLE);
           } catch (e) {
             Components.utils.reportError(e)
           }
@@ -73,7 +97,51 @@ console.log(context.extension);
     };
   }
   
-  close() {
-    // Replaced by onShutdown()
-  }  
+  onShutdown(isAddonShutdown) {
+    // Execute registered shutdown()
+    try {
+      if (this.bootstrappedObj.shutdown) {
+        this.bootstrappedObj.shutdown.call(this.bootstrappedObj, 
+          this.getDataParams(), 
+          isAddonShutdown 
+            ? this.bootstrappedObj.BOOTSTRAP_REASONS.APP_SHUTDOWN
+            : this.bootstrappedObj.BOOTSTRAP_REASONS.ADDON_DISABLE);
+      }
+    } catch (e) {
+      Components.utils.reportError(e)
+    }
+
+    if (isAddonShutdown)
+      return;
+    
+    
+    // Extract all registered chrome content urls
+    let chromeUrls = [];
+    if (this.chromeData) {
+        for (let chromeEntry of this.chromeData) {
+        if (chromeEntry[0].toLowerCase().trim() == "content") {
+          chromeUrls.push("chrome://" + chromeEntry[1] + "/");
+        }
+      }
+    }
+
+    // Unload JSMs of this add-on    
+    const rootURI = this.extension.rootURI.spec;
+    for (let module of Cu.loadedModules) {
+      if (module.startsWith(rootURI) || (module.startsWith("chrome://") && chromeUrls.find(s => module.startsWith(s)))) {
+        console.log("Unloading: " + module);
+        Cu.unload(module);
+      }
+    }    
+    
+    // Flush all caches
+    Services.obs.notifyObservers(null, "startupcache-invalidate");
+
+    if (this.chromeHandle) {
+      this.chromeHandle.destruct();
+      this.chromeHandle = null;
+    }
+
+    console.log("LegacyBootstrap for " + this.extension.id + " unloaded!");
+  }
 };
