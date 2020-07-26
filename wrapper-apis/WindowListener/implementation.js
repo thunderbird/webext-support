@@ -137,7 +137,9 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
               // messenger window is opened.
               //chromeURLs: Object.keys(self.registeredWindows),
               onLoadWindow(window) {                
-                // special action if this is the main messenger window
+                window[self.namespace] = {};
+                
+                // Special action #1: If this is the main messenger window
                 if (window.location.href == "chrome://messenger/content/messenger.xul" ||
                   window.location.href == "chrome://messenger/content/messenger.xhtml") {
 
@@ -183,11 +185,44 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
                     }                    
                   }
                 }
-                                
+
+                // Special action #2: If this page contains browser or iframe elements
+                let browserElements = window.document.getElementsByTagName("browser");
+                let iframeElements = window.document.getElementsByTagName("iframe");
+                if (browserElements.length > 0 || iframeElements.length > 0) {
+                  //register a MutationObserver
+                  window[self.namespace]._mObserver = new window.MutationObserver(function(mutations) {
+                      mutations.forEach(async function(mutation) {
+                          if (mutation.attributeName == "src") {
+                              // a page has been loaded
+                              let targetWindow = mutation.target.contentWindow.wrappedJSObject;
+                              if (targetWindow) {
+                                  console.log("WindowListenerAPI: " + targetWindow.document.readyState);
+                                  console.log("WindowListenerAPI: " + targetWindow.location.href);
+                                  await new Promise(resolve => { targetWindow.addEventListener("unload", resolve, { once: true });  });
+                                  console.log("unloaded")
+                                  console.log("WindowListenerAPI: " + targetWindow.document.readyState);
+                                  console.log("WindowListenerAPI: " + targetWindow.location.href);
+                                  await new Promise(resolve => { targetWindow.addEventListener("DOMContentLoaded", resolve, { once: true });  });
+                                  console.log("loaded");
+                                  console.log("WindowListenerAPI: " + targetWindow.location.href);
+                                  console.log("WindowListenerAPI: " + targetWindow.document.readyState);
+                                  
+                              }
+                          }
+                      });    
+                  });
+                  for (let element of browserElements) {
+                      window[self.namespace]._mObserver.observe(element, { attributes: true, childList: false, characterData: false });
+                  }
+                  for (let element of iframeElements) {
+                      window[self.namespace]._mObserver.observe(element, { attributes: true, childList: false, characterData: false });
+                  }
+                }
+                
                 if (self.registeredWindows.hasOwnProperty(window.location.href)) {
                   try {
                     // Create add-on specific namespace
-                    window[self.namespace] = {};
                     window[self.namespace].namespace = self.namespace;
                     window[self.namespace].window = window;
                     window[self.namespace].document = window.document;
@@ -209,6 +244,12 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
               },
 
               onUnloadWindow(window) {
+                if (window[self.namespace].hasOwnProperty("_mObserver")) {
+                  console.log("Unloading MutationObservers");
+                  console.log(window[self.namespace]._mObserver.takeRecords());
+                  window[self.namespace]._mObserver.disconnect();
+                }
+                
                 if (self.registeredWindows.hasOwnProperty(window.location.href)) {
                   //  Remove this window from the list of open windows
                   self.openWindows = self.openWindows.filter(e => (e != window));    
