@@ -2,7 +2,11 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
- * Version: 1.5
+ * Version: 1.6
+ * - added mutation observer to be able to inject into browser elements
+ * - use larger icons as fallback
+ *
+ *
  * Author: John Bieling (john@thunderbird.net)
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -119,6 +123,19 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
         },
         
         startListening() {
+          // async sleep function using Promise
+          async function sleep(delay) {
+            let timer =  Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);            
+            return new Promise(function(resolve, reject) {
+              let event = {
+                notify: function(timer) {
+                  resolve();
+                }
+              }            
+              timer.initWithCallback(event, delay, Components.interfaces.nsITimer.TYPE_ONE_SHOT);
+            });
+          };
+
           if (!self.isBackgroundContext) 
             throw new Error("The WindowListener API may only be called from the background page.");
 
@@ -173,11 +190,14 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
                   }
                   
                   // load the registered startup script, if one has been registered
-                  // (only for the initial main window9
+                  // (only for the initial main window)
                   if (self.counts == 0 && self.pathToStartupScript) {
                     self.counts++;
                     let startupJS = {};
                     startupJS.extension = self.extension;
+                    startupJS.messenger = Array.from(self.extension.views).find(
+                      view => view.viewType === "background").xulBrowser.contentWindow
+                      .wrappedJSObject.browser;
                     try {
                       if (self.pathToStartupScript) Services.scriptloader.loadSubScript(self.pathToStartupScript, startupJS, "UTF-8");
                     } catch (e) {
@@ -186,81 +206,55 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
                   }
                 }
 
-                // Special action #2: If this page contains browser or iframe elements
+                // Special action #2: If this page contains browser elements
                 let browserElements = window.document.getElementsByTagName("browser");
-                let iframeElements = window.document.getElementsByTagName("iframe");
-                if (browserElements.length > 0 || iframeElements.length > 0) {
+                if (browserElements.length > 0) {
                   //register a MutationObserver
                   window[self.namespace]._mObserver = new window.MutationObserver(function(mutations) {
                       mutations.forEach(async function(mutation) {
-                          if (mutation.attributeName == "src") {
-                              // a page has been loaded
+                          if (mutation.attributeName == "src" && self.registeredWindows.hasOwnProperty(mutation.target.getAttribute("src"))) {
+                            // When the MutationObserver callsback, the window is still showing "about:black" and it is going
+                            // to unload and then load the new page. Any eventListener attached to the window will be removed
+                            // so we cannot listen for the load event. We have to poll manually to learn when loading has finished.
+                            // On my system it takes 70ms.
+                            let loaded = false;
+                            for (let i=0; i < 100 && !loaded; i++) {
+                              await sleep(100);  
                               let targetWindow = mutation.target.contentWindow.wrappedJSObject;
-                              if (targetWindow) {
-                                  console.log("WindowListenerAPI: " + targetWindow.document.readyState);
-                                  console.log("WindowListenerAPI: " + targetWindow.location.href);
-                                  await new Promise(resolve => { targetWindow.addEventListener("unload", resolve, { once: true });  });
-                                  console.log("unloaded")
-                                  console.log("WindowListenerAPI: " + targetWindow.document.readyState);
-                                  console.log("WindowListenerAPI: " + targetWindow.location.href);
-                                  await new Promise(resolve => { targetWindow.addEventListener("DOMContentLoaded", resolve, { once: true });  });
-                                  console.log("loaded");
-                                  console.log("WindowListenerAPI: " + targetWindow.location.href);
-                                  console.log("WindowListenerAPI: " + targetWindow.document.readyState);
-                                  
+                              if (targetWindow && targetWindow.location.href == mutation.target.getAttribute("src") && targetWindow.document.readyState == "complete") {
+                                loaded = true;
+                                break;
                               }
+                            }
+                            if (loaded) {
+                              let targetWindow = mutation.target.contentWindow.wrappedJSObject;
+                              targetWindow[self.namespace] = {};
+                              self._loadIntoWindow(targetWindow);
+                            }
                           }
                       });    
                   });
+
                   for (let element of browserElements) {
-                      window[self.namespace]._mObserver.observe(element, { attributes: true, childList: false, characterData: false });
-                  }
-                  for (let element of iframeElements) {
-                      window[self.namespace]._mObserver.observe(element, { attributes: true, childList: false, characterData: false });
+                      if (self.registeredWindows.hasOwnProperty(element.getAttribute("src"))) {
+                        //inject directly
+                        let targetWindow = element.contentWindow.wrappedJSObject;
+                        targetWindow[self.namespace] = {};
+                        self._loadIntoWindow(targetWindow);
+                      } else {
+                        // inject after browser has been loaded
+                        window[self.namespace]._mObserver.observe(element, { attributes: true, childList: false, characterData: false });
+                      }
                   }
                 }
                 
-                if (self.registeredWindows.hasOwnProperty(window.location.href)) {
-                  try {
-                    // Create add-on specific namespace
-                    window[self.namespace].namespace = self.namespace;
-                    window[self.namespace].window = window;
-                    window[self.namespace].document = window.document;
-                    
-                    // Make extension object available in loaded JavaScript
-                    window[self.namespace].extension = self.extension;
-                    // Add messenger obj
-                    window[self.namespace].messenger = Array.from(self.extension.views).find(
-                      view => view.viewType === "background").xulBrowser.contentWindow
-                      .wrappedJSObject.browser;                  
-                    // Load script into add-on specific namespace
-                    Services.scriptloader.loadSubScript(self.registeredWindows[window.location.href], window[self.namespace], "UTF-8");
-                    // Call onLoad(window, wasAlreadyOpen)
-                    window[self.namespace].onLoad(self.openWindows.includes(window));
-                  } catch (e) {
-                    Components.utils.reportError(e)
-                  }
-                }
+                // Load JS into window
+                self._loadIntoWindow(window);
               },
 
               onUnloadWindow(window) {
-                if (window[self.namespace].hasOwnProperty("_mObserver")) {
-                  console.log("Unloading MutationObservers");
-                  console.log(window[self.namespace]._mObserver.takeRecords());
-                  window[self.namespace]._mObserver.disconnect();
-                }
-                
-                if (self.registeredWindows.hasOwnProperty(window.location.href)) {
-                  //  Remove this window from the list of open windows
-                  self.openWindows = self.openWindows.filter(e => (e != window));    
-                  
-                  try {
-                    // Call onUnload()
-                    window[self.namespace].onUnload(false);
-                  } catch (e) {
-                    Components.utils.reportError(e)
-                  }
-                }
+                // Remove JS from window
+                self._unloadFromWindow(window, false);
               }
             });
           } else {
@@ -271,6 +265,57 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
       }
     };
   }
+
+  _loadIntoWindow(window) {
+      if (window.hasOwnProperty(this.namespace) && this.registeredWindows.hasOwnProperty(window.location.href)) {
+        try {
+          // Create add-on specific namespace
+          window[this.namespace].namespace = this.namespace;
+          window[this.namespace].window = window;
+          window[this.namespace].document = window.document;
+          
+          // Make extension object available in loaded JavaScript
+          window[this.namespace].extension = this.extension;
+          // Add messenger obj
+          window[this.namespace].messenger = Array.from(this.extension.views).find(
+            view => view.viewType === "background").xulBrowser.contentWindow
+            .wrappedJSObject.browser;                  
+          // Load script into add-on specific namespace
+          Services.scriptloader.loadSubScript(this.registeredWindows[window.location.href], window[this.namespace], "UTF-8");
+          // Call onLoad(window, wasAlreadyOpen)
+          window[this.namespace].onLoad(this.openWindows.includes(window));
+        } catch (e) {
+          Components.utils.reportError(e)
+        }
+      }
+  }
+  
+  _unloadFromWindow(window, isAddonShutdown) {
+      // unload any contained browser elements
+      if (window.hasOwnProperty(this.namespace) && window[this.namespace].hasOwnProperty("_mObserver")) {
+        window[this.namespace]._mObserver.disconnect();
+        let browserElements = window.document.getElementsByTagName("browser");
+        for (let element of browserElements) {
+          this._unloadFromWindow(element.contentWindow.wrappedJSObject, isAddonShutdown);         
+        }        
+      }
+
+      if (window.hasOwnProperty(this.namespace) && this.registeredWindows.hasOwnProperty(window.location.href)) {      
+        //  Remove this window from the list of open windows
+        this.openWindows = this.openWindows.filter(e => (e != window));    
+        
+        try {
+          // Call onUnload()
+          window[this.namespace].onUnload(isAddonShutdown);
+        } catch (e) {
+          Components.utils.reportError(e)
+        }
+        
+        // Remove injected JS object
+        delete window[this.namespace];
+      }
+  }
+
 
   onShutdown(isAppShutdown) {
     // temporary installed addons always return isAppShutdown = false
@@ -297,14 +342,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
           }
         }
           
-        if (this.registeredWindows.hasOwnProperty(window.location.href)) {
-          try {
-            // Call onUnload()
-            window[this.namespace].onUnload(true);
-          } catch (e) {
-            Components.utils.reportError(e)
-          }
-        }
+        this._unloadFromWindow(window, true);
       }
       // Stop listening for new windows.
       ExtensionSupport.unregisterWindowListener("injectListener");
