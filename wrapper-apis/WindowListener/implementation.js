@@ -178,7 +178,13 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
                       // add the options entry
                       let element_addonPrefs = window.document.getElementById(self.menu_addonPrefs_id);
                       let id = self.menu_addonPrefs_id + "_" + self.namespace;
-                      let icon = self.extension.manifest.icons[16];
+                      
+                      // Get the best size of the icon (16px or bigger)
+                      let iconSizes = Object.keys(self.extension.manifest.icons);
+                      iconSizes.sort((a,b)=>a-b);
+                      let bestSize = iconSizes.filter(e => parseInt(e) >= 16).shift();
+                      let icon = bestSize ? self.extension.manifest.icons[bestSize] : "";
+                      
                       let name = self.extension.manifest.name;
                       let entry = window.MozXULElement.parseXULToFragment(
                         `<menuitem class="menuitem-iconic" id="${id}" image="${icon}" label="${name}" />`);
@@ -229,7 +235,8 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
                             if (loaded) {
                               let targetWindow = mutation.target.contentWindow.wrappedJSObject;
                               targetWindow[self.namespace] = {};
-                              self._loadIntoWindow(targetWindow);
+                              // load of window has finished, inject (isAddonActivation = false)
+                              self._loadIntoWindow(targetWindow, false);
                             }
                           }
                       });    
@@ -237,10 +244,10 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
 
                   for (let element of browserElements) {
                       if (self.registeredWindows.hasOwnProperty(element.getAttribute("src"))) {
-                        //inject directly
                         let targetWindow = element.contentWindow.wrappedJSObject;
                         targetWindow[self.namespace] = {};
-                        self._loadIntoWindow(targetWindow);
+                        //inject directly because the window is already open (isAddonActivation = true)
+                        self._loadIntoWindow(targetWindow, true);
                       } else {
                         // inject after browser has been loaded
                         window[self.namespace]._mObserver.observe(element, { attributes: true, childList: false, characterData: false });
@@ -249,11 +256,11 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
                 }
                 
                 // Load JS into window
-                self._loadIntoWindow(window);
+                self._loadIntoWindow(window, self.openWindows.includes(window));
               },
 
               onUnloadWindow(window) {
-                // Remove JS from window
+                // Remove JS from window, window is being closed, addon is not shut down
                 self._unloadFromWindow(window, false);
               }
             });
@@ -266,7 +273,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
     };
   }
 
-  _loadIntoWindow(window) {
+  _loadIntoWindow(window, isAddonActivation) {
       if (window.hasOwnProperty(this.namespace) && this.registeredWindows.hasOwnProperty(window.location.href)) {
         try {
           // Create add-on specific namespace
@@ -283,20 +290,20 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
           // Load script into add-on specific namespace
           Services.scriptloader.loadSubScript(this.registeredWindows[window.location.href], window[this.namespace], "UTF-8");
           // Call onLoad(window, wasAlreadyOpen)
-          window[this.namespace].onLoad(this.openWindows.includes(window));
+          window[this.namespace].onLoad(isAddonActivation);
         } catch (e) {
           Components.utils.reportError(e)
         }
       }
   }
   
-  _unloadFromWindow(window, isAddonShutdown) {
+  _unloadFromWindow(window, isAddonDeactivation) {
       // unload any contained browser elements
       if (window.hasOwnProperty(this.namespace) && window[this.namespace].hasOwnProperty("_mObserver")) {
         window[this.namespace]._mObserver.disconnect();
         let browserElements = window.document.getElementsByTagName("browser");
         for (let element of browserElements) {
-          this._unloadFromWindow(element.contentWindow.wrappedJSObject, isAddonShutdown);         
+          this._unloadFromWindow(element.contentWindow.wrappedJSObject, isAddonDeactivation);         
         }        
       }
 
@@ -306,7 +313,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
         
         try {
           // Call onUnload()
-          window[this.namespace].onUnload(isAddonShutdown);
+          window[this.namespace].onUnload(isAddonDeactivation);
         } catch (e) {
           Components.utils.reportError(e)
         }
@@ -341,7 +348,9 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
             window.document.getElementById(this.menu_addonsManager_prefs_id).remove();
           }
         }
-          
+        
+        // if we reach this point, it is NOT app shutdown, but only addon shutdown
+        // -> isAddonShutdown = true
         this._unloadFromWindow(window, true);
       }
       // Stop listening for new windows.
