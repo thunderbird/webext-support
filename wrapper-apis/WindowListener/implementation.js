@@ -307,7 +307,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
             element.setAttribute("class", "autoinjected_" + this.namespace);
             element.setAttribute("rel", "stylesheet");
             element.setAttribute("href", cssFile);
-            window.document.documentElement.appendChild(element);            
+            return window.document.documentElement.appendChild(element);
           }
           
           // Make extension object available in loaded JavaScript
