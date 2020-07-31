@@ -314,7 +314,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
           }
 
           // helper function to inject DOM elements
-          window[this.namespace].injectElements = function (xulString, dtdFiles = []) {
+          window[this.namespace].injectElements = function (containerElementId, elementsXULString, dtdFiles = []) {
             function injectChildren(elements, container) {
               for (let i = 0; i < elements.length; i++) {
                 if (elements[i].id && window.document.getElementById(elements[i].id)) {
@@ -337,7 +337,9 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
                 }
               }
             }
-            injectChildren(window.MozXULElement.parseXULToFragment(xulString, dtdFiles).children, window.document.documentElement);
+            let containerElement = window.document.getElementById(containerElementId);
+            let parsedFragment = window.MozXULElement.parseXULToFragment(elementsXULString, dtdFiles);
+            injectChildren(parsedFragment.children, containerElement);
           }
           
           // Make extension object available in loaded JavaScript
