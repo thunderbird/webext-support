@@ -2,6 +2,9 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
+ * Version: 1.8
+ * - add injectElements
+ *
  * Version: 1.7
  * - add injectCSS
  * - add optional enforced namespace
@@ -308,6 +311,33 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
             element.setAttribute("rel", "stylesheet");
             element.setAttribute("href", cssFile);
             return window.document.documentElement.appendChild(element);
+          }
+
+          // helper function to inject DOM elements
+          window[this.namespace].injectElements = function (xulString, dtdFiles = []) {
+            function injectChildren(elements, container) {
+              for (let i = 0; i < elements.length; i++) {
+                if (elements[i].id && window.document.getElementById(elements[i].id)) {
+                  // existing container match, dive into recursivly
+                  injectChildren(elements[i].children, window.document.getElementById(elements[i].id));
+
+                } else if (elements[i].hasAttribute("insertafter") && window.document.getElementById(elements[i].getAttribute("insertafter"))) {
+                  // insertafter
+                  let hookElement = window.document.getElementById(elements[i].getAttribute("insertafter"));
+                  hookElement.parentNode.insertBefore(elements[i], hookElement.nextSibling);
+
+                } else if (elements[i].hasAttribute("insertbefore") && window.document.getElementById(elements[i].getAttribute("insertbefore"))) {
+                  // insertbefore
+                  let hookElement = window.document.getElementById(elements[i].getAttribute("insertbefore"));
+                  hookElement.parentNode.insertBefore(elements[i], hookElement);
+                  
+                } else {
+                  // append element to the current container
+                  container.appendChild(elements[i]);
+                }
+              }
+            }
+            injectChildren(window.MozXULElement.parseXULToFragment(xulString, dtdFiles).children, window.document.documentElement);
           }
           
           // Make extension object available in loaded JavaScript
