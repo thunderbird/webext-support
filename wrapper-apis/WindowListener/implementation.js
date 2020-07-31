@@ -2,6 +2,9 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
+ * Version: 1.9
+ * - automatically remove all entries added by injectElements
+ *
  * Version: 1.8
  * - add injectElements
  *
@@ -307,7 +310,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
           window[this.namespace].injectCSS = function (cssFile) {
             let ns = window.document.documentElement.lookupNamespaceURI("html");
             let element = window.document.createElementNS(ns, "link");
-            element.setAttribute("class", "autoinjected_" + this.namespace);
+            element.setAttribute("wlapi_autoinjected", this.namespace);
             element.setAttribute("rel", "stylesheet");
             element.setAttribute("href", cssFile);
             return window.document.documentElement.appendChild(element);
@@ -315,29 +318,32 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
 
           // helper function to inject DOM elements
           window[this.namespace].injectElements = function (xulString, dtdFiles = []) {
-            function injectChildren(elements, container) {
+            function injectChildren(elements, container, namespace) {
               for (let i = 0; i < elements.length; i++) {
                 if (elements[i].id && window.document.getElementById(elements[i].id)) {
                   // existing container match, dive into recursivly
-                  injectChildren(elements[i].children, window.document.getElementById(elements[i].id));
+                  injectChildren(elements[i].children, window.document.getElementById(elements[i].id), namespace);
 
                 } else if (elements[i].hasAttribute("insertafter") && window.document.getElementById(elements[i].getAttribute("insertafter"))) {
                   // insertafter
+                  elements[i].setAttribute("wlapi_autoinjected", namespace);
                   let hookElement = window.document.getElementById(elements[i].getAttribute("insertafter"));
                   hookElement.parentNode.insertBefore(elements[i], hookElement.nextSibling);
 
                 } else if (elements[i].hasAttribute("insertbefore") && window.document.getElementById(elements[i].getAttribute("insertbefore"))) {
                   // insertbefore
+                  elements[i].setAttribute("wlapi_autoinjected", namespace);
                   let hookElement = window.document.getElementById(elements[i].getAttribute("insertbefore"));
                   hookElement.parentNode.insertBefore(elements[i], hookElement);
                   
                 } else {
                   // append element to the current container
+                  elements[i].setAttribute("wlapi_autoinjected", namespace);
                   container.appendChild(elements[i]);
                 }
               }
             }
-            injectChildren(window.MozXULElement.parseXULToFragment(xulString, dtdFiles).children, window.document.documentElement);
+            injectChildren(window.MozXULElement.parseXULToFragment(xulString, dtdFiles).children, window.document.documentElement, this.namespace);
           }
           
           // Make extension object available in loaded JavaScript
@@ -371,7 +377,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
         this.openWindows = this.openWindows.filter(e => (e != window));    
         
         // Remove all auto injected objects
-        let elements = Array.from(window.document.getElementsByClassName("autoinjected_" + this.namespace));
+        let elements = Array.from(window.document.querySelectorAll('[wlapi_autoinjected="' + this.namespace + '"]'));
         for (let element of elements) {
           element.remove();
         }        
