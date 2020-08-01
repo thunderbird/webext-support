@@ -161,7 +161,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
             }
             
             // Register window listener for all pre-registered windows
-            ExtensionSupport.registerWindowListener("injectListener", {
+            ExtensionSupport.registerWindowListener("injectListener_" + self.namespace, {
               // React on all windows and manually reduce to the registered
               // windows, so we can do special actions when the main 
               // messenger window is opened.
