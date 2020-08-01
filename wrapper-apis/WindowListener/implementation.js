@@ -322,7 +322,8 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
               for (let i = 0; i < elements.length; i++) {
                 if (elements[i].id && window.document.getElementById(elements[i].id)) {
                   // existing container match, dive into recursivly
-                  injectChildren(elements[i].children, window.document.getElementById(elements[i].id), namespace);
+
+                  injectChildren(Array.from(elements[i].children), window.document.getElementById(elements[i].id), namespace);
 
                 } else if (elements[i].hasAttribute("insertafter") && window.document.getElementById(elements[i].getAttribute("insertafter"))) {
                   // insertafter
@@ -343,7 +344,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
                 }
               }
             }
-            injectChildren(window.MozXULElement.parseXULToFragment(xulString, dtdFiles).children, window.document.documentElement, this.namespace);
+            injectChildren(Array.from(window.MozXULElement.parseXULToFragment(xulString, dtdFiles).children), window.document.documentElement, this.namespace);
           }
           
           // Make extension object available in loaded JavaScript
