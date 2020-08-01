@@ -428,7 +428,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
         this._unloadFromWindow(window, true);
       }
       // Stop listening for new windows.
-      ExtensionSupport.unregisterWindowListener("injectListener");
+      ExtensionSupport.unregisterWindowListener("injectListener_" + this.namespace);
     }
     
     // Load registered shutdown script
