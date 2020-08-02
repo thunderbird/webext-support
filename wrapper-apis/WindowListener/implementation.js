@@ -336,25 +336,33 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
                 if (elements[i].hasAttribute("insertafter") && checkElements(elements[i].getAttribute("insertafter"))) {
                   let insertAfterElement = checkElements(elements[i].getAttribute("insertafter"));
                   
-                  if (debug) console.log("#" + i + " (" + elements[i].id + ")" + " insertafter " + insertAfterElement.id);
+                  if (debug) console.log(elements[i].id + ": insertafter " + insertAfterElement.id);
+                  if (elements[i].id && window.document.getElementById(elements[i].id)) {
+                    console.error("The id <" + elements[i].id + "> of the injected element already exists in the document!"); 
+                  }
+                  
                   elements[i].setAttribute("wlapi_autoinjected", namespace);
                   insertAfterElement.parentNode.insertBefore(elements[i], insertAfterElement.nextSibling);
                   
                 } else if (elements[i].hasAttribute("insertbefore") && checkElements(elements[i].getAttribute("insertbefore"))) {
                   let insertBeforeElement = checkElements(elements[i].getAttribute("insertbefore"));
                   
-                  if (debug) console.log("#" + i + " (" + elements[i].id + ")" + " insertbefore " + insertBeforeElement.id);
+                  if (debug) console.log(elements[i].id + ": insertbefore " + insertBeforeElement.id);
+                  if (elements[i].id && window.document.getElementById(elements[i].id)) {
+                    console.error("The id <" + elements[i].id + "> of the injected element already exists in the document!"); 
+                    }
+
                   elements[i].setAttribute("wlapi_autoinjected", namespace);
                   insertBeforeElement.parentNode.insertBefore(elements[i], insertBeforeElement);
 
                 } else if (elements[i].id && window.document.getElementById(elements[i].id)) {
                   // existing container match, dive into recursivly
-                  if (debug) console.log("#" + i + " (" + elements[i].id + ") is  existing container, injecting into " + elements[i].id);
+                  if (debug) console.log(elements[i].id + " is an existing container, injecting into " + elements[i].id);
                   injectChildren(Array.from(elements[i].children), window.document.getElementById(elements[i].id), namespace, debug);
 
                 } else {
                   // append element to the current container
-                  if (debug) console.log("#" + i + " (" + elements[i].id + ")" + " append to " + container.id);
+                  if (debug) console.log(elements[i].id + ": append to " + container.id);
                   elements[i].setAttribute("wlapi_autoinjected", namespace);
                   container.appendChild(elements[i]);
                 }
