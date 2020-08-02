@@ -317,34 +317,52 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
           }
 
           // helper function to inject DOM elements
-          window[this.namespace].injectElements = function (xulString, dtdFiles = []) {
-            function injectChildren(elements, container, namespace) {
-              for (let i = 0; i < elements.length; i++) {
-                if (elements[i].id && window.document.getElementById(elements[i].id)) {
-                  // existing container match, dive into recursivly
-
-                  injectChildren(Array.from(elements[i].children), window.document.getElementById(elements[i].id), namespace);
-
-                } else if (elements[i].hasAttribute("insertafter") && window.document.getElementById(elements[i].getAttribute("insertafter"))) {
-                  // insertafter
-                  elements[i].setAttribute("wlapi_autoinjected", namespace);
-                  let hookElement = window.document.getElementById(elements[i].getAttribute("insertafter"));
-                  hookElement.parentNode.insertBefore(elements[i], hookElement.nextSibling);
-
-                } else if (elements[i].hasAttribute("insertbefore") && window.document.getElementById(elements[i].getAttribute("insertbefore"))) {
-                  // insertbefore
-                  elements[i].setAttribute("wlapi_autoinjected", namespace);
-                  let hookElement = window.document.getElementById(elements[i].getAttribute("insertbefore"));
-                  hookElement.parentNode.insertBefore(elements[i], hookElement);
+          window[this.namespace].injectElements = function (xulString, dtdFiles = [], debug = false) {
+            function checkElements(stringOfIDs) {
+              let arrayOfIDs = stringOfIDs.split(",").map(e => e.trim());
+              for (let id of arrayOfIDs) {
+                let element = window.document.getElementById(id);
+                if (element) {
+                  return element;
+                }
+              }
+              return null;
+            }
+            
+            function injectChildren(elements, container, namespace, debug) {
+              if (debug) console.log(elements);
+              
+              for (let i = 0; i < elements.length; i++) {                
+                if (elements[i].hasAttribute("insertafter") && checkElements(elements[i].getAttribute("insertafter"))) {
+                  let insertAfterElement = checkElements(elements[i].getAttribute("insertafter"));
                   
+                  if (debug) console.log("#" + i + " (" + elements[i].id + ")" + " insertafter " + insertAfterElement.id);
+                  elements[i].setAttribute("wlapi_autoinjected", namespace);
+                  insertAfterElement.parentNode.insertBefore(elements[i], insertAfterElement.nextSibling);
+                  
+                } else if (elements[i].hasAttribute("insertbefore") && checkElements(elements[i].getAttribute("insertbefore"))) {
+                  let insertBeforeElement = checkElements(elements[i].getAttribute("insertbefore"));
+                  
+                  if (debug) console.log("#" + i + " (" + elements[i].id + ")" + " insertbefore " + insertBeforeElement.id);
+                  elements[i].setAttribute("wlapi_autoinjected", namespace);
+                  insertBeforeElement.parentNode.insertBefore(elements[i], insertBeforeElement);
+
+                } else if (elements[i].id && window.document.getElementById(elements[i].id)) {
+                  // existing container match, dive into recursivly
+                  if (debug) console.log("#" + i + " (" + elements[i].id + ") is  existing container, injecting into " + elements[i].id);
+                  injectChildren(Array.from(elements[i].children), window.document.getElementById(elements[i].id), namespace, debug);
+
                 } else {
                   // append element to the current container
+                  if (debug) console.log("#" + i + " (" + elements[i].id + ")" + " append to " + container.id);
                   elements[i].setAttribute("wlapi_autoinjected", namespace);
                   container.appendChild(elements[i]);
                 }
               }
             }
-            injectChildren(Array.from(window.MozXULElement.parseXULToFragment(xulString, dtdFiles).children), window.document.documentElement, this.namespace);
+
+            if (debug) console.log ("Injecting into root document:");
+            injectChildren(Array.from(window.MozXULElement.parseXULToFragment(xulString, dtdFiles).children), window.document.documentElement, this.namespace, debug);
           }
           
           // Make extension object available in loaded JavaScript
