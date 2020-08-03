@@ -303,7 +303,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
 
           //Create WLDATA object
           window[this.uniqueRandomID].WL = {};
-          window[this.uniqueRandomID].WL.uniqueRandomID = this.uniqueRandomID;
+          window[this.uniqueRandomID].WL.scopeName = this.uniqueRandomID;
             
           // Add helper function to inject CSS to WLDATA object
           window[this.uniqueRandomID].WL.injectCSS = function (cssFile) {
