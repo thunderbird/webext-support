@@ -4,7 +4,7 @@
  *
  * Version: 1.12
  * - no longer allow to enforce custom "namespace"
- * - no longer call it namespace but uniqueRandomID
+ * - no longer call it namespace but uniqueRandomID / scopeName
  * - expose special objects as the global WL object
  * - autoremove injected elements after onUnload has ben executed
  *
