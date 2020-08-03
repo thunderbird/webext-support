@@ -2,6 +2,12 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
+ * Version: 1.12
+ * - no longer allow to enforce custom "namespace"
+ * - no longer call it namespace but uniqueRandomID
+ * - expose special objects as the global WL object
+ * - autoremove injected elements after onUnload has ben executed
+ *
  * Version: 1.9
  * - automatically remove all entries added by injectElements
  *
@@ -34,7 +40,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
     // track if this is the background/main context
     this.isBackgroundContext = (context.viewType == "background");
     
-    this.namespace = "AddOnNS" + context.extension.instanceId;
+    this.uniqueRandomID = "AddOnNS" + context.extension.instanceId;
     this.menu_addonsManager_id ="addonsManager";
     this.menu_addonsManager_prefs_id = "addonsManager_prefs_revived";
     this.menu_addonPrefs_id = "addonPrefs_revived";
@@ -131,11 +137,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
             : context.extension.rootURI.resolve(aPath);
         },
         
-        startListening(_forcedNamespace = null) {
-          if (_forcedNamespace) {
-            self.namespace = _forcedNamespace;
-          }
-          
+        startListening() {          
           // async sleep function using Promise
           async function sleep(delay) {
             let timer =  Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);            
@@ -161,17 +163,14 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
             }
             
             // Register window listener for all pre-registered windows
-            ExtensionSupport.registerWindowListener("injectListener_" + self.namespace, {
+            ExtensionSupport.registerWindowListener("injectListener_" + self.uniqueRandomID, {
               // React on all windows and manually reduce to the registered
               // windows, so we can do special actions when the main 
               // messenger window is opened.
               //chromeURLs: Object.keys(self.registeredWindows),
               onLoadWindow(window) {                
-                if (window.hasOwnProperty(self.namespace)) {
-                  throw new Error("Namespace <" + self.namespace + "> already exists, aborting to load add-on <" + self.extension.manifest.name + ">");
-                  return;
-                }
-                window[self.namespace] = {};
+                // Create add-on scope
+                window[self.uniqueRandomID] = {};
                 
                 // Special action #1: If this is the main messenger window
                 if (window.location.href == "chrome://messenger/content/messenger.xul" ||
@@ -194,7 +193,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
                       
                       // add the options entry
                       let element_addonPrefs = window.document.getElementById(self.menu_addonPrefs_id);
-                      let id = self.menu_addonPrefs_id + "_" + self.namespace;
+                      let id = self.menu_addonPrefs_id + "_" + self.uniqueRandomID;
                       
                       // Get the best size of the icon (16px or bigger)
                       let iconSizes = Object.keys(self.extension.manifest.icons);
@@ -217,8 +216,9 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
                   if (self.counts == 0 && self.pathToStartupScript) {
                     self.counts++;
                     let startupJS = {};
-                    startupJS.extension = self.extension;
-                    startupJS.messenger = Array.from(self.extension.views).find(
+                    startupJS.WL = {}
+                    startupJS.WL.extension = self.extension;
+                    startupJS.WL.messenger = Array.from(self.extension.views).find(
                       view => view.viewType === "background").xulBrowser.contentWindow
                       .wrappedJSObject.browser;
                     try {
@@ -233,7 +233,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
                 let browserElements = window.document.getElementsByTagName("browser");
                 if (browserElements.length > 0) {
                   //register a MutationObserver
-                  window[self.namespace]._mObserver = new window.MutationObserver(function(mutations) {
+                  window[self.uniqueRandomID]._mObserver = new window.MutationObserver(function(mutations) {
                       mutations.forEach(async function(mutation) {
                           if (mutation.attributeName == "src" && self.registeredWindows.hasOwnProperty(mutation.target.getAttribute("src"))) {
                             // When the MutationObserver callsback, the window is still showing "about:black" and it is going
@@ -251,12 +251,9 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
                             }
                             if (loaded) {
                               let targetWindow = mutation.target.contentWindow.wrappedJSObject;
-                              if (targetWindow.hasOwnProperty(self.namespace)) {
-                                throw new Error("Namespace <" + self.namespace + "> already exists, aborting to load add-on <" + self.extension.manifest.name + ">");
-                                return;
-                              }
-                              targetWindow[self.namespace] = {};
-                              // load of window has finished, inject (isAddonActivation = false)
+                              // Create add-on scope
+                              targetWindow[self.uniqueRandomID] = {};
+                              // Inject with isAddonActivation = false
                               self._loadIntoWindow(targetWindow, false);
                             }
                           }
@@ -266,16 +263,13 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
                   for (let element of browserElements) {
                       if (self.registeredWindows.hasOwnProperty(element.getAttribute("src"))) {
                         let targetWindow = element.contentWindow.wrappedJSObject;
-                        if (targetWindow.hasOwnProperty(self.namespace)) {
-                          throw new Error("Namespace <" + self.namespace + "> already exists, aborting to load add-on <" + self.extension.manifest.name + ">");
-                          return;
-                        }
-                        targetWindow[self.namespace] = {};
-                        //inject directly because the window is already open (isAddonActivation = true)
+                        // Create add-on scope
+                        targetWindow[self.uniqueRandomID] = {};
+                        // Inject with isAddonActivation = true
                         self._loadIntoWindow(targetWindow, true);
                       } else {
-                        // inject after browser has been loaded
-                        window[self.namespace]._mObserver.observe(element, { attributes: true, childList: false, characterData: false });
+                        // Window/Browser is not yet fully loaded, postpone injection via MutationObserver
+                        window[self.uniqueRandomID]._mObserver.observe(element, { attributes: true, childList: false, characterData: false });
                       }
                   }
                 }
@@ -299,25 +293,30 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
   }
 
   _loadIntoWindow(window, isAddonActivation) {
-      if (window.hasOwnProperty(this.namespace) && this.registeredWindows.hasOwnProperty(window.location.href)) {
+      if (window.hasOwnProperty(this.uniqueRandomID) && this.registeredWindows.hasOwnProperty(window.location.href)) {
         try {
-          // Create add-on specific namespace
-          window[this.namespace].namespace = this.namespace;
-          window[this.namespace].window = window;
-          window[this.namespace].document = window.document;
-          
-          // helper function to inject CSS
-          window[this.namespace].injectCSS = function (cssFile) {
+          let uniqueRandomID = this.uniqueRandomID;
+
+          // Add reference to window to add-on scope
+          window[this.uniqueRandomID].window = window;
+          window[this.uniqueRandomID].document = window.document;
+
+          //Create WLDATA object
+          window[this.uniqueRandomID].WL = {};
+          window[this.uniqueRandomID].WL.uniqueRandomID = this.uniqueRandomID;
+            
+          // Add helper function to inject CSS to WLDATA object
+          window[this.uniqueRandomID].WL.injectCSS = function (cssFile) {
             let ns = window.document.documentElement.lookupNamespaceURI("html");
             let element = window.document.createElementNS(ns, "link");
-            element.setAttribute("wlapi_autoinjected", this.namespace);
+            element.setAttribute("wlapi_autoinjected", uniqueRandomID);
             element.setAttribute("rel", "stylesheet");
             element.setAttribute("href", cssFile);
             return window.document.documentElement.appendChild(element);
           }
 
-          // helper function to inject DOM elements
-          window[this.namespace].injectElements = function (xulString, dtdFiles = [], debug = false) {
+          // Add helper function to inject XUL to WLDATA object
+          window[this.uniqueRandomID].WL.injectElements = function (xulString, dtdFiles = [], debug = false) {
             function checkElements(stringOfIDs) {
               let arrayOfIDs = stringOfIDs.split(",").map(e => e.trim());
               for (let id of arrayOfIDs) {
@@ -329,60 +328,57 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
               return null;
             }
             
-            function injectChildren(elements, container, namespace, debug) {
+            function injectChildren(elements, container) {
               if (debug) console.log(elements);
-              
+
               for (let i = 0; i < elements.length; i++) {                
                 if (elements[i].hasAttribute("insertafter") && checkElements(elements[i].getAttribute("insertafter"))) {
                   let insertAfterElement = checkElements(elements[i].getAttribute("insertafter"));
                   
-                  if (debug) console.log(elements[i].id + ": insertafter " + insertAfterElement.id);
+                  if (debug) console.log(elements[i].tagName + "#" + elements[i].id + ": insertafter " + insertAfterElement.id);
                   if (elements[i].id && window.document.getElementById(elements[i].id)) {
                     console.error("The id <" + elements[i].id + "> of the injected element already exists in the document!"); 
                   }
-                  
-                  elements[i].setAttribute("wlapi_autoinjected", namespace);
+                  elements[i].setAttribute("wlapi_autoinjected", uniqueRandomID);
                   insertAfterElement.parentNode.insertBefore(elements[i], insertAfterElement.nextSibling);
                   
                 } else if (elements[i].hasAttribute("insertbefore") && checkElements(elements[i].getAttribute("insertbefore"))) {
                   let insertBeforeElement = checkElements(elements[i].getAttribute("insertbefore"));
                   
-                  if (debug) console.log(elements[i].id + ": insertbefore " + insertBeforeElement.id);
+                  if (debug) console.log(elements[i].tagName + "#" + elements[i].id + ": insertbefore " + insertBeforeElement.id);
                   if (elements[i].id && window.document.getElementById(elements[i].id)) {
                     console.error("The id <" + elements[i].id + "> of the injected element already exists in the document!"); 
-                    }
-
-                  elements[i].setAttribute("wlapi_autoinjected", namespace);
+                  }
+                  elements[i].setAttribute("wlapi_autoinjected", uniqueRandomID);
                   insertBeforeElement.parentNode.insertBefore(elements[i], insertBeforeElement);
 
                 } else if (elements[i].id && window.document.getElementById(elements[i].id)) {
                   // existing container match, dive into recursivly
-                  if (debug) console.log(elements[i].id + " is an existing container, injecting into " + elements[i].id);
-                  injectChildren(Array.from(elements[i].children), window.document.getElementById(elements[i].id), namespace, debug);
+                  if (debug) console.log(elements[i].tagName + "#" + elements[i].id + " is an existing container, injecting into " + elements[i].id);
+                  injectChildren(Array.from(elements[i].children), window.document.getElementById(elements[i].id));
 
                 } else {
                   // append element to the current container
-                  if (debug) console.log(elements[i].id + ": append to " + container.id);
-                  elements[i].setAttribute("wlapi_autoinjected", namespace);
+                  if (debug) console.log(elements[i].tagName + "#" + elements[i].id + ": append to " + container.id);
+                  elements[i].setAttribute("wlapi_autoinjected", uniqueRandomID);
                   container.appendChild(elements[i]);
                 }
               }
             }
 
             if (debug) console.log ("Injecting into root document:");
-            injectChildren(Array.from(window.MozXULElement.parseXULToFragment(xulString, dtdFiles).children), window.document.documentElement, this.namespace, debug);
+            injectChildren(Array.from(window.MozXULElement.parseXULToFragment(xulString, dtdFiles).children), window.document.documentElement);
           }
           
-          // Make extension object available in loaded JavaScript
-          window[this.namespace].extension = this.extension;
-          // Add messenger obj
-          window[this.namespace].messenger = Array.from(this.extension.views).find(
+          // Add extension object to WLDATA object
+          window[this.uniqueRandomID].WL.extension = this.extension;
+          // Add messenger object to WLDATA object
+          window[this.uniqueRandomID].WL.messenger = Array.from(this.extension.views).find(
             view => view.viewType === "background").xulBrowser.contentWindow
             .wrappedJSObject.browser;                  
-          // Load script into add-on specific namespace
-          Services.scriptloader.loadSubScript(this.registeredWindows[window.location.href], window[this.namespace], "UTF-8");
-          // Call onLoad(window, wasAlreadyOpen)
-          window[this.namespace].onLoad(isAddonActivation);
+          // Load script into add-on scope
+          Services.scriptloader.loadSubScript(this.registeredWindows[window.location.href], window[this.uniqueRandomID], "UTF-8");
+          window[this.uniqueRandomID].onLoad(isAddonActivation);
         } catch (e) {
           Components.utils.reportError(e)
         }
@@ -390,36 +386,36 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
   }
   
   _unloadFromWindow(window, isAddonDeactivation) {
-      // unload any contained browser elements
-      if (window.hasOwnProperty(this.namespace) && window[this.namespace].hasOwnProperty("_mObserver")) {
-        window[this.namespace]._mObserver.disconnect();
+    // unload any contained browser elements
+      if (window.hasOwnProperty(this.uniqueRandomID) && window[this.uniqueRandomID].hasOwnProperty("_mObserver")) {
+        window[this.uniqueRandomID]._mObserver.disconnect();
         let browserElements = window.document.getElementsByTagName("browser");
         for (let element of browserElements) {
           this._unloadFromWindow(element.contentWindow.wrappedJSObject, isAddonDeactivation);         
         }        
       }
 
-      if (window.hasOwnProperty(this.namespace) && this.registeredWindows.hasOwnProperty(window.location.href)) {
+      if (window.hasOwnProperty(this.uniqueRandomID) && this.registeredWindows.hasOwnProperty(window.location.href)) {
         //  Remove this window from the list of open windows
         this.openWindows = this.openWindows.filter(e => (e != window));    
         
-        // Remove all auto injected objects
-        let elements = Array.from(window.document.querySelectorAll('[wlapi_autoinjected="' + this.namespace + '"]'));
-        for (let element of elements) {
-          element.remove();
-        }        
-
         try {
           // Call onUnload()
-          window[this.namespace].onUnload(isAddonDeactivation);
+          window[this.uniqueRandomID].onUnload(isAddonDeactivation);
         } catch (e) {
           Components.utils.reportError(e)
         }
+
+        // Remove all auto injected objects
+        let elements = Array.from(window.document.querySelectorAll('[wlapi_autoinjected="' + this.uniqueRandomID + '"]'));
+        for (let element of elements) {
+          element.remove();
+        }        
       }
       
-      // Remove namespace object, if it exists
-      if (window.hasOwnProperty(this.namespace)) {
-        delete window[this.namespace];
+      // Remove add-on scope, if it exists
+      if (window.hasOwnProperty(this.uniqueRandomID)) {
+        delete window[this.uniqueRandomID];
       }
   }
 
@@ -439,7 +435,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
           this.pathToOptionsPage && 
           (window.location.href == "chrome://messenger/content/messenger.xul" ||
           window.location.href == "chrome://messenger/content/messenger.xhtml")) {            
-          let id = this.menu_addonPrefs_id + "_" + this.namespace;
+          let id = this.menu_addonPrefs_id + "_" + this.uniqueRandomID;
           window.document.getElementById(id).remove();
           
           //do we have to remove the entire add-on options menu?
@@ -454,7 +450,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
         this._unloadFromWindow(window, true);
       }
       // Stop listening for new windows.
-      ExtensionSupport.unregisterWindowListener("injectListener_" + this.namespace);
+      ExtensionSupport.unregisterWindowListener("injectListener_" + this.uniqueRandomID);
     }
     
     // Load registered shutdown script
