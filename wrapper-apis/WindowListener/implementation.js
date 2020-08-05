@@ -328,6 +328,8 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
               return null;
             }
             
+            let toolbarsToResolve = [];
+        
             function injectChildren(elements, container) {
               if (debug) console.log(elements);
 
@@ -357,6 +359,23 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
                   if (debug) console.log(elements[i].tagName + "#" + elements[i].id + " is an existing container, injecting into " + elements[i].id);
                   injectChildren(Array.from(elements[i].children), window.document.getElementById(elements[i].id));
 
+                } else if (elements[i].localName === "toolbarpalette") {
+                  // These vanish from the document but still exist via the palette property
+                  if (debug) console.log(elements[i].id + " is a toolbarpalette");
+                  let boxes = [...window.document.getElementsByTagName("toolbox")];
+                  let box = boxes.find(box => box.palette && box.palette.id === elements[i].id);
+                  let palette = box ? box.palette : null;
+            
+                  if (!palette) {
+                    if (debug) console.log(`The palette for ${elements[i].id} could not be found, deferring to later`);
+                    continue;
+                  }
+            
+                  if (debug) console.log(`The toolbox for ${elements[i].id} is ${box.id}`);
+            
+                  toolbarsToResolve.push(...box.querySelectorAll("toolbar"));
+                  toolbarsToResolve.push(...window.document.querySelectorAll(`toolbar[toolboxid="${box.id}"]`));
+                  injectChildren(Array.from(elements[i].children), palette);
                 } else {
                   // append element to the current container
                   if (debug) console.log(elements[i].tagName + "#" + elements[i].id + ": append to " + container.id);
@@ -368,6 +387,19 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
 
             if (debug) console.log ("Injecting into root document:");
             injectChildren(Array.from(window.MozXULElement.parseXULToFragment(xulString, dtdFiles).children), window.document.documentElement);
+
+            for (let bar of toolbarsToResolve) {
+              let currentset = Services.xulStore.getValue(
+                window.location,
+                bar.id,
+                "currentset"
+              );
+              if (currentset) {
+                bar.currentSet = currentset;
+              } else if (bar.getAttribute("defaultset")) {
+                bar.currentSet = bar.getAttribute("defaultset");
+              }
+            }
           }
           
           // Add extension object to WLDATA object
