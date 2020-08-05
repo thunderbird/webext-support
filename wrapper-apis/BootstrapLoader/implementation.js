@@ -4,10 +4,10 @@
  *
  * Version: 1.1
  * Author: John Bieling (john@thunderbird.net)
- * 
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
 // Get various parts of the WebExtension framework that we need.
@@ -19,7 +19,7 @@ var BootstrapLoader = class extends ExtensionCommon.ExtensionAPI {
   getAPI(context) {
     this.pathToBootstrapScript = null;
     this.chromeHandle = null;
-    this.chromeData = null;    
+    this.chromeData = null;
     this.bootstrappedObj = {};
 
     // make the extension object and the messenger object available inside
@@ -27,9 +27,9 @@ var BootstrapLoader = class extends ExtensionCommon.ExtensionAPI {
     this.bootstrappedObj.extension = context.extension;
     this.bootstrappedObj.messenger = Array.from(context.extension.views)
                       .find(view => view.viewType === "background")
-                      .xulBrowser.contentWindow.wrappedJSObject.browser;        
-    
-    
+                      .xulBrowser.contentWindow.wrappedJSObject.browser;
+
+
     this.BOOTSTRAP_REASONS = {
       APP_STARTUP: 1,
       APP_SHUTDOWN: 2,
@@ -40,7 +40,7 @@ var BootstrapLoader = class extends ExtensionCommon.ExtensionAPI {
       ADDON_UPGRADE: 7,
       ADDON_DOWNGRADE: 8,
     };
-    
+
     let self = this;
 
     return {
@@ -54,11 +54,11 @@ var BootstrapLoader = class extends ExtensionCommon.ExtensionAPI {
             context.extension.rootURI
           );
           self.chromeHandle = aomStartup.registerChrome(manifestURI, chromeData);
-          self.chromeData = chromeData;          
+          self.chromeData = chromeData;
         },
-       
+
         registerBootstrapScript: async function(aPath) {
-          self.pathToBootstrapScript = aPath.startsWith("chrome://") 
+          self.pathToBootstrapScript = aPath.startsWith("chrome://")
             ? aPath
             : context.extension.rootURI.resolve(aPath);
 
@@ -66,12 +66,12 @@ var BootstrapLoader = class extends ExtensionCommon.ExtensionAPI {
           let addon = await AddonManager.getAddonByID(context.extension.id);
           //make the addon globally available  in the bootstrapped scope
           self.bootstrappedObj.addon = addon;
-          
+
           // add BOOTSTRAP_REASONS to scope
           for (let reason of Object.keys(self.BOOTSTRAP_REASONS)) {
             self.bootstrappedObj[reason] = self.BOOTSTRAP_REASONS[reason];
           }
-          
+
           // Load registered bootstrap scripts and execute its startup() function.
           try {
             if (self.pathToBootstrapScript) Services.scriptloader.loadSubScript(self.pathToBootstrapScript, self.bootstrappedObj, "UTF-8");
@@ -83,21 +83,21 @@ var BootstrapLoader = class extends ExtensionCommon.ExtensionAPI {
       }
     };
   }
-  
-  onShutdown(isAppShutdown) {  
+
+  onShutdown(isAppShutdown) {
     // Execute registered shutdown()
     try {
       if (this.bootstrappedObj.shutdown) {
         this.bootstrappedObj.shutdown(
           this.extension.addonData,
-          isAppShutdown 
+          isAppShutdown
             ? this.BOOTSTRAP_REASONS.APP_SHUTDOWN
             : this.BOOTSTRAP_REASONS.ADDON_DISABLE);
       }
     } catch (e) {
       Components.utils.reportError(e)
     }
-    
+
     if (this.chromeHandle) {
       this.chromeHandle.destruct();
       this.chromeHandle = null;
