@@ -399,11 +399,13 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
         //  Remove this window from the list of open windows
         this.openWindows = this.openWindows.filter(e => (e != window));
 
-        try {
-          // Call onUnload()
-          window[this.uniqueRandomID].onUnload(isAddonDeactivation);
-        } catch (e) {
-          Components.utils.reportError(e)
+        if (window[this.uniqueRandomID].onUnload) {
+          try {
+            // Call onUnload()
+            window[this.uniqueRandomID].onUnload(isAddonDeactivation);
+          } catch (e) {
+            Components.utils.reportError(e)
+          }
         }
 
         // Remove all auto injected objects
