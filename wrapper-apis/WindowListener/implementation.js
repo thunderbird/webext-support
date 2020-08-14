@@ -2,6 +2,9 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
+ * Version: 1.14
+ * - support resource urls
+ *
  * Version: 1.12
  * - no longer allow to enforce custom "namespace"
  * - no longer call it namespace but uniqueRandomID / scopeName
@@ -54,6 +57,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
     this.openWindows = [];
 
     const aomStartup = Cc["@mozilla.org/addons/addon-manager-startup;1"].getService(Ci.amIAddonManagerStartup);
+    const resProto = Cc["@mozilla.org/network/protocol;1?name=resource"].getService(Ci.nsISubstitutingProtocolHandler);
 
     let self = this;
 
@@ -91,17 +95,42 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
           Services.scriptloader.loadSubScript(url, prefsObj, "UTF-8");
         },
 
-        registerChromeUrl(chromeData) {
+        registerChromeUrl(data) {
           if (!self.isBackgroundContext)
             throw new Error("The WindowListener API may only be called from the background page.");
 
-          const manifestURI = Services.io.newURI(
-            "manifest.json",
-            null,
-            context.extension.rootURI
-          );
-          self.chromeHandle = aomStartup.registerChrome(manifestURI, chromeData);
+          let chromeData = [];
+          let resourceData = [];
+          for (let entry of data) {
+            if (entry[0] == "resource") resourceData.push(entry);
+            else chromeData.push(entry)
+          }
+
+          if (chromeData.length > 0) {
+            const manifestURI = Services.io.newURI(
+              "manifest.json",
+              null,
+              context.extension.rootURI
+            );
+            self.chromeHandle = aomStartup.registerChrome(manifestURI, chromeData);
+          }
+
+          for (let res of resourceData) {
+            // [ "resource", "shortname" , "path" ]
+            let uri = Services.io.newURI(
+              res[2],
+              null,
+              context.extension.rootURI
+            );
+            resProto.setSubstitutionWithFlags(
+              res[1],
+              uri,
+              resProto.ALLOW_CONTENT_ACCESS
+            );
+          }
+
           self.chromeData = chromeData;
+          self.resourceData = resourceData;
         },
 
         registerWindow(windowHref, jsFile) {
@@ -486,6 +515,17 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
     // Flush all caches
     Services.obs.notifyObservers(null, "startupcache-invalidate");
     this.registeredWindows = {};
+
+    if (this.resourceData) {
+      const resProto = Cc["@mozilla.org/network/protocol;1?name=resource"].getService(Ci.nsISubstitutingProtocolHandler);
+      for (let res of this.resourceData) {
+        // [ "resource", "shortname" , "path" ]
+        resProto.setSubstitution(
+          res[1],
+          null,
+        );
+      }
+    }
 
     if (this.chromeHandle) {
       this.chromeHandle.destruct();
