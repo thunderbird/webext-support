@@ -2,7 +2,9 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
- * Version: 1.1
+ * Version: 1.2
+ * - add support for resource urls
+ *
  * Author: John Bieling (john@thunderbird.net)
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -20,6 +22,7 @@ var BootstrapLoader = class extends ExtensionCommon.ExtensionAPI {
     this.pathToBootstrapScript = null;
     this.chromeHandle = null;
     this.chromeData = null;
+    this.resourceData = null;    
     this.bootstrappedObj = {};
 
     // make the extension object and the messenger object available inside
@@ -41,20 +44,47 @@ var BootstrapLoader = class extends ExtensionCommon.ExtensionAPI {
       ADDON_DOWNGRADE: 8,
     };
 
+    const aomStartup = Cc["@mozilla.org/addons/addon-manager-startup;1"].getService(Ci.amIAddonManagerStartup);
+    const resProto = Cc["@mozilla.org/network/protocol;1?name=resource"].getService(Ci.nsISubstitutingProtocolHandler);
+    
     let self = this;
 
     return {
       BootstrapLoader: {
 
-        registerChromeUrl: async function(chromeData) {
-          const aomStartup = Cc["@mozilla.org/addons/addon-manager-startup;1"].getService(Ci.amIAddonManagerStartup);
-          const manifestURI = Services.io.newURI(
-            "manifest.json",
-            null,
-            context.extension.rootURI
-          );
-          self.chromeHandle = aomStartup.registerChrome(manifestURI, chromeData);
+        registerChromeUrl(data) {
+          let chromeData = [];
+          let resourceData = [];
+          for (let entry of data) {
+            if (entry[0] == "resource") resourceData.push(entry);
+            else chromeData.push(entry)
+          }
+
+          if (chromeData.length > 0) {
+            const manifestURI = Services.io.newURI(
+              "manifest.json",
+              null,
+              context.extension.rootURI
+            );
+            self.chromeHandle = aomStartup.registerChrome(manifestURI, chromeData);
+          }
+
+          for (let res of resourceData) {
+            // [ "resource", "shortname" , "path" ]
+            let uri = Services.io.newURI(
+              res[2],
+              null,
+              context.extension.rootURI
+            );
+            resProto.setSubstitutionWithFlags(
+              res[1],
+              uri,
+              resProto.ALLOW_CONTENT_ACCESS
+            );
+          }
+
           self.chromeData = chromeData;
+          self.resourceData = resourceData;
         },
 
         registerBootstrapScript: async function(aPath) {
@@ -64,7 +94,7 @@ var BootstrapLoader = class extends ExtensionCommon.ExtensionAPI {
 
           // Get the addon object belonging to this extension.
           let addon = await AddonManager.getAddonByID(context.extension.id);
-          //make the addon globally available  in the bootstrapped scope
+          //make the addon globally available in the bootstrapped scope
           self.bootstrappedObj.addon = addon;
 
           // add BOOTSTRAP_REASONS to scope
@@ -96,6 +126,17 @@ var BootstrapLoader = class extends ExtensionCommon.ExtensionAPI {
       }
     } catch (e) {
       Components.utils.reportError(e)
+    }
+
+    if (this.resourceData) {
+      const resProto = Cc["@mozilla.org/network/protocol;1?name=resource"].getService(Ci.nsISubstitutingProtocolHandler);
+      for (let res of this.resourceData) {
+        // [ "resource", "shortname" , "path" ]
+        resProto.setSubstitution(
+          res[1],
+          null,
+        );
+      }
     }
 
     if (this.chromeHandle) {
