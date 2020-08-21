@@ -2,6 +2,9 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
+ * Version: 1.19
+ * - add support for ToolbarPalette
+ *
  * Version: 1.18
  * - execute shutdown script also during global app shutdown (fixed)
  *
