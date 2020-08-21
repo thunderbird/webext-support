@@ -2,6 +2,10 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
+ * Version: 1.20
+ * - fix long delay before customize window opens
+ * - fix non working removal of palette items
+ *
  * Version: 1.19
  * - add support for ToolbarPalette
  *
@@ -353,14 +357,26 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
           window[this.uniqueRandomID].window = window;
           window[this.uniqueRandomID].document = window.document;
 
+          // Keep track of toolbarpalettes we are injecting into
+          window[this.uniqueRandomID]._toolbarpalettes = {};
+          
           //Create WLDATA object
           window[this.uniqueRandomID].WL = {};
           window[this.uniqueRandomID].WL.scopeName = this.uniqueRandomID;
 
           // Add helper function to inject CSS to WLDATA object
           window[this.uniqueRandomID].WL.injectCSS = function (cssFile) {
-            let ns = window.document.documentElement.lookupNamespaceURI("html");
-            let element = window.document.createElementNS(ns, "link");
+            let element;
+            let v = parseInt(Services.appinfo.version.split(".").shift());
+            
+            // using createElementNS in TB78 delays the insert process and hides any security violation errors
+            if (v > 68) {
+              element = window.document.createElement("link");
+            } else {
+              let ns = window.document.documentElement.lookupNamespaceURI("html");
+              element = window.document.createElementNS(ns, "link");
+            }
+            
             element.setAttribute("wlapi_autoinjected", uniqueRandomID);
             element.setAttribute("rel", "stylesheet");
             element.setAttribute("href", cssFile);
@@ -369,6 +385,8 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
 
           // Add helper function to inject XUL to WLDATA object
           window[this.uniqueRandomID].WL.injectElements = function (xulString, dtdFiles = [], debug = false) {
+            let toolbarsToResolve = [];
+
             function checkElements(stringOfIDs) {
               let arrayOfIDs = stringOfIDs.split(",").map(e => e.trim());
               for (let id of arrayOfIDs) {
@@ -380,7 +398,6 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
               return null;
             }
 
-            let toolbarsToResolve = [];
 
             function injectChildren(elements, container) {
               if (debug) console.log(elements);
@@ -440,6 +457,10 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
             
                   toolbarsToResolve.push(...box.querySelectorAll("toolbar"));
                   toolbarsToResolve.push(...window.document.querySelectorAll(`toolbar[toolboxid="${box.id}"]`));
+                  for (let child of elements[i].children) {
+                    child.setAttribute("wlapi_autoinjected", uniqueRandomID);
+                  }
+                  window[uniqueRandomID]._toolbarpalettes[palette.id] = palette;
                   injectChildren(Array.from(elements[i].children), palette);
                 } else {
                   // append element to the current container
@@ -510,6 +531,15 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
         for (let element of elements) {
           element.remove();
         }
+        
+        // Remove all autoinjected toolbarpalette items
+        for (const palette of Object.values(window[this.uniqueRandomID]._toolbarpalettes)) {
+          let elements = Array.from(palette.querySelectorAll('[wlapi_autoinjected="' + this.uniqueRandomID + '"]'));
+          for (let element of elements) {
+            element.remove();
+          }
+        }
+        
       }
 
       // Remove add-on scope, if it exists
