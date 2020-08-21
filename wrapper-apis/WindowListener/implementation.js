@@ -2,6 +2,9 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
+ * Version: 1.18
+ * - execute shutdown script also during global app shutdown (fixed)
+ *
  * Version: 1.17
  * - execute shutdown script also during global app shutdown
  *
@@ -502,9 +505,8 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
           }
         }
 
-        // if we reach this point, it is NOT app shutdown, but only addon shutdown
-        // -> isAddonShutdown = true
-        this._unloadFromWindow(window, true);
+        // if it is app shutdown, it is not just an add-on deactivation
+        this._unloadFromWindow(window, !isAppShutdown);
       }
       // Stop listening for new windows.
       ExtensionSupport.unregisterWindowListener("injectListener_" + this.uniqueRandomID);
