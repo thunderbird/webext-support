@@ -2,6 +2,9 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
+ * Version: 1.16
+ * - support for persist
+ *
  * Version: 1.15
  * - make (undocumented) startup() async
  *
@@ -373,6 +376,19 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
               if (debug) console.log(elements);
 
               for (let i = 0; i < elements.length; i++) {
+                // take care of persists
+                const uri = window.document.documentURI;
+                for (const persistentNode of elements[i].querySelectorAll("[persist]")) {
+                  for (const persistentAttribute of persistentNode.getAttribute("persist").trim().split(" ")) {
+                    if (Services.xulStore.hasValue(uri, persistentNode.id, persistentAttribute)) {
+                      persistentNode.setAttribute(
+                        persistentAttribute,
+                        Services.xulStore.getValue(uri, persistentNode.id, persistentAttribute)
+                      );
+                    }
+                  }
+                }
+                
                 if (elements[i].hasAttribute("insertafter") && checkElements(elements[i].getAttribute("insertafter"))) {
                   let insertAfterElement = checkElements(elements[i].getAttribute("insertafter"));
 
