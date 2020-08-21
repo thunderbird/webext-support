@@ -8,8 +8,8 @@ To get started with MailExtensions, we suggest to check out these resources firs
 
 | Folder         | Description |
 | ---------------| ----------- |
-| wrapper-apis   | APIs to simplify the add-on update process for Thunderbird 78. They are described in detail in the [wiki](https://github.com/thundernest/addon-developer-support/wiki). |
-| auxiliary-apis | APIs used by conversion steps after the initial update using the wrapper APIs. |
+| wrapper&#x2011;apis   | APIs to simplify the add-on update process for Thunderbird 78. They are described in detail in the [wiki](https://github.com/thundernest/addon-developer-support/wiki). |
+| auxiliary&#x2011;apis | APIs used by conversion steps after the initial update using the wrapper APIs. |
 | scripts        | Scripts used by conversion steps after the initial update using the wrapper APIs. |
 | tools          | Tools to help developers update their add-ons more easily. |
 
