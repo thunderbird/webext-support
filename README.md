@@ -6,6 +6,8 @@ To get started with MailExtensions, we suggest to check out these resources firs
 * [Thunderbird Add-On Developer Guide](https://developer.thunderbird.net/add-ons/about-add-ons)
 * [MailExtension API Documentation](https://thunderbird-webextensions.readthedocs.io/en/latest/)
 
+## Content
+
 | Folder         | Description |
 | ---------------| ----------- |
 | wrapper&#x2011;apis &nbsp;  | APIs to simplify the add-on update process for Thunderbird 78. They are described in detail in the [wiki](https://github.com/thundernest/addon-developer-support/wiki). |
@@ -13,5 +15,5 @@ To get started with MailExtensions, we suggest to check out these resources firs
 | scripts        | Scripts used by conversion steps after the initial update using the wrapper APIs. |
 | tools          | Tools to help developers update their add-ons more easily. |
 
-
+The tutorials describing further conversion steps are currently being worked on and will be released in the course of the next months. Subscribe to the [tutorials issue](https://github.com/thundernest/addon-developer-support/issues/37) to get notified on each release.
 
