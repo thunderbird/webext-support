@@ -1,0 +1,34 @@
+[
+  {
+    "namespace": "ReplacementAddonNotification",
+    "functions": [
+      {
+        "name": "set",
+        "description": "Redirect users to a replacement add-on using a notification bar.",
+        "type": "function",
+        "async": true,
+        "parameters": [
+          {
+            "name": "details",
+            "description": "Object with details about the replacement add-on",
+            "type": "object",
+            "properties": {
+              "path": {
+                "description": "Path to the ATN listing page of the new addon",
+                "type": "string"
+              },
+              "description": {
+                "description": "Notification description",
+                "type": "string"
+              },
+              "label": {
+                "description": "Label for the button to open the ATN page.",
+                "type": "string"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+]
