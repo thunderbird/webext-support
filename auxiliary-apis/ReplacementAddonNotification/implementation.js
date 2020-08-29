@@ -82,7 +82,8 @@ var ReplacementAddonNotification = class extends ExtensionCommon.ExtensionAPI {
 
   close() {
     for (let window of Services.wm.getEnumerator("mail:3pane")) {
-      window.document.getElementById(this.prefix +"Container")?.remove();
+      let container = window.document.getElementById(this.prefix +"Container");
+      if (container) container.remove();
     }
     ExtensionSupport.unregisterWindowListener(this.prefix + "Listener");
   }
