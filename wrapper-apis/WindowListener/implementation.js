@@ -215,6 +215,11 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
           self.pathToStartupScript = aPath.startsWith("chrome://")
             ? aPath
             : context.extension.rootURI.resolve(aPath);
+
+          if (self.debug && !this.aDocumentExistsAt(self.pathToStartupScript)) {
+            console.error("Attempt to register non-existent startup script: " + self.pathToStartupScript);
+            if (aPath != self.pathToStartupScript) console.log("(user provided script path was: " + aPath + ")" );
+          }          
         },
 
         registerShutdownScript(aPath) {
@@ -224,6 +229,11 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
           self.pathToShutdownScript = aPath.startsWith("chrome://")
             ? aPath
             : context.extension.rootURI.resolve(aPath);
+
+          if (self.debug && !this.aDocumentExistsAt(self.pathToShutdownScript)) {
+            console.error("Attempt to register non-existent shutdown script: " + self.pathToShutdownScript);
+            if (aPath != self.pathToShutdownScript) console.log("(user provided script path was: " + aPath + ")" );
+          }          
         },
 
         async startListening() {
