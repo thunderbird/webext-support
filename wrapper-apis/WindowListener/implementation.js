@@ -75,7 +75,8 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
     this.chromeData = null;
     this.resourceData = null;    
     this.openWindows = [];
-
+    this.debug = context.extension.addonData.temporarilyInstalled;
+    
     const aomStartup = Cc["@mozilla.org/addons/addon-manager-startup;1"].getService(Ci.amIAddonManagerStartup);
     const resProto = Cc["@mozilla.org/network/protocol;1?name=resource"].getService(Ci.nsISubstitutingProtocolHandler);
 
@@ -83,58 +84,39 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
 
     return {
       WindowListener: {
-/*
-        chromeResourceExists(chromeUriString) {
-          if (!overlay.startsWith("chrome://")) {
-            throw new Error("chromeResourceExists called with non-\"chrome://\" URI string: " + chromeUriString);
-          }
-          try {
-            await this.readChromeFile(overlay);
-          } catch (e) {
-            return false;
-          }
-          return true;
-        },
-*/
+
         aDocumentExistsAt(uriString) {
           console.log("aDocumentExistsAt(\"" + uriString + "\")");
           try {
             let uriObject = Services.io.newURI(uriString);
             let content = Cu.readUTF8URI(uriObject);
-            return true;
           } catch (e) {
-            console.log("aDocumentExistsAt(\"" + uriString + "\") got exception:\n" + e);
+            console.log("aDocumentExistsAt(\"" + uriString + "\") returned exception:");
+            Components.utils.reportError(e); 
             return false;
           }
+          return true;
         },
 
-        registerOptionsPage(pathToOptionsPage, debug = context.extension.addonData.temporarilyInstalled) {
-           let optionsUrl = pathToOptionsPage.startsWith("chrome://")
-             ? pathToOptionsPage
-              : context.extension.rootURI.resolve(pathToOptionsPage);
+        registerOptionsPage(optionsUrl) {
+          self.pathToOptionsPage = optionsUrl.startsWith("chrome://")
+            ? optionsUrl
+            : context.extension.rootURI.resolve(optionsUrl);
 
-          if (debug && !this.aDocumentExistsAt(optionsUrl)) {
-            console.error("Non-existent options page specified: " + optionsUrl + "\n"
-              + "(originally " + pathToOptionsPage + ")" );
-          }
-          else if (debug) { console.log("aDocumentExistsAt() returned true"); }
-
-          self.pathToOptionsPage = pathToOptionsPage;
+          if (self.debug && !this.aDocumentExistsAt(self.pathToOptionsPage)) {
+            console.error("Attempt to register non-existent options page: " + self.pathToOptionsPage);
+             if (optionsUrl != self.pathToOptionsPage) console.log("(user provided options page was: " + optionsUrl + ")");
+          }          
         },
 
-        registerDefaultPrefs(pathToDefaultsJs, debug) {
-          if (!debug) { debug = context.extension.addonData.temporarilyInstalled; }
-          console.log("debug is " + debug);
-          let defaultsJsUrl = context.extension.rootURI.resolve(pathToDefaultsJs);
-          if (defaultsJsUrl == null) {
-            console.error("Failed resolving path to default-preference-setting script into a proper URL: " + pathToDefaultsJs);
-          }
-          if (debug && !this.aDocumentExistsAt(defaultsJsUrl)) {
-            console.error("Attempt to register non-existent default prefs script " + defaultsJsUrl + "\n"
-              + "(originally " + pathToDefaultsJs + ")" );
+        registerDefaultPrefs(defaultUrl) {
+          let url = context.extension.rootURI.resolve(defaultUrl);
+
+          if (self.debug && !this.aDocumentExistsAt(url)) {
+            console.error("Attempt to register non-existent default prefs script: " + url);
+            if (url != defaultUrl) console.log("(user provided script path was: " + defaultUrl + ")" );
             return;
           }
-          else if (debug) { console.log("aDocumentExistsAt() returned true"); }
 
           let prefsObj = {};
           prefsObj.Services = ChromeUtils.import("resource://gre/modules/Services.jsm").Services;
@@ -154,7 +136,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
                 throw new Error("Preference <" + aName + "> has an unsupported type <" + typeof aDefault + ">. Allowed are string, number and boolean.");
             }
           }
-          Services.scriptloader.loadSubScript(defaultsJsUrl, prefsObj, "UTF-8");
+          Services.scriptloader.loadSubScript(url, prefsObj, "UTF-8");
         },
 
         registerChromeUrl(data) {
@@ -195,37 +177,27 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
           self.resourceData = resourceData;
         },
 
-        registerWindow(windowHref, jsFile, debug) {
-          if (!debug) { debug = context.extension.addonData.temporarilyInstalled; }
+        registerWindow(windowHref, jsFile) {
           if (!self.isBackgroundContext)
             throw new Error("The WindowListener API may only be called from the background page.");
 
-          if (debug && !this.aDocumentExistsAt(windowHref)) {
-            console.error("Attempt to register an injector script for non-existent window" + windowHref);
+          if (self.debug && !this.aDocumentExistsAt(windowHref)) {
+            console.error("Attempt to register an injector script for non-existent window: " + windowHref);
             return;
           }
-          else if (debug) { console.log("aDocumentExistsAt() returned true"); }
 
           if (!self.registeredWindows.hasOwnProperty(windowHref)) {
             // path to JS file can either be chrome:// URL or a relative URL
-            let path;
-            if (jsFile.startsWith("chrome://")) {
-               path = jsFile;
-            }
-            else {
-              path = context.extension.rootURI.resolve(jsFile);
-              if (path == null) {
-                console.error("Could not resolve a URL for specified injector script path " + windowHref);
-                return;
-              }
-            }
-            if (debug && !this.aDocumentExistsAt(path)) {
-              console.error("Attempt to register a non-existent injector script" + path + "\n"
-                + "(originally " + jsFile + " )\n"
+            let path = jsFile.startsWith("chrome://")
+              ? jsFile
+              : context.extension.rootURI.resolve(jsFile)
+
+            if (self.debug && !this.aDocumentExistsAt(path)) {
+              console.error("Attempt to register a non-existent injector script: " + path + "\n"
                 + "for window " + windowHref);
+              if (path != jsFile) console.log("(user provided script path was: " + jsFile + " )");
               return;
             }
-          else if (debug) { console.log("aDocumentExistsAt() returned true"); }
             self.registeredWindows[windowHref] = path;
           } else {
             console.error("Window <" +windowHref + "> has already been registered");

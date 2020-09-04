@@ -10,14 +10,7 @@
             "name": "aPath",
             "type": "string",
             "description": "Relative path to the default file."
-          },
-          {
-            "name": "debug",
-            "type": "boolean",
-            "optional": true,
-            "description": "Indication of whether to ensure the default preferences file exists at its specified location"
           }
-
         ]
       },
       {
@@ -28,12 +21,6 @@
             "name": "aPath",
             "type": "string",
             "description": "Path to the options page, which should be made accessible in the (legacy) Add-On Options menu."
-          },
-          {
-            "name": "debug",
-            "type": "boolean",
-            "optional": true,
-            "description": "Indication of whether to ensure the options page exists at its specified location"
           }
         ]
       },
@@ -74,12 +61,6 @@
             "name": "jsFile",
             "type": "string",
             "description": "Path to the JavaScript file, which should be loaded into the window."
-          },
-          {
-            "name": "debug",
-            "type": "boolean",
-            "optional": true,
-            "description": "Indication of whether to ensure that the window and the JS file actually exist at their specified locations"
           }
         ]
       },
