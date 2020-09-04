@@ -2,6 +2,11 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
+ * Version: 1.21
+ * - print debug messages only if add-ons are installed temporarily from
+ *   the add-on debug page
+ * - add checks to registered windows and scripts, if they actually exists
+ *
  * Version: 1.20
  * - fix long delay before customize window opens
  * - fix non working removal of palette items
