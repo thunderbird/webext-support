@@ -90,15 +90,14 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
       WindowListener: {
 
         aDocumentExistsAt(uriString) {
+          console.log("WindowListener API: Checking if document at <" + uriString + "> used in registration actually exits.");
           try {
             let uriObject = Services.io.newURI(uriString);
             let content = Cu.readUTF8URI(uriObject);
           } catch (e) {
-            console.log("WindowListener API: Document at <" + uriString + "> used in registration does NOT seem to exits.");
             Components.utils.reportError(e); 
             return false;
           }
-          console.log("WindowListener API: Document at <" + uriString + "> used in registration seems to exits.");
           return true;
         },
 
@@ -108,7 +107,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
             : context.extension.rootURI.resolve(optionsUrl);
 
           if (self.debug && !this.aDocumentExistsAt(self.pathToOptionsPage)) {
-            console.error("Attempt to register non-existent options page: " + self.pathToOptionsPage);
+            console.error("WindowListener API: Attempt to register non-existent options page: " + self.pathToOptionsPage);
             if (optionsUrl != self.pathToOptionsPage) console.log("(user provided options page was: " + optionsUrl + ")");
             self.pathToOptionsPage = null;
           }          
@@ -118,7 +117,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
           let url = context.extension.rootURI.resolve(defaultUrl);
 
           if (self.debug && !this.aDocumentExistsAt(url)) {
-            console.error("Attempt to register non-existent default prefs script: " + url);
+            console.error("WindowListener API: Attempt to register non-existent default prefs script: " + url);
             if (url != defaultUrl) console.log("(user provided script path was: " + defaultUrl + ")" );
             return;
           }
@@ -187,7 +186,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
             throw new Error("The WindowListener API may only be called from the background page.");
 
           if (self.debug && !this.aDocumentExistsAt(windowHref)) {
-            console.error("Attempt to register an injector script for non-existent window: " + windowHref);
+            console.error("WindowListener API: Attempt to register an injector script for non-existent window: " + windowHref);
             return;
           }
 
@@ -198,14 +197,14 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
               : context.extension.rootURI.resolve(jsFile)
 
             if (self.debug && !this.aDocumentExistsAt(path)) {
-              console.error("Attempt to register a non-existent injector script: " + path + "\n"
+              console.error("WindowListener API: Attempt to register a non-existent injector script: " + path + "\n"
                 + "for window " + windowHref);
               if (path != jsFile) console.log("(user provided script path was: " + jsFile + " )");
               return;
             }
             self.registeredWindows[windowHref] = path;
           } else {
-            console.error("Window <" +windowHref + "> has already been registered");
+            console.error("WindowListener API: Window <" +windowHref + "> has already been registered");
           }
         },
 
@@ -218,7 +217,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
             : context.extension.rootURI.resolve(aPath);
 
           if (self.debug && !this.aDocumentExistsAt(self.pathToStartupScript)) {
-            console.error("Attempt to register non-existent startup script: " + self.pathToStartupScript);
+            console.error("WindowListener API: Attempt to register non-existent startup script: " + self.pathToStartupScript);
             if (aPath != self.pathToStartupScript) console.log("(user provided script path was: " + aPath + ")" );
             self.pathToStartupScript = null;
           }          
@@ -233,7 +232,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
             : context.extension.rootURI.resolve(aPath);
 
           if (self.debug && !this.aDocumentExistsAt(self.pathToShutdownScript)) {
-            console.error("Attempt to register non-existent shutdown script: " + self.pathToShutdownScript);
+            console.error("WindowListener API: Attempt to register non-existent shutdown script: " + self.pathToShutdownScript);
             if (aPath != self.pathToShutdownScript) console.log("(user provided script path was: " + aPath + ")" );
             self.pathToShutdownScript = null;
           }          
@@ -395,7 +394,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
               }
             });
           } else {
-            console.error("Failed to start listening, no windows registered");
+            console.error("WindowListener API: Failed to start listening, no windows registered");
           }
         },
 
