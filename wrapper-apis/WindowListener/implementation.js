@@ -109,7 +109,8 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
 
           if (self.debug && !this.aDocumentExistsAt(self.pathToOptionsPage)) {
             console.error("Attempt to register non-existent options page: " + self.pathToOptionsPage);
-             if (optionsUrl != self.pathToOptionsPage) console.log("(user provided options page was: " + optionsUrl + ")");
+            if (optionsUrl != self.pathToOptionsPage) console.log("(user provided options page was: " + optionsUrl + ")");
+            self.pathToOptionsPage = null;
           }          
         },
 
@@ -219,6 +220,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
           if (self.debug && !this.aDocumentExistsAt(self.pathToStartupScript)) {
             console.error("Attempt to register non-existent startup script: " + self.pathToStartupScript);
             if (aPath != self.pathToStartupScript) console.log("(user provided script path was: " + aPath + ")" );
+            self.pathToStartupScript = null;
           }          
         },
 
@@ -233,6 +235,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
           if (self.debug && !this.aDocumentExistsAt(self.pathToShutdownScript)) {
             console.error("Attempt to register non-existent shutdown script: " + self.pathToShutdownScript);
             if (aPath != self.pathToShutdownScript) console.log("(user provided script path was: " + aPath + ")" );
+            self.pathToShutdownScript = null;
           }          
         },
 
