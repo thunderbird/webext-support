@@ -58,6 +58,10 @@ var { ExtensionSupport } = ChromeUtils.import("resource:///modules/ExtensionSupp
 var { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 var WindowListener = class extends ExtensionCommon.ExtensionAPI {
+  log(msg) {
+    if (this.debug) console.log(msg);
+  }
+  
   getAPI(context) {
     // track if this is the background/main context
     this.isBackgroundContext = (context.viewType == "background");
@@ -86,15 +90,15 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
       WindowListener: {
 
         aDocumentExistsAt(uriString) {
-          console.log("aDocumentExistsAt(\"" + uriString + "\")");
           try {
             let uriObject = Services.io.newURI(uriString);
             let content = Cu.readUTF8URI(uriObject);
           } catch (e) {
-            console.log("aDocumentExistsAt(\"" + uriString + "\") returned exception:");
+            console.log("WindowListener API: Document at <" + uriString + "> used in registration does NOT seem to exits.");
             Components.utils.reportError(e); 
             return false;
           }
+          console.log("WindowListener API: Document at <" + uriString + "> used in registration seems to exits.");
           return true;
         },
 
@@ -252,12 +256,12 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
               if (self.pathToStartupScript) {
                 Services.scriptloader.loadSubScript(self.pathToStartupScript, startupJS, "UTF-8");
                 // delay startup until startup has been finished
-                console.log("Waiting for async startup() in <" + self.pathToStartupScript + "> to finish.");
+                self.log("WindowListener API: Waiting for async startup() in <" + self.pathToStartupScript + "> to finish.");
                 if (startupJS.startup) {
                   await startupJS.startup();
-                  console.log("startup() in <" + self.pathToStartupScript + "> finished");
+                  self.log("WindowListener API: startup() in <" + self.pathToStartupScript + "> finished");
                 } else {
-                  console.log("No startup() in <" + self.pathToStartupScript + "> found.");
+                  self.log("WindowListener API: No startup() in <" + self.pathToStartupScript + "> found.");
                 }
               }
             } catch (e) {
@@ -586,7 +590,6 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
       }
   }
 
-
   onShutdown(isAppShutdown) {
     // Unload from all still open windows
     let urls = Object.keys(this.registeredWindows);
@@ -638,7 +641,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
     const rootURI = this.extension.rootURI.spec;
     for (let module of Cu.loadedModules) {
       if (module.startsWith(rootURI) || (module.startsWith("chrome://") && chromeUrls.find(s => module.startsWith(s)))) {
-        console.log("Unloading: " + module);
+        this.log("WindowListener API: Unloading: " + module);
         Cu.unload(module);
       }
     }
