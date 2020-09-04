@@ -64,7 +64,11 @@ var { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 var WindowListener = class extends ExtensionCommon.ExtensionAPI {
   log(msg) {
-    if (this.debug) console.log(msg);
+    if (this.debug) console.log("WindowListener API: " + msg);
+  }
+
+  error(msg) {
+    if (this.debug) console.error("WindowListener API: " + msg);
   }
   
   getAPI(context) {
@@ -95,7 +99,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
       WindowListener: {
 
         aDocumentExistsAt(uriString) {
-          console.log("WindowListener API: Checking if document at <" + uriString + "> used in registration actually exits.");
+          self.log("Checking if document at <" + uriString + "> used in registration actually exits.");
           try {
             let uriObject = Services.io.newURI(uriString);
             let content = Cu.readUTF8URI(uriObject);
@@ -112,8 +116,8 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
             : context.extension.rootURI.resolve(optionsUrl);
 
           if (self.debug && !this.aDocumentExistsAt(self.pathToOptionsPage)) {
-            console.error("WindowListener API: Attempt to register non-existent options page: " + self.pathToOptionsPage);
-            if (optionsUrl != self.pathToOptionsPage) console.log("(user provided options page was: " + optionsUrl + ")");
+            self.error("Attempt to register non-existent options page: " + self.pathToOptionsPage
+              + ((optionsUrl != self.pathToOptionsPage) ? "\n(user provided options page was: " + optionsUrl + ")" : ""));
             self.pathToOptionsPage = null;
           }          
         },
@@ -122,8 +126,8 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
           let url = context.extension.rootURI.resolve(defaultUrl);
 
           if (self.debug && !this.aDocumentExistsAt(url)) {
-            console.error("WindowListener API: Attempt to register non-existent default prefs script: " + url);
-            if (url != defaultUrl) console.log("(user provided script path was: " + defaultUrl + ")" );
+            self.error("Attempt to register non-existent default prefs script: " + url
+              + ((url != defaultUrl) ? "\n(user provided script path was: " + defaultUrl + ")" : ""));
             return;
           }
 
@@ -191,7 +195,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
             throw new Error("The WindowListener API may only be called from the background page.");
 
           if (self.debug && !this.aDocumentExistsAt(windowHref)) {
-            console.error("WindowListener API: Attempt to register an injector script for non-existent window: " + windowHref);
+            self.error("Attempt to register an injector script for non-existent window: " + windowHref);
             return;
           }
 
@@ -202,14 +206,14 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
               : context.extension.rootURI.resolve(jsFile)
 
             if (self.debug && !this.aDocumentExistsAt(path)) {
-              console.error("WindowListener API: Attempt to register a non-existent injector script: " + path + "\n"
-                + "for window " + windowHref);
-              if (path != jsFile) console.log("(user provided script path was: " + jsFile + " )");
+              self.error("Attempt to register a non-existent injector script: " + path
+                + "\nfor window " + windowHref
+                + ((path != jsFile) ? "\n(user provided script path was: " + jsFile + " )" : ""));
               return;
             }
             self.registeredWindows[windowHref] = path;
           } else {
-            console.error("WindowListener API: Window <" +windowHref + "> has already been registered");
+            self.error("Window <" +windowHref + "> has already been registered");
           }
         },
 
@@ -222,8 +226,8 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
             : context.extension.rootURI.resolve(aPath);
 
           if (self.debug && !this.aDocumentExistsAt(self.pathToStartupScript)) {
-            console.error("WindowListener API: Attempt to register non-existent startup script: " + self.pathToStartupScript);
-            if (aPath != self.pathToStartupScript) console.log("(user provided script path was: " + aPath + ")" );
+            self.error("Attempt to register non-existent startup script: " + self.pathToStartupScript
+              + ((aPath != self.pathToStartupScript) ? "\n(user provided script path was: " + aPath + ")" : ""));
             self.pathToStartupScript = null;
           }          
         },
@@ -237,8 +241,8 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
             : context.extension.rootURI.resolve(aPath);
 
           if (self.debug && !this.aDocumentExistsAt(self.pathToShutdownScript)) {
-            console.error("WindowListener API: Attempt to register non-existent shutdown script: " + self.pathToShutdownScript);
-            if (aPath != self.pathToShutdownScript) console.log("(user provided script path was: " + aPath + ")" );
+            self.error("Attempt to register non-existent shutdown script: " + self.pathToShutdownScript
+              + ((aPath != self.pathToShutdownScript) ? "(user provided script path was: " + aPath + ")" : ""));
             self.pathToShutdownScript = null;
           }          
         },
@@ -273,12 +277,12 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
               if (self.pathToStartupScript) {
                 Services.scriptloader.loadSubScript(self.pathToStartupScript, startupJS, "UTF-8");
                 // delay startup until startup has been finished
-                self.log("WindowListener API: Waiting for async startup() in <" + self.pathToStartupScript + "> to finish.");
+                self.log("Waiting for async startup() in <" + self.pathToStartupScript + "> to finish.");
                 if (startupJS.startup) {
                   await startupJS.startup();
-                  self.log("WindowListener API: startup() in <" + self.pathToStartupScript + "> finished");
+                  self.log("startup() in <" + self.pathToStartupScript + "> finished");
                 } else {
-                  self.log("WindowListener API: No startup() in <" + self.pathToStartupScript + "> found.");
+                  self.log("No startup() in <" + self.pathToStartupScript + "> found.");
                 }
               }
             } catch (e) {
@@ -399,7 +403,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
               }
             });
           } else {
-            console.error("WindowListener API: Failed to start listening, no windows registered");
+            self.error("Failed to start listening, no windows registered");
           }
         },
 
@@ -479,7 +483,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
                   let insertAfterElement = checkElements(elements[i].getAttribute("insertafter"));
 
                   if (debug) console.log(elements[i].tagName + "#" + elements[i].id + ": insertafter " + insertAfterElement.id);
-                  if (elements[i].id && window.document.getElementById(elements[i].id)) {
+                  if (debug && elements[i].id && window.document.getElementById(elements[i].id)) {
                     console.error("The id <" + elements[i].id + "> of the injected element already exists in the document!");
                   }
                   elements[i].setAttribute("wlapi_autoinjected", uniqueRandomID);
@@ -489,7 +493,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
                   let insertBeforeElement = checkElements(elements[i].getAttribute("insertbefore"));
 
                   if (debug) console.log(elements[i].tagName + "#" + elements[i].id + ": insertbefore " + insertBeforeElement.id);
-                  if (elements[i].id && window.document.getElementById(elements[i].id)) {
+                  if (debug && elements[i].id && window.document.getElementById(elements[i].id)) {
                     console.error("The id <" + elements[i].id + "> of the injected element already exists in the document!");
                   }
                   elements[i].setAttribute("wlapi_autoinjected", uniqueRandomID);
@@ -658,7 +662,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
     const rootURI = this.extension.rootURI.spec;
     for (let module of Cu.loadedModules) {
       if (module.startsWith(rootURI) || (module.startsWith("chrome://") && chromeUrls.find(s => module.startsWith(s)))) {
-        this.log("WindowListener API: Unloading: " + module);
+        this.log("Unloading: " + module);
         Cu.unload(module);
       }
     }
