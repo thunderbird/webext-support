@@ -99,7 +99,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
       WindowListener: {
 
         aDocumentExistsAt(uriString) {
-          self.log("Checking if document at <" + uriString + "> used in registration actually exits.");
+          self.log("Checking if document at <" + uriString + "> used in registration actually exists.");
           try {
             let uriObject = Services.io.newURI(uriString);
             let content = Cu.readUTF8URI(uriObject);
