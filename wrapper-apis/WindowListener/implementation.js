@@ -2,6 +2,10 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
+ * Version: 1.22
+ * - to reduce confusions, only check built-in URLs as add-on URLs cannot
+ *   be resolved if a temp installed add-on has bin zipped
+ *
  * Version: 1.21
  * - print debug messages only if add-ons are installed temporarily from
  *   the add-on debug page
@@ -114,22 +118,10 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
           self.pathToOptionsPage = optionsUrl.startsWith("chrome://")
             ? optionsUrl
             : context.extension.rootURI.resolve(optionsUrl);
-
-          if (self.debug && !this.aDocumentExistsAt(self.pathToOptionsPage)) {
-            self.error("Attempt to register non-existent options page: " + self.pathToOptionsPage
-              + ((optionsUrl != self.pathToOptionsPage) ? "\n(user provided options page was: " + optionsUrl + ")" : ""));
-            self.pathToOptionsPage = null;
-          }          
         },
 
         registerDefaultPrefs(defaultUrl) {
           let url = context.extension.rootURI.resolve(defaultUrl);
-
-          if (self.debug && !this.aDocumentExistsAt(url)) {
-            self.error("Attempt to register non-existent default prefs script: " + url
-              + ((url != defaultUrl) ? "\n(user provided script path was: " + defaultUrl + ")" : ""));
-            return;
-          }
 
           let prefsObj = {};
           prefsObj.Services = ChromeUtils.import("resource://gre/modules/Services.jsm").Services;
@@ -205,12 +197,6 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
               ? jsFile
               : context.extension.rootURI.resolve(jsFile)
 
-            if (self.debug && !this.aDocumentExistsAt(path)) {
-              self.error("Attempt to register a non-existent injector script: " + path
-                + "\nfor window " + windowHref
-                + ((path != jsFile) ? "\n(user provided script path was: " + jsFile + " )" : ""));
-              return;
-            }
             self.registeredWindows[windowHref] = path;
           } else {
             self.error("Window <" +windowHref + "> has already been registered");
@@ -224,12 +210,6 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
           self.pathToStartupScript = aPath.startsWith("chrome://")
             ? aPath
             : context.extension.rootURI.resolve(aPath);
-
-          if (self.debug && !this.aDocumentExistsAt(self.pathToStartupScript)) {
-            self.error("Attempt to register non-existent startup script: " + self.pathToStartupScript
-              + ((aPath != self.pathToStartupScript) ? "\n(user provided script path was: " + aPath + ")" : ""));
-            self.pathToStartupScript = null;
-          }          
         },
 
         registerShutdownScript(aPath) {
@@ -239,12 +219,6 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
           self.pathToShutdownScript = aPath.startsWith("chrome://")
             ? aPath
             : context.extension.rootURI.resolve(aPath);
-
-          if (self.debug && !this.aDocumentExistsAt(self.pathToShutdownScript)) {
-            self.error("Attempt to register non-existent shutdown script: " + self.pathToShutdownScript
-              + ((aPath != self.pathToShutdownScript) ? "(user provided script path was: " + aPath + ")" : ""));
-            self.pathToShutdownScript = null;
-          }          
         },
 
         async startListening() {
