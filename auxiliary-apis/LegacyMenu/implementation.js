@@ -1,7 +1,6 @@
-/*
- * The content of this file is licensed. You may obtain a copy of
- * the license at https://github.com/thsmi/sieve/ or request it via
- * email from the author.
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
  *
  * Do not remove or change this comment.
  *
