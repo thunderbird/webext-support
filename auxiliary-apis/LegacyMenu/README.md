@@ -63,6 +63,8 @@ The `type` property of the description object passed to `LegacyMenu.add()` suppo
 * `appmenu-label` : 
 * `appmenu-separator` :
 
+The `menu-*` types will add an item to the standard window menu, the `appmenu-*` types will add an item to the app menu a.k.a. hamburger menu.
+
 To attach a command action to any of the added menu items, register the onCommand listener:
 
 ```
