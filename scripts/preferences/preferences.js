@@ -66,7 +66,7 @@ var preferences = {
   },
 
   // Remove a preference (calls to getPref will return default value)
-  clearPref: function(aName, aValue) {
+  clearPref: function(aName) {
     delete this._prefs[userPrefPrefix + aName];
     messenger.storage[userPrefStorageArea].remove(userPrefPrefix + aName);    
   },
