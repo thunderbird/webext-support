@@ -1,16 +1,16 @@
 ## Objective
 
-This script is a wrapper for your MailExtensions local storage to set and get
-your add-on options.
+This script is a wrapper for your MailExtensions storage to set and get
+your add-on preferences.
 
 ## Usage
 
 This script provides the following public methods:
 
-#### async preferences.init([defaults]);
+### async preferences.init([defaults]);
 
 The main difference between the MailExtensions local storage and the
-legacy nsIPrefBranch: the storage API to access the data is asynchronously.
+legacy `nsIPrefBranch`: the storage API to access the data is asynchronously.
 
 This function will asynchronously load the current values from the storage
 into a local object and sets up a listener for storage changes, which will
@@ -47,6 +47,20 @@ If the `defaults` parameter is not given, this function will pull the default va
 from the local storage. Setting default values multiple times will propagate them
 to all instances of this script as well.
 
-#### preferences.setPref(aName, aValue);
-#### preferences.getPref(aName, [aFallback]);
-#### preferences.clearPref(aName);
+
+### preferences.getPref(aName, [aFallback]);
+
+Gets the value for preference `aName`. Returns the default value if no user value has been defined. If not even a default value has been set, the value of the optional parameter `aFallback`  is returned (or `null`).
+
+
+### preferences.setPref(aName, aValue);
+
+Updates the stored user value for preference `aName`. Subsequent calls to `getPref` will return the new value. The update is also propagated to the MailExtensions storage and all other instances of this script will get the new value as well. This script is not waiting for the MailExtensions storage to complete the change.
+
+
+### preferences.clearPref(aName);
+
+Clears the stored user value for preference `aName`. Subsequent calls to `getPref` will return the default value. The clearing is also propagated to the MailExtensions storage and all other instances of this script will clear the preference as well. This script is not waiting for the MailExtensions storage to complete the change.
+
+
+
