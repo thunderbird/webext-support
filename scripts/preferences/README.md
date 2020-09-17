@@ -1,6 +1,6 @@
 ## Objective
 
-This script is a wrapper for your MailExtensions local storage to set and get
+This script is a wrapper for your MailExtensions storage to set and get
 your add-on preferences.
 
 ## Usage
