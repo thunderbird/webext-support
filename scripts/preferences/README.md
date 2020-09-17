@@ -43,7 +43,7 @@ let defaultPrefs = {
 })()
 
 ```
-If the defaults parameter is not given, this function will pull the default values
+If the `defaults` parameter is not given, this function will pull the default values
 from the local storage. Setting default values multiple times will propagate them
 to all instances of this script as well.
 
