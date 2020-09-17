@@ -4,8 +4,9 @@ Use this API to migrate your preferences from the legacy pref branch to the loca
 
 ## Usage
 
-Define an object which contains the name of all the preferences you want to migrate and loop through it.
-To reduce redundancy, you could actually use the same object which is used to define the default values of your add-on options. A background script could look like the following:
+Define an object which contains the names of all the preferences you want to migrate and loop through it. To reduce redundancy, you could actually use the same object which is used to define the default values of your add-on options. 
+
+A background script could look like the following:
 
 ```
 let defaultPrefs = {
