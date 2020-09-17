@@ -5,7 +5,9 @@ Use this API to add menu items to the Thunderbird UI, as long as it is not yet p
 ## Usage
 
 In order to add a menu item to a window, you first need to get the handle to that window. The most simple way is to request all currently open windows
-and listen for newly opened windows and pass the received window handles to a method, which adds the menu items (if needed). A background script could look like the following:
+and listen for newly opened windows and pass the received window handles to a method, which adds the menu items (if needed). 
+
+A background script could look like the following:
 
 ```
 (async function() {
