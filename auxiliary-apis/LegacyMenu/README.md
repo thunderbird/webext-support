@@ -58,12 +58,12 @@ Depending on its value, the new menu item will be inserted `before` or `after` t
 If the position is set to `child`, the new menu entry will be appended to the reference element. 
 
 The `type` property of the description object passed to `LegacyMenu.add()` supports the following values:
-* `menu-label` : 
-* `menu-separator` : 
-* `appmenu-label` : 
-* `appmenu-separator` :
+* `menu-label` 
+* `menu-separator` 
+* `appmenu-label` 
+* `appmenu-separator`
 
-The `menu-*` types will add an item to the standard window menu, the `appmenu-*` types will add an item to the app menu a.k.a. hamburger menu.
+The `menu-*` types will add an item to the standard window menu, the `appmenu-*` types will add an item to the app menu a.k.a. the hamburger menu.
 
 To attach a command action to any of the added menu items, register the onCommand listener:
 
