@@ -36,25 +36,32 @@ function manipulateWindow(window) {
     }
 
     const id = `${window.id}`;
-    messenger.LegacyMenu.add(id, {
+    const description = {
       "id": "menu_TestItem",
       "type": "menu-label",
       "reference": "activityManager",
       "position": "before",
       "label": "Test2",
       "accesskey": "T"
-    });   
+    };
+    messenger.LegacyMenu.add(id, description);   
 }
 
 ```
 
-The `position` property supports the following values:
-* before
-* after
-* child
+The `position` property of the description object passed to `LegacyMenu.add()` supports the following values:
+* `before`
+* `after`
+* `child`
 
 Depending on its value, the new menu item will be inserted `before` or `after` the element identified by the id specified in the `reference` property.
-If the position is set to `child`, the new menu entry will be appended to the reference element.
+If the position is set to `child`, the new menu entry will be appended to the reference element. 
+
+The `type` property of the description object passed to `LegacyMenu.add()` supports the following values:
+* `menu-label` : 
+* `menu-separator` : 
+* `appmenu-label` : 
+* `appmenu-separator` :
 
 To attach a command action to any of the added menu items, register the onCommand listener:
 
