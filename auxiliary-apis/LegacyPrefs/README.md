@@ -41,7 +41,8 @@ let defaultPrefs = {
       // Store the migrated value in local storage.
       // Check out the MDN documentation at
       // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/storage
-      // or use preference.js bundled with this API
+      // or use preference.js part of this repository:
+      // https://github.com/thundernest/addon-developer-support/tree/master/scripts/preferences
       preferences.setPref(prefName, legacyValue);
       
       // Clear the legacy value.
