@@ -100,9 +100,6 @@ var preferences = {
         this._prefs[key] = userPrefStorage[key];
       }
     }
-
-    // Add storage change listener.
-    await messenger.storage.onChanged.addListener(this.storageChanged);
     
     // If defaults are given, push them into storage.local, if not, get them
     // from storage.local.
@@ -132,7 +129,10 @@ var preferences = {
           this._prefs[key] = defaultPrefStorage[key];
         }
       }
-    }    
+    }
+    
+    // Add storage change listener.
+    await messenger.storage.onChanged.addListener(this.storageChanged);    
   },
 
 }
