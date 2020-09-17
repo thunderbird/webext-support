@@ -37,12 +37,12 @@ function manipulateWindow(window) {
 
     const id = `${window.id}`;
     const description = {
-      "id": "menu_TestItem",
+      "id": "menu_CustomItem",
       "type": "menu-label",
       "reference": "activityManager",
       "position": "before",
-      "label": "Test2",
-      "accesskey": "T"
+      "label": "My Custom Menu Item",
+      "accesskey": "C"
     };
     messenger.LegacyMenu.add(id, description);   
 }
@@ -70,7 +70,7 @@ To attach a command action to any of the added menu items, register the onComman
 ```
   messenger.LegacyMenu.onCommand.addListener(
     async (windowsId, id) => {
-      if (id == "menu_TestItem") {
+      if (id == "menu_CustomItem") {
         messenger.windows.create({
           url: "popup.html",
           type: "popup"
