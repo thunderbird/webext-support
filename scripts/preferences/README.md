@@ -1,7 +1,7 @@
 ## Objective
 
 This script is a wrapper for your MailExtensions local storage to set and get
-your add-on options.
+your add-on preferences.
 
 ## Usage
 
@@ -10,7 +10,7 @@ This script provides the following public methods:
 ### async preferences.init([defaults]);
 
 The main difference between the MailExtensions local storage and the
-legacy nsIPrefBranch: the storage API to access the data is asynchronously.
+legacy `nsIPrefBranch`: the storage API to access the data is asynchronously.
 
 This function will asynchronously load the current values from the storage
 into a local object and sets up a listener for storage changes, which will
@@ -50,7 +50,7 @@ to all instances of this script as well.
 
 ### preferences.getPref(aName, [aFallback]);
 
-Gets the value for preference `aName`. Returns the default value if no user value has been defined. If not even a default value has been set, `aFallback` or `null` is returned.
+Gets the value for preference `aName`. Returns the default value if no user value has been defined. If not even a default value has been set, the value of the optional parameter `aFallback`  is returned (or `null`).
 
 
 ### preferences.setPref(aName, aValue);
