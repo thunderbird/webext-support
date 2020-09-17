@@ -10,7 +10,7 @@ This script provides the following public methods:
 ### async preferences.init([defaults]);
 
 The main difference between the MailExtensions local storage and the
-legacy `nsIPrefBranch`: the storage API to access the data is asynchronously.
+legacy `nsIPrefBranch`: the storage API to access the data works asynchronously.
 
 This function will asynchronously load the current values from the storage
 into a local object and sets up a listener for storage changes, which will
