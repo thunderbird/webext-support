@@ -54,3 +54,4 @@ let defaultPrefs = {
 
 ```
 
+A detailed usage description of the used `preferences.js` script can be found in [/scripts/preferences/](https://github.com/thundernest/addon-developer-support/tree/master/scripts/preferences).
