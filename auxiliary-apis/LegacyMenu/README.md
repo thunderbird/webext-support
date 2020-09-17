@@ -1,11 +1,11 @@
 ## Objective
 
-Use this API to add menu entries to the Thunderbird UI, as long as it is not yet possible with built-in APIs (like the menus API).
+Use this API to add menu items to the Thunderbird UI, as long as it is not yet possible with built-in APIs (like the menus API).
 
 ## Usage
 
-In order to add a menu to a window, you first need to get the handle to that window. The most simple way is to request all open windows
-and listen to newly opend windows and pass the received window handles to a method, which adds the menu entries (if needed). A background script could look like the following:
+In order to add a menu item to a window, you first need to get the handle to that window. The most simple way is to request all currently open windows
+and listen for newly opened windows and pass the received window handles to a method, which adds the menu items (if needed). A background script could look like the following:
 
 ```
 (async function() {
@@ -28,9 +28,9 @@ function manipulateWindow(window) {
     // * app
     // * devtools
     // * addressBook
-    // * messageCompose 
+    // * messageCompose
     // * messageDisplay
-    
+   
     if (`${window.type}` !== "normal") {
       return;
     }
@@ -43,7 +43,7 @@ function manipulateWindow(window) {
       "position": "before",
       "label": "Test2",
       "accesskey": "T"
-    });    
+    });   
 }
 
 ```
@@ -53,5 +53,23 @@ The `position` property supports the following values:
 * after
 * child
 
-Depending on its value, the new menu entry will be inserted `before` or `after` the element identified by the id specified in the `reference` property.
+Depending on its value, the new menu item will be inserted `before` or `after` the element identified by the id specified in the `reference` property.
 If the position is set to `child`, the new menu entry will be appended to the reference element.
+
+To attach a command action to any of the added menu items, register the onCommand listener:
+
+```
+  messenger.LegacyMenu.onCommand.addListener(
+    async (windowsId, id) => {
+      if (id == "menu_TestItem") {
+        messenger.windows.create({
+          url: "popup.html",
+          type: "popup"
+        });
+      }
+    }
+  ); 
+
+```
+
+The listener will fire for any of the added menu items and will include the id of the window and the id of the item that has been clicked on.
