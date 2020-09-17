@@ -1,6 +1,6 @@
 ## Objective
 
-Use this API to migrate preferences from the legacy pref branch to local storage.
+Use this API to migrate your preferences from the legacy pref branch to the local storage of your MailExtension.
 
 ## Usage
 
