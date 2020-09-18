@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import os, sys, json, re, io
+import os, sys, json, re, io, shlex
 
 #------------------------------------------------
 
@@ -9,23 +9,25 @@ def newDir(dir):
        print("Directory doesn't exist. Creating. <" +  dir + ">")
        os.makedirs(dir)
 
-def convert(source, destination, current = None):
+def convert(source, destination, current = None, level = 0):
     dir = source if current == None else current
-    messages = ""
+    messages = []
     
     for name in os.listdir(dir):
         path = os.path.join(dir, name)
         
         if os.path.isfile(path):
             if path.endswith('.dtd'):
-                messages = messages + convert_dtd(path, dir)
+                messages.extend(convert_dtd(path, dir))
             if path.endswith('.properties'):
-                messages = messages + convert_prop(path, dir)
+                messages.extend(convert_prop(path, dir))
 
         else:
-            convert(source, destination, path)
+            messages.extend(convert(source, destination, path, level+1))
 
-    if (messages):
+    if level > 1:
+            return messages
+    elif level == 1 and messages:
         # map the path from the source into the destination folder
         dest = dir.replace(source, destination);
         messagesjson = os.path.join(dest, "messages.json")
@@ -35,10 +37,10 @@ def convert(source, destination, current = None):
         oldData = None
         if os.path.exists(messagesjson):
             with open(messagesjson, "r",  encoding='utf-8') as f:
-                oldData = json.load(f)    
-        
+                oldData = json.load(f)
+
         # merge data
-        newData = json.loads("{" + messages[:-1] + "}")
+        newData = json.loads("{" + ", ".join(messages) + "}")
         if oldData:
             mergedData = oldData
             mergedData.update(newData)
@@ -55,27 +57,22 @@ def convert(source, destination, current = None):
         with open(messagesjson, "r",  encoding='utf-8') as f:
             d = json.load(f)
             #print(d)
-
+    
+    return []
 
 
 
 def convert_dtd(path, dir):
     print(" CONVERTING <" + path + "> to JSON")
 
-    p = re.compile(r'\s+')
-    sdtd = ''
+    sdtd = []
 
-    dtd = io.open(path, 'r', encoding='utf-8')
-    dtdLines = dtd.readlines()
+    dtd = io.open(path, 'r', encoding='utf-8')   
+    dtdTokens = shlex.split(dtd.read(), posix=False)
 
-    for line in dtdLines:
-        sline = line.strip().replace('\r','').replace('\n','')
-        #print("next line >>" + line + "<<", len(line))
-
-        if sline != '' and sline.find('<!--') == -1:
-            b = p.split(sline, 2)
-            b2 = b[2][0:(len(b[2])-1)]
-            sdtd = sdtd + ' "' + b[1] +'"'+ ': { "message": ' + b2 + '},'
+    for i, j in enumerate(dtdTokens):
+        if j == "<!ENTITY":
+            sdtd.append(' "' + dtdTokens[i+1].strip() +'" : ' + json.dumps({ "message" : dtdTokens[i+2].strip()[1:-1] }))
 
     return sdtd
 
@@ -83,7 +80,7 @@ def convert_dtd(path, dir):
 def convert_prop(path, dir):
     print(" CONVERTING <" + path + "> to JSON")
 
-    sprop = ''
+    sprop = []
     prop = io.open(path, 'r', encoding='utf-8')
     propLines = prop.readlines()
 
@@ -96,20 +93,21 @@ def convert_prop(path, dir):
             
             # search for %S and replace them by $P1$, $P2" and so on
             count = 0;
-            placeholders = [];
-            placeholder = ""
+            placeholders = {};
             while True:
                 idx = a[1].find("%S")
                 if (idx == -1):
                     break
                 count += 1
                 a[1] = a[1].replace("%S", "$P" + str(count) + "$", 1)
-                placeholders.append('"P' + str(count) + '": { "content": "$' + str(count) + '"}')
-                
+                placeholders["P" + str(count)] = { "content" : "$" + str(count) }
+            
+            data = {}
+            data["message"] = a[1].strip();
             if len(placeholders) > 0:
-                placeholder = ', "placeholders": {' + ','.join(placeholders) + '}'
+                data["placeholder"] = placeholders
                  
-            sprop = sprop + ' "' + a[0] +'"'+ ': { "message": "' + a[1].replace("\"","'") + '"' + placeholder+ ' },'
+            sprop.append(' "' + a[0].strip() +'" : ' +  json.dumps(data));
 
     return sprop
 
