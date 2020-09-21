@@ -1,3 +1,16 @@
+/*
+ * This file is provided by the addon-developer-support repository at
+ * https://github.com/thundernest/addon-developer-support
+ *
+ * Version: 1.1
+ *
+ * Author: John Bieling (john@thunderbird.net)
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
 // Import some things we need.
 var { ExtensionCommon } = ChromeUtils.import("resource://gre/modules/ExtensionCommon.jsm");
 var { ExtensionSupport } = ChromeUtils.import("resource:///modules/ExtensionSupport.jsm");
