@@ -152,7 +152,7 @@ var preferences = {
   // M-C preferencesBindings.js.
   
   // Get current values from preference elements and update preferences.
-  savePreferences: async function (window) {
+  savePreferences: async function () {
     if (!this._preferencesLoaded)
       return;
     
