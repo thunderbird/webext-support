@@ -16,4 +16,4 @@ i18n.updateDocument({
 });
 ```
 
-More details on using this script together with the WindowListener API or the BootstrapLoader API, can be found in the corresponding tutorial.
+More details on using this script together with the WindowListener API or the BootstrapLoader API, can be found in the [corresponding locale tutorial](https://github.com/thundernest/addon-developer-support/wiki/Tutorial:-Switch-to-the-WebExtension-i18n-locale-system).
