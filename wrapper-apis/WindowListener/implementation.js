@@ -2,6 +2,9 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
+ * Version: 1.23
+ * - automatically localize i18n locale strings in injectElements()
+ *
  * Version: 1.22
  * - to reduce confusions, only check built-in URLs as add-on URLs cannot
  *   be resolved if a temp installed add-on has bin zipped
@@ -389,7 +392,8 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
       if (window.hasOwnProperty(this.uniqueRandomID) && this.registeredWindows.hasOwnProperty(window.location.href)) {
         try {
           let uniqueRandomID = this.uniqueRandomID;
-
+          let extension = this.extension;
+          
           // Add reference to window to add-on scope
           window[this.uniqueRandomID].window = window;
           window[this.uniqueRandomID].document = window.document;
@@ -435,6 +439,10 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
               return null;
             }
 
+            function localize(entity) {
+              let msg = entity.slice("__MSG_".length,-2);
+              return extension.localeData.localizeMessage(msg)
+            }
 
             function injectChildren(elements, container) {
               if (debug) console.log(elements);
@@ -509,7 +517,8 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
             }
 
             if (debug) console.log ("Injecting into root document:");
-            injectChildren(Array.from(window.MozXULElement.parseXULToFragment(xulString, dtdFiles).children), window.document.documentElement);
+            let localicedXulString = xulString.replaceAll(/__MSG_(.*?)__/g, localize);
+            injectChildren(Array.from(window.MozXULElement.parseXULToFragment(localicedXulString, dtdFiles).children), window.document.documentElement);
 
             for (let bar of toolbarsToResolve) {
               let currentset = Services.xulStore.getValue(
