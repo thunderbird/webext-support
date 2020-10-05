@@ -5,10 +5,10 @@
 Calling this function, for example in a `DOMContentLoaded` event listener, will search the loaded document and replace all i18n locale strings (`__MSG_<message-name>__)` with their corresponding i18n message.
 
 The optional `options` object can be used to override standard behavior:
-* `keyPrefix` : specifies the prefix for the WebExtension locale strings, defaults to `__MSG_`
-* `getMessage`: specifies the function used to lookup i18n messages, defaults to `messenger.i18n.getMessage`
+* `keyPrefix` : specifies the prefix for the i18n locale strings, defaults to `__MSG_`
+* `getMessage`: specifies the function used to lookup i18n locale strings, defaults to `messenger.i18n.getMessage`
 
-Overriding the standard message-lookup-function is needed, if this script is used in a legacy context, as `messenger` is not defined there. Using one of our wrapper APIs gives access to the `extension` object in legacy context, which can even be passed as a parameter into newly opened legacy windows. That extension object provides access to `extension.localeData.localizeMessage`, which can be used to lookup i18n messages.
+Overriding the standard `getMessage` function is needed, if this script is used in a legacy context, as `messenger` is not defined there. Using one of our wrapper APIs gives access to the `extension` object in legacy context, which can even be passed as a parameter into newly opened legacy windows. That extension object provides access to `extension.localeData.localizeMessage`, which can be used to lookup i18n messages.
 
 ```
 i18n.updateDocument({
