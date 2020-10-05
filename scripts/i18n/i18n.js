@@ -3,7 +3,10 @@ var i18n = {
 		let re = new RegExp(this.keyPrefix + "(.+?)__", "g");
 		return string.replace(re, matched => {
 			const key = matched.slice(this.keyPrefix.length, -2);
-			return this.getMessage(key) || matched;
+			let rv = this.extension 
+						? this.extension.localeData.localizeMessage(key)
+						: messenger.i18n.getMessage(key);
+			return rv || matched;
 		});
 	},
 
@@ -34,9 +37,9 @@ var i18n = {
 	},
 
 	updateDocument(options = {}) {		
-		this.getMessage = options?.getMessage
-			? options.getMessage
-			: messenger.i18n.getMessage;
+		this.extension = options?.extension
+			? options.extension
+			: null;		
 		this.keyPrefix = options?.keyPrefix
 			? options.keyPrefix
 			: "__MSG_";
