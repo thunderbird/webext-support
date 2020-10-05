@@ -6,6 +6,6 @@ Calling this function, for example in a `DOMContentLoaded` event listener, will 
 
 The optional `options` object can be used to override standard behavior:
 * `keyPrefix` : Secifies the prefix for the i18n locale strings, defaults to `__MSG_`
-* `extension`: Specifies the `extension` object from an Experiment. If provided, `extension.localeData.localizeMessage()` will be used to localize the strings, instead of `messenger.i18n.getMessage()`.
+* `extension`: Specifies the `extension` object available to a WebExtension Experiment. If provided, `extension.localeData.localizeMessage()` instead of `messenger.i18n.getMessage()` will be used to localize the strings.
 
 More details on using this script together with the WindowListener API or the BootstrapLoader API, can be found in the [corresponding locale tutorial](https://github.com/thundernest/addon-developer-support/wiki/Tutorial:-Switch-to-the-WebExtension-i18n-locale-system).
