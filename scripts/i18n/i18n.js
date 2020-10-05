@@ -40,11 +40,7 @@ let i18n = {
 		this.keyPrefix = options?.keyPrefix
 			? options.keyPrefix
 			: "__MSG_";
-		let node = options?.node
-			? options.node
-			: document;
-
-		this.updateSubtree(node);
+		this.updateSubtree(document);
 	}
 };
 
