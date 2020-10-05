@@ -1,4 +1,4 @@
-let i18n = {
+var i18n = {
 	updateString(string) {
 		let re = new RegExp(this.keyPrefix + "(.+?)__", "g");
 		return string.replace(re, matched => {
