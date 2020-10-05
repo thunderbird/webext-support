@@ -64,7 +64,9 @@ Clears the stored user value for preference `aName`. Subsequent calls to `getPre
 
 ### async preferences.loadPreferences(window);
 
-This will search the given `window` for elements with a `preference` attribute (containing the name of a preference) and will load the appropriate values. Any user changes to these elements values will instantly update the linked preferences. This behaviour can be changed by adding the `instantApply` attribute to the element and setting it to `false`. Also supported is the `delayprefsave` attribute, which causes to defer the preference updates by 1s.
+This will search the given `window` for elements with a `preference` attribute (containing the name of a preference) and will load the appropriate values. Any user changes to these elements values will instantly update the linked preferences. This behaviour can be changed by adding the `instantApply` attribute to the element and setting it to `false`. 
+
+**Note:** _Also supported is the `delayprefsave` attribute, which causes to defer the preference updates by 1s. This requires to add the `alarms` permission to the `manifest.json` file._
 
 If a linked preference is modified elsewhere, the element's value in the given window will be automatically updated to new new value.
 
