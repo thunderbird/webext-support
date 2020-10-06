@@ -2,7 +2,7 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
- * Version: 1.23
+ * Version: 1.24
  * - automatically localize i18n locale strings in injectElements()
  *
  * Version: 1.22
