@@ -12,6 +12,7 @@ These APIs are not intended to be merged into Thunderbird. They are very generic
 | -----------------------| ------ | ------------ |
 | [LegacyPrefs](https://github.com/thundernest/addon-developer-support/tree/master/auxiliary-apis/LegacyPrefs)            | [@jobisoft](https://github.com/jobisoft/)  | Access Thunderbird preferences |
 | [LegacyMenu](https://github.com/thundernest/addon-developer-support/tree/master/auxiliary-apis/LegacyMenu)             | [@jobisoft](https://github.com/jobisoft/)  | Add menu entries to Thunderbird menus currently not accessible using the menus API |
+| [CachingFix](https://github.com/rsjtdrjgfuzkfg/thunderbird-experiments/tree/master/experiments/cachingfix)        | [@rsjtdrjgfuzkfg](https://github.com/rsjtdrjgfuzkfg/) | Adding this experiment will automatically [fix caching issues when the add-on is updated, disabled or uninstalled](https://developer.thunderbird.net/add-ons/mailextensions/experiments#managing-your-experiments-lifecycle). A similar feature is built into the WindowListener wrapper API. |
 
 &nbsp;
  
@@ -24,7 +25,6 @@ If you are working on an API yourself, we are looking forward to list it here as
 | Name                   | Author |  Description |
 | -----------------------| ------ | ------------ |
 | [NotificationBox](https://github.com/jobisoft/notificationBox-API/tree/master/notificationbox)        | [@jobisoft](https://github.com/jobisoft/)       | Add Thunderbird notification boxes.        |
-
 
 &nbsp;
 
