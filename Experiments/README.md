@@ -26,7 +26,7 @@ These APIs can be discussed in the issue section of this repository.
 
 | Name                   | Author |  Discussion | Description |
 | -----------------------| ------ | ----------- | ----------- |
-| [NotificationBox](https://github.com/jobisoft/notificationBox-API/tree/master/notificationbox)        | [@jobisoft](https://github.com/jobisoft/)       | [Issue](https://github.com/jobisoft/notificationBox-API/issues/1) | Add Thunderbird notification boxes.        |
+| [NotificationBox](https://github.com/jobisoft/notificationBox-API/tree/master/notificationbox)        | [@jobisoft](https://github.com/jobisoft/)       | [Issue](https://github.com/thundernest/addon-developer-support/issues/47) | Add Thunderbird notification boxes.        |
 | [CustomUI](https://github.com/rsjtdrjgfuzkfg/thunderbird-experiments/tree/master/experiments/customui) | [@rsjtdrjgfuzkfg](https://github.com/rsjtdrjgfuzkfg/) | | A generic UI extension framework based iframes registered at fixed extension points. |
 | [TCP](https://github.com/rsjtdrjgfuzkfg/thunderbird-experiments/tree/master/experiments/tcp) | [@rsjtdrjgfuzkfg](https://github.com/rsjtdrjgfuzkfg/) | | TCP support based on ArrayBuffers (currently client side only). |
 | [Runtime.onDisable](https://github.com/rsjtdrjgfuzkfg/thunderbird-experiments/tree/master/experiments/runtime) | [@rsjtdrjgfuzkfg](https://github.com/rsjtdrjgfuzkfg/) | | Permit WebExtensions to perform (time-limited) cleanup tasks after the add-on is disabled or uninstalled. |
