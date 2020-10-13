@@ -26,6 +26,7 @@ If you are working on an API yourself, we are looking forward to list it here as
 | -----------------------| ------ | ------------ |
 | [NotificationBox](https://github.com/jobisoft/notificationBox-API/tree/master/notificationbox)        | [@jobisoft](https://github.com/jobisoft/)       | Add Thunderbird notification boxes.        |
 | [CustomUI](https://github.com/rsjtdrjgfuzkfg/thunderbird-experiments/tree/master/experiments/customui) | [@rsjtdrjgfuzkfg](https://github.com/rsjtdrjgfuzkfg/) | A generic UI extension framework based iframes registered at fixed extension points. |
+| [TCP](https://github.com/rsjtdrjgfuzkfg/thunderbird-experiments/tree/master/experiments/tcp) | [@rsjtdrjgfuzkfg](https://github.com/rsjtdrjgfuzkfg/) | TCP support based on ArrayBuffers (currently client side only). |
 
 &nbsp;
 
