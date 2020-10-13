@@ -22,6 +22,8 @@ This is a collection of externally hosted APIs, which aim to be merged into Thun
 
 If you are working on an API yourself, we are looking forward to list it here as well.
 
+These APIs can be discussed in the issue section of this repository. 
+
 | Name                   | Author |  Discussion | Description |
 | -----------------------| ------ | ----------- | ----------- |
 | [NotificationBox](https://github.com/jobisoft/notificationBox-API/tree/master/notificationbox)        | [@jobisoft](https://github.com/jobisoft/)       | [Issue](https://github.com/jobisoft/notificationBox-API/issues/1) | Add Thunderbird notification boxes.        |
