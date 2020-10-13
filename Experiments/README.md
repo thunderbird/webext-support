@@ -34,7 +34,7 @@ These APIs are hosted on a dedicated repository and are on its way to be merged 
 
 | Name                               | Author                                           | Description
 | ---------------------------------- | ------------------------------------------------ | --------------
-| [cloudfile](https://raw.githubusercontent.com/thundernest/tb-web-ext-experiments/master/cloudfile/)          | [@kewisch](https://github.com/kewisch/)          | Experiment with add-on exposing the Cloudfile feature
-| [calendar](https://raw.githubusercontent.com/thundernest/tb-web-ext-experiments/master/calendar/)            | [@kewisch](https://github.com/kewisch/)          | Draft for calendar-related APIs in Thunderbird
+| [cloudfile](https://github.com/thundernest/tb-web-ext-experiments/blob/master/cloudfile)          | [@kewisch](https://github.com/kewisch/)          | Experiment with add-on exposing the Cloudfile feature
+| [calendar](https://github.com/thundernest/tb-web-ext-experiments/blob/master/calendar)            | [@kewisch](https://github.com/kewisch/)          | Draft for calendar-related APIs in Thunderbird
 
 
