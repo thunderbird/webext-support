@@ -27,7 +27,7 @@ The different methods to update [legacy add-ons](https://developer.thunderbird.n
 
 |      | Description |
 | ---- | ---- |
-| [WindowListener API BootstrapLoader API](https://github.com/thundernest/addon-developer-support/wiki) | Wrapper Experiment APIs to simplify the add-on update process for Thunderbird 78. |
+| [WindowListener API BootstrapLoader API](https://github.com/thundernest/addon-developer-support/wiki) | Wrapper Experiment APIs to simplify the process to update legacy add-ons to MailExtensions. |
 | [Update Tutorials](https://github.com/thundernest/addon-developer-support/issues/37) | Updating add-ons using the wrapper APIs should only be the first step. We encourage add-on developers to continue the update process to pure MailExtensions, following the listed tutorials. These tutorials are each designed to be completed in a short amount of time, to get the legacy components out piece by piece. |
 | [Auxiliary APIs](https://github.com/thundernest/addon-developer-support/tree/master/auxiliary-apis) | APIs used by conversion steps after the initial update using the wrapper APIs. |
 | [Scripts](https://github.com/thundernest/addon-developer-support/tree/master/scripts)        | Scripts used by conversion steps after the initial update using the wrapper APIs. |
