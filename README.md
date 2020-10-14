@@ -4,10 +4,10 @@ The goal of this repository is to provide useful code snippets, examples and too
 
 ## Content
 
-* Introduction to MailExtensions, WebExtension APIs and Experiments
-* Converting legacy add-ons to MailExtensions
-* Collaborating on new WebExtension APIs
-* Proposing new WebExtension APIs
+* [Introduction to MailExtensions, WebExtension APIs and Experiments](#supporting-add-on-developers)
+* [Converting legacy add-ons to MailExtensions](#converting-legacy-add-ons-to-mailextensions)
+* [Collaborating on new WebExtension APIs](#collaborating-on-new-webextension-apis)
+* [Proposing new WebExtension APIs](#proposing-new-webextension-apis)
 
 &nbsp;
 
