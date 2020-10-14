@@ -1,6 +1,6 @@
 # Supporting Add-On Developers
 
-The goal of this repository is to provide useful code snippets, examples and tools to add-on developers in order to better "weather" the transition to the new extension structure of Thunderbird 78: MailExtensions.
+The goal of this repository is to provide useful code snippets, examples, scripts, APIs and tools to add-on developers in order to better "weather" the transition to the new extension structure of Thunderbird 78: MailExtensions.
 
 ## Content
 
