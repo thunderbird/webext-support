@@ -37,8 +37,6 @@ The different methods to update [legacy add-ons](https://developer.thunderbird.n
 
 ## Proposing new WebExtension APIs
 
-While we work on new WebExtension APIs, many add-on developers started towe cannot do that entirelyon our own. We need to learn, what APIs are missing
-
 ### Proposing APIs : Stage One
 
 This is a collection of externally hosted APIs, which aim to be merged into Thunderbird. They are at a very early stage and do not yet fulfill the standards for stage two. Nevertheless we wish to collect them at a central place to obtain an overview of what APIs are currently being worked on, so add-on developers who wish to implement a certain functionality can collaborate.
