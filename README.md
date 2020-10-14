@@ -8,6 +8,7 @@ The goal of this repository is to provide useful code snippets, examples, script
 * [Converting legacy add-ons to MailExtensions](#converting-legacy-add-ons-to-mailextensions)
 * [Collaborating on new WebExtension APIs](#collaborating-on-new-webextension-apis)
 * [Proposing new WebExtension APIs](#proposing-new-webextension-apis)
+* [Some useful helper Experiment APIs](#some-useful-helper-experiment-apis)
 
 &nbsp;
 
@@ -60,6 +61,18 @@ These APIs are hosted on a dedicated repository and are on its way to be merged 
 | ---------------------------------- | ------------------------------------------------ | --------------
 | [cloudfile](https://github.com/thundernest/tb-web-ext-experiments/blob/master/cloudfile)          | [@kewisch](https://github.com/kewisch/)          | Experiment with add-on exposing the Cloudfile feature
 | [calendar](https://github.com/thundernest/tb-web-ext-experiments/blob/master/calendar)            | [@kewisch](https://github.com/kewisch/)          | Draft for calendar-related APIs in Thunderbird
+
+&nbsp;
+
+## Some useful helper Experiment APIs
+
+These APIs are not intended to be merged into Thunderbird. They are very generic and aim to quickly solve a current limitation.
+
+| Name                   | Author |  Description |
+| -----------------------| ------ | ------------ |
+| [LegacyPrefs](https://github.com/thundernest/addon-developer-support/tree/master/auxiliary-apis/LegacyPrefs)            | [@jobisoft](https://github.com/jobisoft/)  | Access Thunderbird preferences |
+| [LegacyMenu](https://github.com/thundernest/addon-developer-support/tree/master/auxiliary-apis/LegacyMenu)             | [@jobisoft](https://github.com/jobisoft/)  | Add menu entries to Thunderbird menus currently not accessible using the built-in menus API |
+| [CachingFix](https://github.com/rsjtdrjgfuzkfg/thunderbird-experiments/tree/master/experiments/cachingfix)        | [@rsjtdrjgfuzkfg](https://github.com/rsjtdrjgfuzkfg/) | Adding this Experiment API will automatically [fix caching issues when the add-on is updated, disabled or uninstalled](https://developer.thunderbird.net/add-ons/mailextensions/experiments#managing-your-experiments-lifecycle). A similar feature is built into the WindowListener wrapper API. |
 
 &nbsp;
 
