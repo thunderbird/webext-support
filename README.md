@@ -13,7 +13,7 @@ The goal of this repository is to provide useful code snippets, examples, script
 
 ## Introduction to MailExtensions, WebExtension APIs and Experiments
 
-To get started with MailExtensions, we suggest to read our [Thunderbird MailExtension guide](https://developer.thunderbird.net/add-ons/mailextensions) first. You will learn, how MailExtensions use a set of well defined APIs (called WebExtension APIs), which will be mostly stable, even if the unerlying Thunderbird code base is changed. In the past, this has led to heavy add-on breakage on each new Thunderbird release and the WebExtension approach aims to minimize that.
+To get started with MailExtensions, we suggest to read our [Thunderbird MailExtension guide](https://developer.thunderbird.net/add-ons/mailextensions) first. You will learn, how MailExtensions use a set of well-defined APIs (called WebExtension APIs), which will be mostly stable, even if the underlying Thunderbird code base is changed. In the past, these internal changes have led to heavy add-on breakages on each new Thunderbird release and the WebExtension approach aims to minimize that.
 
 You will also learn, that the current set of available WebExtension APIs is far from being complete. Many aspects of Thunderbird which are of interest for add-ons, cannot be accessed by them. To overcome this limitation, add-on developers can write Experiment APIs, which have direct access to internal Thunderbird functions and components and can make them available to MailExtensions. 
 
@@ -39,9 +39,9 @@ The different methods to update [legacy add-ons](https://developer.thunderbird.n
 
 The main idea behind Experiment APIs is not just to make Thunderbird internals available to MailExtensions, but to actually design and experiment with new WebExtension APIs, which can then be proposed to be merged into Thunderbird.
 
-This is a collection of externally hosted APIs, which aim to be merged into Thunderbird, but do not yet fulfill the required standards. Nevertheless we wish to collect them at a central place to obtain an overview of what APIs are currently being worked on, so add-on developers who wish to implement a certain functionality can collaborate.
+This is a collection of externally hosted APIs, which aim to be merged into Thunderbird, but do not yet fulfill the required standards. Nevertheless, we wish to collect them at a central place to obtain an overview of what APIs are currently being worked on, so add-on developers who wish to implement a certain functionality can collaborate.
 
-If you are working on an API yourself, we are looking forward to list it here as well. These APIs can be discussed in the issue section of this repository. 
+If you are working on an API yourself, we are looking forward to listing it here as well. These APIs can be discussed in the issue section of this repository. 
 
 | Name                   | Author |  Discussion | Description |
 | -----------------------| ------ | ----------- | ----------- |
