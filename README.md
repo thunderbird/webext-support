@@ -5,8 +5,8 @@ The goal of this repository is to provide useful code snippets, examples and too
 ## Content
 
 * Introduction to MailExtensions, WebExtension APIs and Experiments
-* Converting legacy add-ons to MailExtensions
 * Proposing new WebExtension APIs
+* Converting legacy add-ons to MailExtensions
 
 &nbsp;
 
@@ -17,21 +17,6 @@ To get started with MailExtensions, we suggest to read our [Thunderbird MailExte
 You will also learn, that the current set of available WebExtension APIs is far from being complete. Many aspects of Thunderbird which are of interest for add-ons, cannot be accessed by them. To overcome this limitation, add-on developers can write Experiment APIs, which have direct access to internal Thunderbird functions and components and can make them available to MailExtensions. 
 
 The main idea behind such Experiment APIs is not just to make Thunderbird internals available to MailExtensions, but to actually design and experiment with new WebExtension APIs, which can then be proposed to be merged into Thunderbird.
-
-&nbsp;
-
-## Converting legacy add-ons to MailExtensions
-
-The different methods to update [legacy add-ons](https://developer.thunderbird.net/add-ons/about-add-ons#legacy-extension-types) to MailExtensions are covered in our [Thunderbird add-on update guide](https://developer.thunderbird.net/add-ons/updating/tb78). You will learn, that they can be converted by removing all legacy parts at once, or step-by-step by using two special wrapper Experiment APIs. To simplify the add-on conversion process, this repository includes a few additional resources:
-
-
-|      | Description |
-| ---- | ---- |
-| [WindowListener API BootstrapLoader API](https://github.com/thundernest/addon-developer-support/wiki) | Wrapper Experiment APIs to simplify the add-on update process for Thunderbird 78. |
-| [Update Tutorials](https://github.com/thundernest/addon-developer-support/issues/37) | Updating add-ons using the wrapper APIs should only be the first step. We encourage add-on developers to continue the update process to pure MailExtensions, following the listed tutorials. These tutorials are each designed to be completed in a short amount of time, to get the legacy components out piece by piece. |
-| [Auxiliary APIs](https://github.com/thundernest/addon-developer-support/tree/master/auxiliary-apis) | APIs used by conversion steps after the initial update using the wrapper APIs. |
-| [Scripts](https://github.com/thundernest/addon-developer-support/tree/master/scripts)        | Scripts used by conversion steps after the initial update using the wrapper APIs. |
-| [Tools](https://github.com/thundernest/addon-developer-support/tree/master/tools/)          | Tools to help developers update their add-ons more easily. |
 
 &nbsp;
 
@@ -60,3 +45,19 @@ These APIs are hosted on a dedicated repository and are on its way to be merged 
 | ---------------------------------- | ------------------------------------------------ | --------------
 | [cloudfile](https://github.com/thundernest/tb-web-ext-experiments/blob/master/cloudfile)          | [@kewisch](https://github.com/kewisch/)          | Experiment with add-on exposing the Cloudfile feature
 | [calendar](https://github.com/thundernest/tb-web-ext-experiments/blob/master/calendar)            | [@kewisch](https://github.com/kewisch/)          | Draft for calendar-related APIs in Thunderbird
+
+&nbsp;
+
+## Converting legacy add-ons to MailExtensions
+
+The different methods to update [legacy add-ons](https://developer.thunderbird.net/add-ons/about-add-ons#legacy-extension-types) to MailExtensions are covered in our [Thunderbird add-on update guide](https://developer.thunderbird.net/add-ons/updating/tb78). You will learn, that they can be converted by removing all legacy parts at once, or step-by-step by using two special wrapper Experiment APIs. To simplify the add-on conversion process, this repository includes a few additional resources:
+
+
+|      | Description |
+| ---- | ---- |
+| [WindowListener API BootstrapLoader API](https://github.com/thundernest/addon-developer-support/wiki) | Wrapper Experiment APIs to simplify the add-on update process for Thunderbird 78. |
+| [Update Tutorials](https://github.com/thundernest/addon-developer-support/issues/37) | Updating add-ons using the wrapper APIs should only be the first step. We encourage add-on developers to continue the update process to pure MailExtensions, following the listed tutorials. These tutorials are each designed to be completed in a short amount of time, to get the legacy components out piece by piece. |
+| [Auxiliary APIs](https://github.com/thundernest/addon-developer-support/tree/master/auxiliary-apis) | APIs used by conversion steps after the initial update using the wrapper APIs. |
+| [Scripts](https://github.com/thundernest/addon-developer-support/tree/master/scripts)        | Scripts used by conversion steps after the initial update using the wrapper APIs. |
+| [Tools](https://github.com/thundernest/addon-developer-support/tree/master/tools/)          | Tools to help developers update their add-ons more easily. |
+
