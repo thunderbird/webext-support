@@ -39,9 +39,17 @@ The different methods to update [legacy add-ons](https://developer.thunderbird.n
 
 The main idea behind Experiment APIs is not just to make Thunderbird internals available to MailExtensions, but to actually design and experiment with new WebExtension APIs, which can then be proposed to be merged into Thunderbird.
 
-This is a collection of externally hosted APIs, which aim to be merged into Thunderbird, but do not yet fulfill the required standards. Nevertheless, we wish to collect them at a central place to obtain an overview of what APIs are currently being worked on, so add-on developers who wish to implement a certain functionality can collaborate.
+To raise awareness for a missing Thunderbird WebExtension API, you should [file a bug](https://bugzilla.mozilla.org/enter_bug.cgi?product=Thunderbird&component=Add-Ons%3A+Extensions+API&cc=john@thunderbird.net) at bugzilla. To make sure the requested API is indeed not yet available, it may be helpful to check with us on [matrix chat](https://chat.mozilla.org/#/room/#tb-addon-developers:mozilla.org) or on [topicbox](https://thunderbird.topicbox.com/groups/addons).
 
-If you are working on an API yourself, we are looking forward to listing it here as well. These APIs can be discussed in the issue section of this repository. 
+If you started to work on an Experiment API to address the missing  functionality, you can of course link to it in the bugzilla report. Additionally, we wish to collect such Experiment APIs in this section, to obtain an overview of what APIs are currently being worked on. This will enable add-on developers implementing a certain functionality to collaborate. [Contact me directly](mailto:john@thunderbird.net) to get your API added to this list, or file a pull request against this document.
+
+The bugzilla bug can be used to track status, but it may not be the best place to discuss the details of a new API. You could:
+
+ * keep the discussion in a GitHub issue or on [matrix chat](https://chat.mozilla.org/#/room/#tb-addon-developers:mozilla.org), to collaborate on the API in a smaller group first
+ * anounce the API on [topicbox](https://thunderbird.topicbox.com/groups/addons) to get feedback from the add-on developer community and a few core developers like Geoff and Philipp
+ * use the bugzilla bug directly, to get direct feedback mainly from core developers
+
+At one point, it is of course advised to announce the API on [topicbox](https://thunderbird.topicbox.com/groups/addons), to get feedback from the add-on developer community, to learn if there are use cases it does not yet cover or if there might be a better interface concept.
 
 | Name                   | Author |  Discussion | Description |
 | -----------------------| ------ | ----------- | ----------- |
