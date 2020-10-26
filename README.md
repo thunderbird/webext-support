@@ -39,17 +39,19 @@ The different methods to update [legacy add-ons](https://developer.thunderbird.n
 
 The main idea behind Experiment APIs is not just to make Thunderbird internals available to MailExtensions, but to actually design and experiment with new WebExtension APIs, which can then be proposed to be merged into Thunderbird.
 
-To raise awareness for a missing Thunderbird WebExtension API, you should [file a bug](https://bugzilla.mozilla.org/enter_bug.cgi?product=Thunderbird&component=Add-Ons%3A+Extensions+API&cc=john@thunderbird.net) at bugzilla. To make sure the requested API is indeed not yet available, it may be helpful to check with us on [matrix chat](https://chat.mozilla.org/#/room/#tb-addon-developers:mozilla.org) or on [topicbox](https://thunderbird.topicbox.com/groups/addons).
+#### Reporting a missing API on Bugzilla
 
-If you started to work on an Experiment API to address the missing  functionality, you can of course link to it in the bugzilla report. Additionally, we wish to collect such Experiment APIs in this section, to obtain an overview of what APIs are currently being worked on. This will enable add-on developers implementing a certain functionality to collaborate. [Contact me directly](mailto:john@thunderbird.net) to get your API added to this list, or file a pull request against this document.
+If you have identified a missing functionality or a missing WebExtension API, please check the already [existing bugs in the Add-Ons: Extensions API component](https://bugzilla.mozilla.org/buglist.cgi?product=Thunderbird&component=Add-Ons%3A%20Extensions%20API&resolution=---&list_id=15465922) of Bugzilla to avoid duplicate reports. It may also be helpful to check with us on [matrix chat](https://chat.mozilla.org/#/room/#tb-addon-developers:mozilla.org) or on [topicbox](https://thunderbird.topicbox.com/groups/addons), if the requested functionality is already covered by some existing API.
 
-The bugzilla bug can be used to track status, but it may not be the best place to discuss the details of a new API. You could:
+If the functionality is truely missing and has not yet been reported on Bugzilla, please [file a bug in the Add-Ons: Extensions API component](https://bugzilla.mozilla.org/enter_bug.cgi?product=Thunderbird&component=Add-Ons%3A+Extensions+API&cc=john@thunderbird.net) at bugzilla. This will allow us to properly track the progress of the API request.
 
- * keep the discussion in a GitHub issue or on [matrix chat](https://chat.mozilla.org/#/room/#tb-addon-developers:mozilla.org), to collaborate on the API in a smaller group first
- * anounce the API on [topicbox](https://thunderbird.topicbox.com/groups/addons) to get feedback from the add-on developer community and a few core developers like Geoff and Philipp
- * use the bugzilla bug directly, to get direct feedback mainly from core developers
+#### Discussing a missing API on Topicbox
 
-At one point, it is of course advised to announce the API on [topicbox](https://thunderbird.topicbox.com/groups/addons), to get feedback from the add-on developer community, to learn if there are use cases it does not yet cover or if there might be a better interface concept.
+While Bugzilla is good for keeping track of such requests, it is not ideal for discussions. Only a small group of developers will get notified of new bugs. To raise awarness of your API request and get feedback on the proposed API design, you must also post it to [Topicbox](https://thunderbird.topicbox.com/groups/addons) and link your bug to your Topicbox thread. This allows the add-on developer community to be part of the design process.
+
+#### List of currently worked on APIs
+
+If you have already started to work on an Experiment API to address the missing  functionality, we wish to add it to the list below, to obtain an overview of what APIs are currently being worked on. This will enable add-on developers implementing a certain functionality to collaborate. [Contact me directly](mailto:john@thunderbird.net) to get your API added to this list, or file a pull request against this document.
 
 | Name                   | Author |  Discussion | Description |
 | -----------------------| ------ | ----------- | ----------- |
