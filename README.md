@@ -37,19 +37,19 @@ The different methods to update [legacy add-ons](https://developer.thunderbird.n
 
 ## Collaborating on new WebExtension APIs
 
-The main idea behind Experiment APIs is not just to make Thunderbird internals available to MailExtensions, but to actually design and experiment with new WebExtension APIs, which can then be proposed to be merged into Thunderbird.
-
-#### Reporting a missing API on Bugzilla
+#### Reporting missing APIs on Bugzilla
 
 If you have identified a missing functionality or a missing WebExtension API, please check the already [existing bugs in the Add-Ons: Extensions API component](https://bugzilla.mozilla.org/buglist.cgi?product=Thunderbird&component=Add-Ons%3A%20Extensions%20API&resolution=---&list_id=15465922) of Bugzilla to avoid duplicate reports. It may also be helpful to check with us on [matrix chat](https://chat.mozilla.org/#/room/#tb-addon-developers:mozilla.org) or on [topicbox](https://thunderbird.topicbox.com/groups/addons), if the requested functionality is already covered by some existing API.
 
 If the functionality is truely missing and has not yet been reported on Bugzilla, please [file a bug in the Add-Ons: Extensions API component](https://bugzilla.mozilla.org/enter_bug.cgi?product=Thunderbird&component=Add-Ons%3A+Extensions+API&cc=john@thunderbird.net) at bugzilla. This will allow us to properly track the progress of the API request.
 
-#### Discussing a missing API on Topicbox
+#### Discussing missing APIs on Topicbox
 
 While Bugzilla is good for keeping track of such requests, it is not ideal for discussions. Only a small group of developers will get notified of new bugs. To raise awarness of your API request and get feedback on the proposed API design, you must also post it to [Topicbox](https://thunderbird.topicbox.com/groups/addons) and link your bug to your Topicbox thread. This allows the add-on developer community to be part of the design process.
 
-#### List of currently worked on APIs
+#### Working one missing APIs
+
+The main idea behind Experiment APIs is not just to make Thunderbird internals available to MailExtensions, but to actually design and experiment with new WebExtension APIs, which can then be proposed to be merged into Thunderbird.
 
 If you have already started to work on an Experiment API to address the missing  functionality, we wish to add it to the list below, to obtain an overview of what APIs are currently being worked on. This will enable add-on developers implementing a certain functionality to collaborate. [Contact me directly](mailto:john@thunderbird.net) to get your API added to this list, or file a pull request against this document.
 
