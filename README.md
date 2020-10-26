@@ -41,7 +41,7 @@ The different methods to update [legacy add-ons](https://developer.thunderbird.n
 
 If you have identified a missing functionality or a missing WebExtension API, please check the already [existing bugs in the Add-Ons: Extensions API component](https://bugzilla.mozilla.org/buglist.cgi?product=Thunderbird&component=Add-Ons%3A%20Extensions%20API&resolution=---&list_id=15465922) of Bugzilla to avoid duplicate reports. It may also be helpful to check with us on [matrix chat](https://chat.mozilla.org/#/room/#tb-addon-developers:mozilla.org) or on [topicbox](https://thunderbird.topicbox.com/groups/addons), if the requested functionality is already covered by some existing API.
 
-If the functionality is truely missing and has not yet been reported on Bugzilla, please [file a bug in the Add-Ons: Extensions API component](https://bugzilla.mozilla.org/enter_bug.cgi?product=Thunderbird&component=Add-Ons%3A+Extensions+API&cc=john@thunderbird.net) at bugzilla. This will allow us to properly track the progress of the API request.
+If the functionality is truely missing and has not yet been reported on Bugzilla, please [file a bug in the Add-Ons: Extensions API component](https://bugzilla.mozilla.org/enter_bug.cgi?product=Thunderbird&component=Add-Ons%3A+Extensions+API&cc=john@thunderbird.net) at Bugzilla. This will allow us to properly track the progress of the API request.
 
 #### Discussing missing APIs on Topicbox
 
