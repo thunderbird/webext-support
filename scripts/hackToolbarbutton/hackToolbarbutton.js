@@ -12,7 +12,7 @@ var hackToolbarbutton = {
       button.setAttribute("wantdropmarker", "true");
 
       button.appendChild(window.MozXULElement.parseXULToFragment(
-      `<toolbarbutton class="box-inherit toolbarbutton-menubutton-button" flex="1" allowevents="true" label="${origLabel}"/>`));    
+      `<toolbarbutton id="${buttonId}-inner-button" class="box-inherit toolbarbutton-menubutton-button" flex="1" allowevents="true" label="${origLabel}"/>`));    
 
       button.appendChild(window.MozXULElement.parseXULToFragment(
       `<dropmarker type="menu-button" class="toolbarbutton-menubutton-dropmarker"/>`));
