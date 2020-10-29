@@ -26,7 +26,7 @@ The function will return the popup element (!) to which the menuitems have been 
 
 ### hackToolbarbutton.removeMenuitem(window, buttonId, menuitemId);
 
-Removes the menuitem with the given ID of `menuitemId` fro the button. If this was the last menuitem, the menu-button will be converted back to a normal button.
+Removes the menuitem with the given ID of `menuitemId` from the button. If this was the last menuitem, the menu-button will be converted back to a normal button.
 
 ```
 hackToolbarbutton.removeMenuitem(
