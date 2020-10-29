@@ -1,3 +1,7 @@
+## Introduction
+
+With TB78 a few Thunderbird toolbar buttons which formaly have been menu buttons have been reduced to simple buttons. Add-ons had the freedom to change the UI in the past but messing with these buttons will probably lead to broken Thunderbird UI if multiple add-ons are doing it. So I think it is beneficial to publish a common mechanism for MailExtension Experiments to add menuitems to these buttons and automatically upgrade them to menu buttons. The provided methods will also downgrade the button back to a simple button, if all menuitems have been removed.
+
 ## Usage
 
 ### hackMenuButton.addMenuitem(window, buttonId, menuitemId, attributes);
