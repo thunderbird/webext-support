@@ -1,14 +1,24 @@
-var hackMenuButton = {
+var hackToolbarbutton = {
   
   addMenuitem(window, buttonId, menuitemId, attributes = null) {
     let button = window.document.getElementById(buttonId);
     
     // check if we need to convert the button
-    if (!(button.hasAttribute("type") && button.getAttribute("type") == "menu")) {
-    button.setAttribute("type", "menu");
-    button.setAttribute("wantdropmarker", "true");
-    button.appendChild(window.MozXULElement.parseXULToFragment(
-      `<dropmarker type="menu" class="toolbarbutton-menu-dropmarker"/>`));    
+    if (!(button.hasAttribute("type") && button.getAttribute("type") == "menu-button")) {
+      let origLabel = button.getAttribute("label");
+
+      button.setAttribute("is", "toolbarbutton-menu-button");
+      button.setAttribute("type", "menu-button");
+      button.setAttribute("wantdropmarker", "true");
+
+      button.appendChild(window.MozXULElement.parseXULToFragment(
+      `<toolbarbutton class="box-inherit toolbarbutton-menubutton-button" flex="1" allowevents="true" label="${origLabel}"/>`));    
+
+      button.appendChild(window.MozXULElement.parseXULToFragment(
+      `<dropmarker type="menu-button" class="toolbarbutton-menubutton-dropmarker"/>`));
+      
+      button.querySelector("label").hidden = true;
+      button.querySelector("image").hidden = true;
     }
     
     // check if we need to add popup
@@ -17,8 +27,8 @@ var hackMenuButton = {
       popup = window.document.createXULElement("menupopup");
       popup.setAttribute("id", `${buttonId}-popup`);
       button.appendChild(popup);
-    }
-
+    }  
+    
     // add menuitem
     let menuitem = window.document.createXULElement("menuitem");
     menuitem.id = menuitemId;
@@ -44,12 +54,21 @@ var hackMenuButton = {
       let menuitems = popup.querySelectorAll("menuitem");
       if (menuitems.length == 0) {
         popup.remove();
+        button.removeAttribute("is");
         button.removeAttribute("type");
         button.removeAttribute("wantdropmarker");
+
+        let toolbarbutton = button.querySelector("toolbarbutton");
+        if (toolbarbutton) {
+          toolbarbutton.remove();
+        }
         let dropmarker = button.querySelector("dropmarker");
         if (dropmarker) {
           dropmarker.remove();
         }
+        
+        button.querySelector("label").hidden = false;
+        button.querySelector("image").hidden = false;        
       }
     }
   },
