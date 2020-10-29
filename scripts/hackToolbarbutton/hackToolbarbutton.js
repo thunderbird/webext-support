@@ -26,6 +26,7 @@ var hackToolbarbutton = {
     if (!popup) {
       popup = window.document.createXULElement("menupopup");
       popup.setAttribute("id", `${buttonId}-popup`);
+      popup.setAttribute("oncommand", "event.stopPropagation();");
       button.appendChild(popup);
     }  
     
