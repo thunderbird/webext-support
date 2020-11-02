@@ -1,8 +1,8 @@
 var hackToolbarbutton = {
   
-  addMenuitem(window, buttonId, menuitemId, attributes = null) {
+  getPopupElement(window, buttonId) {
     let button = window.document.getElementById(buttonId);
-    
+
     // check if we need to convert the button
     if (!(button.hasAttribute("type") && button.getAttribute("type") == "menu-button")) {
       let origLabel = button.getAttribute("label");
@@ -19,8 +19,8 @@ var hackToolbarbutton = {
       
       button.querySelector("label").hidden = true;
       button.querySelector("image").hidden = true;
-    }
-    
+    } 
+
     // check if we need to add popup
     let popup = button.querySelector("menupopup");
     if (!popup) {
@@ -29,6 +29,11 @@ var hackToolbarbutton = {
       popup.setAttribute("oncommand", "event.stopPropagation();");
       button.appendChild(popup);
     }  
+    return popup;
+  },
+  
+  addMenuitem(window, buttonId, menuitemId, attributes = null) {
+    let popup = getPopupElement(window, buttonId);
     
     // add menuitem
     let menuitem = window.document.createXULElement("menuitem");
