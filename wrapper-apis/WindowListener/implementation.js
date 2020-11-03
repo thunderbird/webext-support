@@ -2,6 +2,9 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
+ * Version: 1.27
+ * - add openOptionsDialog()
+ *
  * Version: 1.26
  * - pass WL object to legacy preference window
  *
@@ -127,10 +130,10 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
         async waitForMasterPassword() {
           // Wait until master password has been entered (if needed)
           while (!Services.logins.isLoggedIn) {
-            console.log("Waiting for master password.");
+            self.log("Waiting for master password.");
             await self.sleep(1000);
           }          
-          console.log("Master password has been entered.");
+          self.log("Master password has been entered.");
         },
 
         aDocumentExistsAt(uriString) {
@@ -250,6 +253,11 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
           self.pathToShutdownScript = aPath.startsWith("chrome://")
             ? aPath
             : context.extension.rootURI.resolve(aPath);
+        },
+
+        openOptionsDialog(windowId) {
+          let window = context.extension.windowManager.get(windowId, context).window
+          window.openDialog(self.pathToOptionsPage, "AddonOptions");
         },
 
         async startListening() {
