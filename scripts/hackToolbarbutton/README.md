@@ -61,7 +61,7 @@ hackToolbarbutton.cleanupIfNeeded(
 
 ### allowDefaultAction(window, buttonId, allow)
 
-Disables or Enables the default onclick action of the button. If disabled, a click will open the menu instead of triggering the default action.
+Disables or enables the default onclick action of the button. If disabled, a click will open the menu instead of triggering the default action.
 
 ```
 hackToolbarbutton.allowDefaultAction(
