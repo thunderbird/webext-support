@@ -6,7 +6,7 @@ As this is messing with custom elements, please be aware that it can break at an
 
 ## Usage
 
-### hackToolbarbutton.addMenuitem(window, buttonId, menuitemId, attributes);
+### Basic : hackToolbarbutton.addMenuitem(window, buttonId, menuitemId, attributes);
 
 Adds a menuitem to the button identified by the ID `buttonId`. If the button is not yet a menu-button it will be converted beforehand.
 The ID of the new menuitem will be set to the provided `menuitemId` and all attributes provided in the `attributes` object will be set as well.
@@ -24,7 +24,7 @@ hackToolbarbutton.addMenuitem(
 
 The function will return the popup element (!) to which the menuitems have been added. This allows to add custom event handlers like `popupshowing`.
 
-### hackToolbarbutton.removeMenuitem(window, buttonId, menuitemId);
+### Basic : hackToolbarbutton.removeMenuitem(window, buttonId, menuitemId);
 
 Removes the menuitem with the given ID of `menuitemId` from the button. If this was the last menuitem, the menu-button will be converted back to a normal button.
 
@@ -35,3 +35,36 @@ hackToolbarbutton.removeMenuitem(
   "my-custom-menuitem1");
 ```
 
+### Advanced : getMenupopupElement(window, buttonId)
+
+If the button identified by the given `buttonId` is not yet a menu-button, it wil be converted. Returns the `menupopup` element.
+
+```
+let popup = hackToolbarbutton.getMenupopupElement(
+  window,
+  "button-newmsg");
+
+let menuitem = document.createXULElement("menuitem");
+menuitem.setAttribute("label", "A Label");
+popup.appendChild(menuitem);
+```
+
+### Advanced :  cleanupIfNeeded(window, buttonId)
+
+Converts the button identified by the given `buttonId` back to a normal button, if its menupopup element does not have any more child elements.
+```
+hackToolbarbutton.cleanupIfNeeded(
+  window,
+  "button-newmsg");
+```
+
+### Advanced : allowDefaultAction(window, buttonId, allow)
+
+Disables or Enables the default onclick action of the button. If disabled, a click will open the menu instead of triggering the default action.
+
+```
+hackToolbarbutton.allowDefaultAction(
+  window,
+  "button-newmsg",
+  false);
+```
