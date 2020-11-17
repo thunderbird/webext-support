@@ -2,6 +2,9 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
+ * Version: 1.28
+ * - do not crash on missing icon
+ *
  * Version: 1.27
  * - add openOptionsDialog()
  *
@@ -332,14 +335,20 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
                       let id = self.menu_addonPrefs_id + "_" + self.uniqueRandomID;
 
                       // Get the best size of the icon (16px or bigger)
-                      let iconSizes = Object.keys(self.extension.manifest.icons);
+                      let iconSizes = self.extension.manifest.icons 
+                        ? Object.keys(self.extension.manifest.icons)
+                        : [];
                       iconSizes.sort((a,b)=>a-b);
                       let bestSize = iconSizes.filter(e => parseInt(e) >= 16).shift();
                       let icon = bestSize ? self.extension.manifest.icons[bestSize] : "";
 
                       let name = self.extension.manifest.name;
-                      let entry = window.MozXULElement.parseXULToFragment(
-                        `<menuitem class="menuitem-iconic" id="${id}" image="${icon}" label="${name}" />`);
+                      let entry = icon
+                        ? window.MozXULElement.parseXULToFragment(
+                            `<menuitem class="menuitem-iconic" id="${id}" image="${icon}" label="${name}" />`)
+                        :  window.MozXULElement.parseXULToFragment(
+                            `<menuitem id="${id}" label="${name}" />`);
+                      
                       element_addonPrefs.appendChild(entry);
                       let WL = {}
                       WL.extension = self.extension;
