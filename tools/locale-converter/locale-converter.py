@@ -116,7 +116,7 @@ def convert_prop(path, dir):
             data = {}
             data["message"] = a[1].strip();
             if len(placeholders) > 0:
-                data["placeholder"] = placeholders
+                data["placeholders"] = placeholders
                  
             sprop.append(' "' + a[0].strip() +'" : ' +  json.dumps(data));
 
