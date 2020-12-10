@@ -2,6 +2,9 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
+ * Version: 1.29
+ * - open options window centered
+ *
  * Version: 1.28
  * - do not crash on missing icon
  *
@@ -260,7 +263,12 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
 
         openOptionsDialog(windowId) {
           let window = context.extension.windowManager.get(windowId, context).window
-          window.openDialog(self.pathToOptionsPage, "AddonOptions");
+          let WL = {}
+          WL.extension = self.extension;
+          WL.messenger = Array.from(self.extension.views).find(
+            view => view.viewType === "background").xulBrowser.contentWindow
+            .wrappedJSObject.browser;
+          window.openDialog(self.pathToOptionsPage, "AddonOptions", "chrome,resizable,centerscreen", WL);
         },
 
         async startListening() {
@@ -355,7 +363,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
                       WL.messenger = Array.from(self.extension.views).find(
                         view => view.viewType === "background").xulBrowser.contentWindow
                         .wrappedJSObject.browser;
-                      window.document.getElementById(id).addEventListener("command", function() {window.openDialog(self.pathToOptionsPage, "AddonOptions", null, WL)});
+                      window.document.getElementById(id).addEventListener("command", function() {window.openDialog(self.pathToOptionsPage, "AddonOptions", "chrome,resizable,centerscreen", WL)});
                     } catch (e) {
                       Components.utils.reportError(e)
                     }
