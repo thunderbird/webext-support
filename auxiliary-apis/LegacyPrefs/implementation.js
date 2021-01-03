@@ -2,6 +2,9 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
+ * Version: 1.3
+ * - add setPref() fucntion
+ *
  * Version: 1.2
  * - add getPref() fucntion
  *
@@ -62,6 +65,36 @@ var LegacyPrefs = class extends ExtensionCommon.ExtensionAPI {
 
         clearUserPref: function(aName) {
           Services.prefs.clearUserPref(aName);
+        },
+        
+
+        // sets a pref
+        setPref: async function(aName, aValue) {
+          let prefType = Services.prefs.getPrefType(aName);
+          if (prefType == Services.prefs.PREF_INVALID) {
+            return false;
+          }
+          
+          switch (prefType) {
+            case Services.prefs.PREF_STRING:
+                Services.prefs.setCharPref(aName, aValue);
+                return true;
+                break;
+
+            case Services.prefs.PREF_INT:
+                Services.prefs.setIntPref(aName, aValue);
+                return true;
+                break;
+            
+            case Services.prefs.PREF_BOOL:
+                Services.prefs.setBoolPref(aName, aValue);
+                return true;
+                break;
+              
+            default:
+              console.error(`Legacy preference <${aName}> has an unknown type of <${prefType}>.`);
+          }
+          return value;
         }
 
       }

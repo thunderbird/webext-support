@@ -14,7 +14,8 @@
             "description": "Name of the preference."
           }
         ]
-      },      {
+      },
+      {
         "name": "getPref",
         "type": "function",
         "async": true,
@@ -31,6 +32,34 @@
             "description": "Value to be returned, if the requested preference does not exist.",
             "optional": true,
             "default": null
+          }
+        ]
+      },
+      {
+        "name": "setPref",
+        "type": "function",
+        "async": true,
+        "description": "Sets a value for an existing pref of the legacy pref system.",
+        "parameters": [
+          {
+            "name": "aName",
+            "type": "string",
+            "description": "Name of the preference."
+          },
+          {
+            "name": "aValue",
+            "choices": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "boolean"
+              }
+            ],
+            "description": "Value to be set."
           }
         ]
       },
