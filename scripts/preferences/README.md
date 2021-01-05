@@ -21,8 +21,12 @@ This script also stores default values in the MailExtensions storage, so they
 can be accessed wherever the actual values are accessed, without the need to
 communicate with the background script to get the default values.
 
-Use the optional `defaults` parameter to set the default values. You probably
-want to do that once in your background script:
+Use the optional `defaults` parameter to set the default values. If the `defaults`
+parameter is not given, this function will pull the default values from the local
+storage. Setting default values multiple times will propagate them to all instances
+of this script as well.
+
+You probably want to do this once in your background script:
 
 ```
 let defaultPrefs = {
@@ -39,14 +43,28 @@ let defaultPrefs = {
 };
 
 (async function(){
+  // init() stores defaultPrefs in local storage,
+  // so they are accessible from everywhere.
   await preferences.init(defaultPrefs);
+  
+  // OPTIONAL: Migrate prefs using the LegacyPrefs API
+  const legacyPrefBranch = "extensions.quicktext.";
+  const prefNames = Object.keys(defaultPrefs);
+  for (let prefName of prefNames) {
+    let legacyValue = await messenger.LegacyPrefs.getUserPref(`${legacyPrefBranch}${prefName}`);    
+    if (legacyValue !== null) {
+      console.log(`Migrating legacy preference <${legacyPrefBranch}${prefName}> = <${legacyValue}>.`);
+      
+      // Store the migrated value in local storage.
+      preferences.setPref(prefName, legacyValue);
+      
+      // Clear the legacy value.
+      messenger.LegacyPrefs.clearUserPref(`${legacyPrefBranch}${prefName}`);
+    }
+  }  
 })()
 
 ```
-If the `defaults` parameter is not given, this function will pull the default values
-from the local storage. Setting default values multiple times will propagate them
-to all instances of this script as well.
-
 
 ### preferences.getPref(aName, [aFallback]);
 
