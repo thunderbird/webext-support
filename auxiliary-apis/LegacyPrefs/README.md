@@ -12,7 +12,11 @@ Returns the value for the ``aName`` preference. If it is not defined or has no d
 
 ### async getUserPref(aName)
 
-Returns the user defined value for the ``aName`` preference. If it is not defined, ``aFallback`` will be returned (which defaults to null). This will ignore any defined default value and will only return an explicitly set value, which differs from the default.
+Returns the user defined value for the ``aName`` preference. This will ignore any defined default value and will only return an explicitly set value, which differs from the default. Otherwise it will return ``null``.
+
+### clearUserPref(aName)
+
+Clears the user defined value for preference ``aName``. Subsequent calls to ``getUserPref(aName)`` will return ``null``.
 
 ### async setPref(aName, aValue)
 
