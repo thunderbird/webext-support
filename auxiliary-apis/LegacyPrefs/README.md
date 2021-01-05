@@ -8,11 +8,11 @@ This API provides the following methods:
 
 ### async getPref(aName, [aFallback])
 
-Returns the preference value for the ``aName`` preference. If it is not defined or has no default value assigned, ``aFallback`` will be returned (which defaults to ``null``).
+Returns the value for the ``aName`` preference. If it is not defined or has no default value assigned, ``aFallback`` will be returned (which defaults to ``null``).
 
 ### async getUserPref(aName)
 
-Returns the user preference value for the ``aName`` preference. If it is not defined, ``aFallback`` will be returned (which defaults to null). This will ignore any defined default value and will only return an explicitly set value, which differs from the default.
+Returns the user defined value for the ``aName`` preference. If it is not defined, ``aFallback`` will be returned (which defaults to null). This will ignore any defined default value and will only return an explicitly set value, which differs from the default.
 
 ### async setPref(aName, aValue)
 
