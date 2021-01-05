@@ -48,6 +48,7 @@ let defaultPrefs = {
   await preferences.init(defaultPrefs);
   
   // OPTIONAL: Migrate prefs using the LegacyPrefs API
+  // https://github.com/thundernest/addon-developer-support/tree/master/auxiliary-apis/LegacyPrefs
   const legacyPrefBranch = "extensions.quicktext.";
   const prefNames = Object.keys(defaultPrefs);
   for (let prefName of prefNames) {
