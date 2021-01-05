@@ -20,7 +20,7 @@ Clears the user defined value for preference ``aName``. Subsequent calls to ``ge
 
 ### async setPref(aName, aValue)
 
-Set the ``aName`` preference to the given value. Will throw an error, if the type of ``aValue`` does not match the type of the preference.
+Set the ``aName`` preference to the given value. Will return false and log an error to the console, if the type of ``aValue`` does not match the type of the preference.
 
 ---
 
