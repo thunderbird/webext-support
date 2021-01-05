@@ -22,9 +22,9 @@ can be accessed wherever the actual values are accessed, without the need to
 communicate with the background script to get the default values.
 
 Use the optional `defaults` parameter to set the default values. If the `defaults`
-parameter is not given, this function will pull the default values from the local
-storage. Setting default values multiple times will propagate them to all instances
-of this script as well.
+parameter is not given, `init()` will pull the default values from the local
+storage. Setting default values multiple times will propagate them to all
+instances of this script as well.
 
 You probably want to do this once in your background script:
 
