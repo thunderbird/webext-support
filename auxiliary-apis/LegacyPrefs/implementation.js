@@ -94,7 +94,7 @@ var LegacyPrefs = class extends ExtensionCommon.ExtensionAPI {
             default:
               console.error(`Legacy preference <${aName}> has an unknown type of <${prefType}>.`);
           }
-          return value;
+          return false;
         }
 
       }
