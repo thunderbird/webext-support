@@ -2,11 +2,14 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
+ * Version: 1.4
+ * - setPref() function returns true if the value could be set, otherwise false
+ *
  * Version: 1.3
- * - add setPref() fucntion
+ * - add setPref() function
  *
  * Version: 1.2
- * - add getPref() fucntion
+ * - add getPref() function
  *
  * Author: John Bieling (john@thunderbird.net)
  *
