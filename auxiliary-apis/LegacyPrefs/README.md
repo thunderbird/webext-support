@@ -4,7 +4,7 @@ Use this API to access Thunderbird's system preferences or to migrate your own p
 
 ## Usage
 
-This API provides the following methods`:
+This API provides the following methods:
 
 ### async getPref(aName, [aFallback])
 
