@@ -2,6 +2,9 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
+ * Version: 1.30
+ * - replace setCharPref by setStringPref to cope with URTF-8 encoding
+ *
  * Version: 1.29
  * - open options window centered
  *
@@ -169,7 +172,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
             let defaults = Services.prefs.getDefaultBranch("");
             switch (typeof aDefault) {
               case "string":
-                  return defaults.setCharPref(aName, aDefault);
+                  return defaults.setStringPref(aName, aDefault);
 
               case "number":
                   return defaults.setIntPref(aName, aDefault);
