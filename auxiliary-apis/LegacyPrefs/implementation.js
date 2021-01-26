@@ -2,6 +2,9 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
+ * Version: 1.5
+ * replace set/getCharPref by set/getStringPref to fix encoding issue
+ *
  * Version: 1.4
  * - setPref() function returns true if the value could be set, otherwise false
  *
@@ -37,7 +40,7 @@ var LegacyPrefs = class extends ExtensionCommon.ExtensionAPI {
           if (!userPrefOnly || Services.prefs.prefHasUserValue(aName)) {
             switch (prefType) {
               case Services.prefs.PREF_STRING:
-                  value = Services.prefs.getCharPref(aName, aFallback);
+                  value = Services.prefs.getStringPref(aName, aFallback);
                   break;
 
               case Services.prefs.PREF_INT:
@@ -80,7 +83,7 @@ var LegacyPrefs = class extends ExtensionCommon.ExtensionAPI {
           
           switch (prefType) {
             case Services.prefs.PREF_STRING:
-                Services.prefs.setCharPref(aName, aValue);
+                Services.prefs.setStringPref(aName, aValue);
                 return true;
                 break;
 
