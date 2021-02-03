@@ -2,7 +2,7 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
- * Version: 1.31
+ * Version: 1.32
  * - fix for e10s
  *
  * Version: 1.30
@@ -95,21 +95,48 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
     if (this.debug) console.log("WindowListener API: " + msg);
   }
   
-  getMessenger(context) {
-    let localstorage = context.apiCan.findAPIPath("storage");
-    localstorage.local.get = (...args) =>
-      localstorage.local.callMethodInParentProcess("get", args);
-    localstorage.local.set = (...args) =>
-      localstorage.local.callMethodInParentProcess("set", args);
-    localstorage.local.remove = (...args) =>
-      localstorage.local.callMethodInParentProcess("remove", args);
-    localstorage.local.clear = (...args) =>
-      localstorage.local.callMethodInParentProcess("clear", args);
+  getMessenger(context) {   
+    let apis = [
+      "storage",
+      "runtime",
+      "extension",
+      "i18n",
+    ];
+
+    function getStorage() {
+      let localstorage = null;
+      try {
+        localstorage = context.apiCan.findAPIPath("storage");
+        localstorage.local.get = (...args) =>
+          localstorage.local.callMethodInParentProcess("get", args);
+        localstorage.local.set = (...args) =>
+          localstorage.local.callMethodInParentProcess("set", args);
+        localstorage.local.remove = (...args) =>
+          localstorage.local.callMethodInParentProcess("remove", args);
+        localstorage.local.clear = (...args) =>
+          localstorage.local.callMethodInParentProcess("clear", args);
+      } catch (e) {
+        console.info("Storage permission is missing");
+      }
+      return localstorage;
+    }
     
-    return { 
-      "storage": localstorage,
-      "i18n": context.apiCan.findAPIPath("i18n"),      
-    };
+    let messenger = {};    
+    for (let api of apis) {
+      switch (api) {
+        case "storage":
+          XPCOMUtils.defineLazyGetter(messenger, "storage", () =>
+            getStorage()
+          );
+        break;
+
+        default:
+          XPCOMUtils.defineLazyGetter(messenger, api, () =>
+            context.apiCan.findAPIPath(api)
+          );
+      }
+    }
+    return messenger;
   }
 
   error(msg) {
