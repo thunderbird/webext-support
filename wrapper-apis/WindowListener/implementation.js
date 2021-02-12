@@ -2,6 +2,9 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
+ * Version: 1.34
+ * - fix error in unload
+ *
  * Version: 1.33
  * - fix for e10s
  *
@@ -643,7 +646,9 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
         window[this.uniqueRandomID]._mObserver.disconnect();
         let browserElements = window.document.getElementsByTagName("browser");
         for (let element of browserElements) {
-          this._unloadFromWindow(element.contentWindow.wrappedJSObject, isAddonDeactivation);
+          if (element.contentWindow) {
+            this._unloadFromWindow(element.contentWindow.wrappedJSObject, isAddonDeactivation);
+          }
         }
       }
 
