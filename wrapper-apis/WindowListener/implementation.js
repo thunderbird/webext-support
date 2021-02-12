@@ -2,7 +2,7 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
- * Version: 1.32
+ * Version: 1.33
  * - fix for e10s
  *
  * Version: 1.30
@@ -417,7 +417,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
 
                 // Special action #2: If this page contains browser elements
                 let browserElements = window.document.getElementsByTagName("browser");
-                /*if (browserElements.length > 0) {
+                if (browserElements.length > 0) {
                   //register a MutationObserver
                   window[self.uniqueRandomID]._mObserver = new window.MutationObserver(function(mutations) {
                       mutations.forEach(async function(mutation) {
@@ -458,7 +458,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
                         window[self.uniqueRandomID]._mObserver.observe(element, { attributes: true, childList: false, characterData: false });
                       }
                   }
-                } */
+                }
 
                 // Load JS into window
                 self._loadIntoWindow(window, self.openWindows.includes(window));
