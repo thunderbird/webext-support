@@ -805,8 +805,8 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
             }
 
             if (debug) console.log ("Injecting into root document:");
-            let localicedXulString = xulString.replace(/__MSG_(.*?)__/g, localize);
-            injectChildren(Array.from(window.MozXULElement.parseXULToFragment(localicedXulString, dtdFiles).children), window.document.documentElement);
+            let localizedXulString = xulString.replace(/__MSG_(.*?)__/g, localize);
+            injectChildren(Array.from(window.MozXULElement.parseXULToFragment(localizedXulString, dtdFiles).children), window.document.documentElement);
 
             for (let bar of toolbarsToResolve) {
               let currentset = Services.xulStore.getValue(
