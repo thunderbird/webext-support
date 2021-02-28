@@ -2,6 +2,9 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
+ * Version: 1.38
+ * - fix for 68 #2
+ *
  * Version: 1.37
  * - fix for 68
  *
@@ -150,7 +153,9 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
     
     event.target.appendChild(entry);
     let noPrefsElem = event.target.querySelector('[disabled="true"]');
-    noPrefsElem.setAttribute("collapsed", "true");
+    // using collapse could be undone by core, so we use display none
+    // noPrefsElem.setAttribute("collapsed", "true");
+    noPrefsElem.style.display = "none";
     event.target.ownerGlobal.document.getElementById(id).addEventListener("command", this);
   }   
 
