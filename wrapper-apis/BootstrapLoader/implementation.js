@@ -2,7 +2,10 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
-  * Version: 1.10
+ * Version: 1.11
+ * - add openOptionsDialog()
+ * 
+ * Version: 1.10
  * - fix for 68
  * 
  * Version: 1.7
@@ -340,6 +343,14 @@ var BootstrapLoader = class extends ExtensionCommon.ExtensionAPI {
           self.pathToOptionsPage = optionsUrl.startsWith("chrome://")
             ? optionsUrl
             : context.extension.rootURI.resolve(optionsUrl);
+        },
+
+        openOptionsDialog(windowId) {
+          let window = context.extension.windowManager.get(windowId, context).window
+          let BL = {}
+          BL.extension = self.extension;
+          BL.messenger = self.getMessenger(self.context);
+          window.openDialog(self.pathToOptionsPage, "AddonOptions", "chrome,resizable,centerscreen", BL);        
         },
 
         registerChromeUrl(data) {
