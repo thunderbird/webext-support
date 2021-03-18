@@ -57,7 +57,7 @@ The WebExtension background script needs to register a listener:
 messenger.WindowListener.onNotifyBackground.addListener(async (info) => {
   switch (info.command) {
     case "doSomething":
-      //so something
+      //do something
       let rv = await doSomething();
       return rv;
       break;
