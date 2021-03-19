@@ -2,6 +2,9 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
+ * Version: 1.6
+ * add setDefaultPref()
+ *
  * Version: 1.5
  * replace set/getCharPref by set/getStringPref to fix encoding issue
  *
@@ -78,6 +81,7 @@ var LegacyPrefs = class extends ExtensionCommon.ExtensionAPI {
         setPref: async function(aName, aValue) {
           let prefType = Services.prefs.getPrefType(aName);
           if (prefType == Services.prefs.PREF_INVALID) {
+            console.error(`Unknown legacy preference <${aName}>, forgot to declare a default?.`);
             return false;
           }
           
@@ -101,7 +105,19 @@ var LegacyPrefs = class extends ExtensionCommon.ExtensionAPI {
               console.error(`Legacy preference <${aName}> has an unknown type of <${prefType}>.`);
           }
           return false;
-        }
+        },
+        
+        setDefaultPref: async function(aName, aValue) {
+          let defaults = Services.prefs.getDefaultBranch("");
+          switch (typeof aValue) {
+            case "string":
+              return defaults.setStringPref(aName, aValue);
+            case "number":
+              return defaults.setIntPref(aName, aValue);
+            case "boolean":
+              return defaults.setBoolPref(aName, aValue);
+          }
+        },      
 
       }
     };
