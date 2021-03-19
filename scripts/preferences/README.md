@@ -30,7 +30,7 @@ WebExtention background page.
 ### preferences.getPref(aName, [aFallback]);
 
 Gets the value for preference `aName`. Returns either a Promise for a value received
-from the WebExtension background page or a direct value from the local cache - see initCache().
+from the WebExtension background page or a direct value from the local cache (if used).
 
 If no user value and also no default value has been defined, the fallback value will be
 returned (or `null`).
