@@ -1,6 +1,22 @@
 // Set this to the ID of your add-on.
 const ADDON_ID = "";
 
+/*
+ * This file is provided by the addon-developer-support repository at
+ * https://github.com/thundernest/addon-developer-support
+ *
+ * For usage descriptions, please check:
+ * https://github.com/thundernest/addon-developer-support/tree/master/scripts/notifyTools
+ *
+ * Version: 1.1
+ *
+ * Author: John Bieling (john@thunderbird.net)
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+ 
 var { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 var notifyTools = {
@@ -48,9 +64,13 @@ var notifyTools = {
   }
 }
 
-window.addEventListener("load", function (event) {
-  Services.obs.addObserver(notifyTools.onNotifyExperimentObserver, "WindowListenerNotifyExperimentObserver", false);
-  window.addEventListener("unload", function (event) {
-  Services.obs.removeObserver(notifyTools.onNotifyExperimentObserver, "WindowListenerNotifyExperimentObserver");
+try {
+  window.addEventListener("load", function (event) {
+    Services.obs.addObserver(notifyTools.onNotifyExperimentObserver, "WindowListenerNotifyExperimentObserver", false);
+    window.addEventListener("unload", function (event) {
+    Services.obs.removeObserver(notifyTools.onNotifyExperimentObserver, "WindowListenerNotifyExperimentObserver");
+    }, false);
   }, false);
-}, false);
+} catch (e) {
+  console.log("WindowListenerNotifyExperimentObserver cannot be registered in a window-less environment.")
+}
