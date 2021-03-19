@@ -2,23 +2,33 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
- * This file is intended to be used in the WebExtension background page,
- * in popup pages, option pages, content pages as well as in legacy chrome
- * windows (together with the WindowListener API).
- * The preferences will be loaded asynchronously from the WebExtension
- * storage and stored in a local pref obj, so all further access can be done
- * synchronously.
- * If preferences are changed elsewhere, the local pref obj will be updated.
- * 
- * Version: 1.2
- * - Bugfix: move to a different saving scheme, as storage.local.get() without
- *   providing a value to get them all, may cause an TransactionInactiveError in
- *   IndexedDB.jsm
+ * This script delegates preference handling to the WebExtension background
+ * page, so it is independent of the used preference storage.
  *
- * Version: 1.1
- * - Bugfix: use messenger.storage instead of browser.storage
+ * This script provides an automated preference load/save support as formaly
+ * provided by the preferencesBindings.js script.
  *
- * Version: 1.0
+ * This file is intended to be used in WebExtension HTML pages (popups,
+ * options, content, windows) as well as in WindowListener legacy scripts. The
+ * script communicates with the WebExtension background page either via
+ * runtime messaging (if run in WebExtension pages) or via WindowListener
+ * notifyTools.js (if run in legacy scripts).
+ *
+ * The script provides 3 main preference functions:
+ *  - setPref(aName, aValue)
+ *  - getPref(aName, a Fallback)
+ *  - clearPref(aName)
+ *
+ * This script also provides an init() function which can be called during page load.
+*  This will request the state of all preferences and keeps a local cache. If that cache
+ * has been set up, the 3 main functions will work with this local cache and can be used
+ * in synchronous code. If init() is not called, the 3 main function will make their
+ * requests to the background page and will return a Promise instead of a direct value.
+ *
+ * The automated preference load/save support is enabled by calling the load(window)
+ * function during page load.
+ *
+ * Version: 2.0
  *
  * Author: John Bieling (john@thunderbird.net)
  *
@@ -26,110 +36,159 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-
-// Set the storage area of userPrefs either to "local" or "sync". Setting it to
-// "sync" is a hack to keep preferences stored even after the add-on has been
-// removed and installed again (storage.local is cleared upon add-on removal).
-// Even though Thunderbird does not actually have a sync backend, storage.sync
-// is not cleared on add-on removal to mimic syncing stored values.
-// Hint: Reloading/Updating an add-on does not clear storage.local.
-const userPrefStorageArea = "local"; // or "sync";
-
+ 
 var preferences = {
-  
-  _isInit: false,
-  _prefElements: [],
-  _preferencesLoaded: false,
-  _userPrefs : {},
-  _defaultPrefs : {},
-   
-  // Get pref value from local pref obj.
-  getPref: function(aName, aFallback = null) {
-    // Get defaultPref.
-    let defaultPref = this._defaultPrefs.hasOwnProperty(aName)
-      ? this._defaultPrefs[aName]
-      : aFallback;
-    
-    // Check if userPref type is defaultPref type and return default if no match.
-    if (this._userPrefs.hasOwnProperty(aName)) {
-      let userPref = this._userPrefs[aName];
-      if (typeof defaultPref == typeof userPref) {
-        return userPref;
-      }      
-      console.log("Type of defaultPref <" + defaultPref + ":" + typeof defaultPref + "> does not match type of userPref <" + userPref + ":" + typeof userPref + ">. Fallback to defaultPref.")
-    }
-    
-    // Fallback to default value.
-    return defaultPref;
-  },
+    _localPrefsCache: {},
+    _localDefaultsCache: {},
+    _localCacheInitialized: false,
 
-  // Set pref value by updating local pref obj and updating storage.
-  setPref: function(aName, aValue) {
-    this._userPrefs[aName] = aValue;
-    messenger.storage[userPrefStorageArea].set({ userPrefs : this._userPrefs });
-  },
+    _prefElements: [],
+    _preferencesLoaded: false,
 
-  // Remove a preference (calls to getPref will return default value)
-  clearPref: function(aName, aValue) {
-    delete this._userPrefs[aName];
-    messenger.storage[userPrefStorageArea].set({ userPrefs : this._userPrefs });
-  },
-  
-  // Listener for storage changes.
-  storageChanged: function (changes, area) {
-    let changedItems = Object.keys(changes);
-    for (let item of changedItems) {
-      if (area == userPrefStorageArea && item == "userPrefs") {
-        this._userPrefs = changes.userPrefs.newValue;
-      }        
-        
-      if (area == "local" && item == "defaultPrefs") {
-        this._defaultPrefs = changes.defaultPrefs.newValue;
-      }
-    }
-  },
-
-  // Initialize the local pref obj by loading userPrefs and defaultPrefs from
-  // WebExtension storage. If a defaults obj is given, the defaults in storage
-  // are updated/set.
-  init: async function(defaults = null) {
-    this._userPrefs = {};
-    this._defaultPrefs = {};
-    
-    // Store user prefs into the local userPrefs obj.
-    this._userPrefs = (await messenger.storage[userPrefStorageArea].get("userPrefs")).userPrefs || {};
-    
-    // If defaults are given, push them into storage.local
-    if (defaults) {
-      await messenger.storage.local.set({ defaultPrefs : defaults });
-
-      // We need to migration from prefsV1 to prefsV2    
-      for(let prefName of Object.keys(defaults)) {
-        let prefV1Value = (await browser.storage[userPrefStorageArea].get("pref.value." + prefName))["pref.value." + prefName];
-        if (prefV1Value) {
-          await browser.storage[userPrefStorageArea].remove("pref.value." + prefName);
-          preferences.setPref(prefName, prefV1Value);
+    // Function to cache preferences locally to be able to use get/set/clearPref()
+    // synchronously. If init() is not called, get/set/clearPref() will make
+    // asynchronous requests to the background page instead using the
+    // local cache.
+    init: async function() {
+        if (typeof messenger == "object") {
+            // Request current values of all preferences.
+            this._localPrefsCache = await messenger.runtime.sendMessage({
+                command: "getAllPrefs"
+            });
+            this._localDefaultsCache = await messenger.runtime.sendMessage({
+                command: "getAllDefaults"
+            });
+            // Register a listener for notifications from the background
+            // to update a preference.
+            messenger.runtime.onMessage.addListener(this._updatesFromBackground);
+        } else if (typeof notifyTools == "object") {
+            // Request current values of all preferences.
+            this._localPrefsCache = await notifyTools.notifyBackground({
+                command: "getAllPrefs"
+            });
+            this._localDefaultsCache = await notifyTools.notifyBackground({
+                command: "getAllDefaults"
+            });
+            // Register a listener for notifications from the background
+            // to update a preference.
+            notifyTools.registerListener(this._updatesFromBackground);
+        } else {
+            throw new Error("notifyTools not found.");
         }
-      }      
-      }
-      
-    this._defaultPrefs = (await messenger.storage.local.get("defaultPrefs")).defaultPrefs || {};
+        this._localCacheInitialized = true;
+        console.log(this._localPrefsCache);
+    },
+
+    _updatesFromBackground: function(info) {
+        if (info.command == "setPref") {
+            this._localPrefsCache[info.name] = info.value;
+        }
+        if (info.command == "clearPref") {
+            if (this._localPrefsCache.hasOwnProperty(info.name)) {
+                delete this._localPrefsCache[info.name];
+            }
+        }
+        if (info.command == "setDefault") {
+            this._localDefaultsCache[info.name] = info.value;
+        }
+    },
+
+    // returns a value from the local cache if init() has been called, or a Promise
+    // for the preference value otherwise
+    getPref: function(aName, aFallback = null) {
+        if (this._localCacheInitialized) {
+            if (this._localPrefsCache.hasOwnProperty(aName)) {
+                return this._localPrefsCache[aName];
+            } else if (this._localDefaultsCache.hasOwnProperty(aName)) {
+                return this._localDefaultsCache[aName];
+            } else {
+                return aFallback;
+            }
+        } else {
+            if (typeof messenger == "object") {
+                return messenger.runtime.sendMessage({
+                    command: "getPref",
+                    name: aName
+                });
+            } else if (notifyTools) {
+                return notifyTools.notifyBackground({
+                    command: "getPref",
+                    name: aName
+                });
+            } else {
+                throw new Error("notifyTools not found.");
+            }
+        }
+    },
+
+    // If init() has been called, the function returns a Promise which resolves when the value has
+    // been updated in the background script, otherwise it returns immediately after updating the
+    // local cache.
+    setPref: function(aName, aValue) {
+        let rv = null;
+        // send update requests, but do not await them (fire and forget)
+        if (typeof messenger == "object") {
+            rv = messenger.runtime.sendMessage({
+                command: "setPref",
+                name: aName,
+                value: aValue
+            });
+        } else if (notifyTools) {
+            rv = notifyTools.notifyBackground({
+                command: "setPref",
+                name: aName,
+                value: aValue
+            });
+        } else {
+            throw new Error("notifyTools not found.");
+        }
+
+        if (this._localCacheInitialized) {
+            this._localPrefsCache[aName] = aValue;
+        } else {
+            return rv;
+        }
+    },
+
+    // If init() has been called, the function returns a Promise which resolves when the value has
+    // been cleared in the background script, otherwise it returns immediately after updating the
+    // local cache.
+    clearPref: function(aName) {
+        let rv = null;
+        // send update requests, but do not await them (fire and forget)
+        if (typeof messenger == "object") {
+            return messenger.runtime.sendMessage({
+                command: "clearPref",
+                name: aName
+            });
+        } else if (notifyTools) {
+            return notifyTools.notifyBackground({
+                command: "clearPref",
+                name: aName
+            });
+        } else {
+            throw new Error("notifyTools not found.");
+        }
+
+        if (this._localCacheInitialized) {
+            if (this._localPrefsCache.hasOwnProperty(aName)) {
+                delete this._localPrefsCache[aName];
+            }
+        } else {
+            return rv;
+        }
+    },
     
-    // Add storage change listener.
-    if (!(await messenger.storage.onChanged.hasListener(this.storageChanged))) {
-      await messenger.storage.onChanged.addListener(this.storageChanged);
-    }
     
-    this._isInit = true;
-  },
-  
-  
-  
-  // The following code is partially taken from
-  // M-C preferencesBindings.js.
-  
+    
+  /**
+   * The following functions auto manage preferences in a document. Preference
+   * elements are identified by a "preference" attribute. Most of this is taken from
+   * the former preferencesBindings.js script.
+   */    
+    
   // Get current values from preference elements and update preferences.
-  savePreferences: async function () {
+  save: async function () {
     if (!this._preferencesLoaded)
       return;
     
@@ -140,10 +199,7 @@ var preferences = {
   },
 
   // Load preferences into elements.
-  loadPreferences: async function (window) {
-    if (!this._isInit) {
-      await this.init();
-    }
+  load: async function (window) {
     this.window = window;
     
     // Gather all preference elements in this document and load their values.

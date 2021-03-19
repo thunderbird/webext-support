@@ -1,87 +1,63 @@
 ## Objective
 
-This script is a wrapper for your MailExtensions storage to set and get
-your add-on preferences.
+This script delegates preference handling to the WebExtension background
+page, so it is independent of the used preference storage.
 
+This script provides an automated preference load/save support as formaly
+provided by the preferencesBindings.js script.
+
+This file is intended to be used in WebExtension HTML pages (popups,
+options, content, windows) as well as in WindowListener legacy scripts. The
+script communicates with the WebExtension background page either via
+runtime messaging (if run in WebExtension pages) or via WindowListener
+notifyTools.js (if run in legacy scripts).
+
+The script provides 3 main preference functions:
+* setPref(aName, aValue)
+* getPref(aName, a Fallback)
+* clearPref(aName)
+
+This script also provides an init() function which can be called during page load,
+which will request the state of all preferences and keeps a local cache. If that cache
+has been set up, the 3 main functions will work with this local cache and can be used
+in synchronous code. If init() is not called, the 3 main function will make their
+requests to the background page and will return a Promise instead of a direct value.
+ 
+The automated preference load/save support is enabled by calling the load(window)
+function during page load.
+ 
 ## Usage
 
 This script provides the following public methods:
 
-### async preferences.init([defaults]);
+### async preferences.init();
 
-The main difference between the MailExtensions local storage and the
-legacy `nsIPrefBranch`: the storage API to access the data works asynchronously.
+This function will asynchronously requests all preferences from the background page
+to set up a local cache. It also sets up a listener to be notified by the background script,
+if a preference chamged so it can update its local cache. After the cache has been set up,
+the other public methods preference functions access the local cache synchronously
 
-This function will asynchronously load the current values from the storage
-into a local object and sets up a listener for storage changes, which will
-update the local object. The other public methods than access the local
-object synchronously, which minimizes the required code changes.
-
-This script also stores default values in the MailExtensions storage, so they
-can be accessed wherever the actual values are accessed, without the need to
-communicate with the background script to get the default values.
-
-Use the optional `defaults` parameter to set the default values. If the `defaults`
-parameter is not given, `init()` will pull the default values from the local
-storage. Setting default values multiple times will propagate them to all
-instances of this script as well.
-
-You probably want to do this once in your background script:
-
-```
-let defaultPrefs = {
-  "counter": 0,
-  "settingsFolder": "",
-  "defaultImport": "",
-  "menuCollapse": true,
-  "toolbar": true,
-  "popup": false,
-  "keywordKey": "Tab",
-  "shortcutModifier": "alt",
-  "shortcutTypeAdv": false,
-  "collapseState": ""
-};
-
-(async function(){
-  // init() stores defaultPrefs in local storage,
-  // so they are accessible from everywhere.
-  await preferences.init(defaultPrefs);
-  
-  // OPTIONAL: Migrate prefs using the LegacyPrefs API
-  // https://github.com/thundernest/addon-developer-support/tree/master/auxiliary-apis/LegacyPrefs
-  const legacyPrefBranch = "extensions.quicktext.";
-  const prefNames = Object.keys(defaultPrefs);
-  for (let prefName of prefNames) {
-    let legacyValue = await messenger.LegacyPrefs.getUserPref(`${legacyPrefBranch}${prefName}`);    
-    if (legacyValue !== null) {
-      console.log(`Migrating legacy preference <${legacyPrefBranch}${prefName}> = <${legacyValue}>.`);
-      
-      // Store the migrated value in local storage.
-      preferences.setPref(prefName, legacyValue);
-      
-      // Clear the legacy value.
-      messenger.LegacyPrefs.clearUserPref(`${legacyPrefBranch}${prefName}`);
-    }
-  }  
-})()
-
-```
 
 ### preferences.getPref(aName, [aFallback]);
 
-Gets the value for preference `aName`. Returns the default value if no user value has been defined. If not even a default value has been set, the value of the optional parameter `aFallback`  is returned (or `null`).
+Gets the value for preference `aName`. Returns either a Promise for a value received
+from the background script or a direct value from the local cache - see init().
+
+If no user value and also no default value has been defined, the fallback value will be
+returned (or `null`).
 
 
 ### preferences.setPref(aName, aValue);
 
-Updates the stored user value for preference `aName`. Subsequent calls to `getPref` will return the new value. The update is also propagated to the MailExtensions storage and all other instances of this script will get the new value as well. This script is not waiting for the MailExtensions storage to complete the change.
-
+Sends an update request for the preference `aName` to the background script and updates
+the local cache (if used). 
 
 ### preferences.clearPref(aName);
 
-Clears the stored user value for preference `aName`. Subsequent calls to `getPref` will return the default value. The clearing is also propagated to the MailExtensions storage and all other instances of this script will clear the preference as well. This script is not waiting for the MailExtensions storage to complete the change.
+Sends a request to delete the user value for the preference `aName` to the background script
+and updates the local cache (if used). ence `aName`. Subsequent calls to `getPref` will return the default value. The clearing is also propagated to the MailExtensions storage and all other instances of this script will clear the preference as well. This script is not waiting for the MailExtensions storage to complete the change.
 
-### async preferences.loadPreferences(window);
+### async preferences.load(window);
 
 This will search the given `window` for elements with a `preference` attribute (containing the name of a preference) and will load the appropriate values. Any user changes to these elements values will instantly update the linked preferences. This behaviour can be changed by adding the `instantApply` attribute to the element and setting it to `false`. 
 
@@ -89,6 +65,6 @@ If a linked preference is modified elsewhere, the element's value in the given w
 
 **Note:** _Also supported is the `delayprefsave` attribute, which causes to defer the preference updates by 1s. This requires to add the `alarms` permission to the `manifest.json` file._
 
-### preferences.savePreferences();
+### preferences.saves();
 
 This will search the `window` provided by a previous call to `preferences.loadPreferences` for elements with a `preference` attribute (containing the name of a preference) and will update those preferences with the current values of the linked elements.
