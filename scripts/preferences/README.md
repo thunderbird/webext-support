@@ -1,7 +1,7 @@
 ## Objective
 
 This script delegates preference handling to the WebExtension background
-page, so it is independent of the used preference storage.
+page, so it is independent of the used preference storage backend.
 
 This script provides an automated preference load/save support as formaly
 provided by the preferencesBindings.js script.
@@ -17,11 +17,9 @@ The script provides 3 main preference functions:
 * getPref(aName, a Fallback)
 * clearPref(aName)
 
-This script also provides an init() function which can be called during page load,
-which will request the state of all preferences and keeps a local cache. If that cache
-has been set up, the 3 main functions will work with this local cache and can be used
-in synchronous code. If init() is not called, the 3 main function will make their
-requests to the background page and will return a Promise instead of a direct value.
+This script also provides an initCache() function which can be called during page load to setup
+a local preference cache. The 3 main preference functions will then work synchronously with this
+local cache instead of making asynchronous calls to the WebExtention background page.
  
 The automated preference load/save support is enabled by calling the load(window)
 function during page load.
@@ -30,18 +28,19 @@ function during page load.
 
 This script provides the following public methods:
 
-### async preferences.init();
+### async preferences.initCache();
 
-This function will asynchronously requests all preferences from the background page
-to set up a local cache. It also sets up a listener to be notified by the background script,
-if a preference chamged so it can update its local cache. After the cache has been set up,
-the other public methods preference functions access the local cache synchronously
+This function will asynchronously requests all preferences from the WebExtension background
+page to set up a local cache. It also sets up a listener to be notified by the background
+page, after a preference has been changed elsewhere so it can update its local cache.
+After the cache has been set up, the 3 main preference functions access the local cache
+synchronously.
 
 
 ### preferences.getPref(aName, [aFallback]);
 
 Gets the value for preference `aName`. Returns either a Promise for a value received
-from the background script or a direct value from the local cache - see init().
+from the WebExtension background page or a direct value from the local cache - see initCache().
 
 If no user value and also no default value has been defined, the fallback value will be
 returned (or `null`).
@@ -49,13 +48,14 @@ returned (or `null`).
 
 ### preferences.setPref(aName, aValue);
 
-Sends an update request for the preference `aName` to the background script and updates
-the local cache (if used). 
+Sends an update request for the preference `aName` to the WebExtension background page and
+updates the local cache (if used). 
 
 ### preferences.clearPref(aName);
 
-Sends a request to delete the user value for the preference `aName` to the background script
-and updates the local cache (if used). ence `aName`. Subsequent calls to `getPref` will return the default value. The clearing is also propagated to the MailExtensions storage and all other instances of this script will clear the preference as well. This script is not waiting for the MailExtensions storage to complete the change.
+Sends a request to delete the user value for the preference `aName` to the WebExtension
+background page and updates the local cache (if used). Subsequent calls to `getPref` will return
+the default value. 
 
 ### async preferences.load(window);
 
