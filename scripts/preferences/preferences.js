@@ -2,35 +2,15 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
- * This script delegates preference handling to the WebExtension background
- * page, so it is independent of the used preference storage.
- *
- * This script provides an automated preference load/save support as formaly
- * provided by the preferencesBindings.js script.
- *
- * This file is intended to be used in WebExtension HTML pages (popups,
- * options, content, windows) as well as in WindowListener legacy scripts. The
- * script communicates with the WebExtension background page either via
- * runtime messaging (if run in WebExtension pages) or via WindowListener
- * notifyTools.js (if run in legacy scripts).
- *
- * The script provides 3 main preference functions:
- *  - setPref(aName, aValue)
- *  - getPref(aName, a Fallback)
- *  - clearPref(aName)
- *
- * This script also provides an init() function which can be called during page load.
-*  This will request the state of all preferences and keeps a local cache. If that cache
- * has been set up, the 3 main functions will work with this local cache and can be used
- * in synchronous code. If init() is not called, the 3 main function will make their
- * requests to the background page and will return a Promise instead of a direct value.
- *
- * The automated preference load/save support is enabled by calling the load(window)
- * function during page load.
+ * For usage descriptions, please check:
+ * https://github.com/thundernest/addon-developer-support/tree/master/scripts/preferences
  *
  * Version: 2.0
  *
- * Author: John Bieling (john@thunderbird.net)
+ * Author (parts): John Bieling (john@thunderbird.net)
+ *
+ * Contains large parts of the preferencesBindings.js file used
+ * in XUL/XHTML option pages.
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -42,14 +22,16 @@ var preferences = {
     _localDefaultsCache: {},
     _localCacheInitialized: false,
 
+    _listenersInitialized: false,
+
     _prefElements: [],
     _preferencesLoaded: false,
 
     // Function to cache preferences locally to be able to use get/set/clearPref()
-    // synchronously. If init() is not called, get/set/clearPref() will make
+    // synchronously. If initCache() is not called, get/set/clearPref() will make
     // asynchronous requests to the background page instead using the
     // local cache.
-    init: async function() {
+    initCache: async function() {
         if (typeof messenger == "object") {
             // Request current values of all preferences.
             this._localPrefsCache = await messenger.runtime.sendMessage({
@@ -58,9 +40,6 @@ var preferences = {
             this._localDefaultsCache = await messenger.runtime.sendMessage({
                 command: "getAllDefaults"
             });
-            // Register a listener for notifications from the background
-            // to update a preference.
-            messenger.runtime.onMessage.addListener(this._updatesFromBackground);
         } else if (typeof notifyTools == "object") {
             // Request current values of all preferences.
             this._localPrefsCache = await notifyTools.notifyBackground({
@@ -69,32 +48,48 @@ var preferences = {
             this._localDefaultsCache = await notifyTools.notifyBackground({
                 command: "getAllDefaults"
             });
-            // Register a listener for notifications from the background
-            // to update a preference.
-            notifyTools.registerListener(this._updatesFromBackground);
         } else {
             throw new Error("notifyTools not found.");
         }
         this._localCacheInitialized = true;
-        console.log(this._localPrefsCache);
+        this._initListeners();
     },
 
+    _initListeners: function() {
+        if (this._listenersInitialized)
+          return;
+        
+        if (typeof messenger == "object") {
+            // Register a listener for messages from the background
+            // to update a preference.
+            messenger.runtime.onMessage.addListener(preferences._updatesFromBackground);
+        } else if (typeof notifyTools == "object") {
+            // Register a listener for notifications from the background
+            // to update a preference.
+            notifyTools.registerListener(preferences._updatesFromBackground);
+        }
+        this._listenersInitialized = true;
+    },
+    
     _updatesFromBackground: function(info) {
         if (info.command == "setPref") {
-            this._localPrefsCache[info.name] = info.value;
+            preferences._localPrefsCache[info.name] = info.value;
         }
         if (info.command == "clearPref") {
-            if (this._localPrefsCache.hasOwnProperty(info.name)) {
-                delete this._localPrefsCache[info.name];
+            if (preferences._localPrefsCache.hasOwnProperty(info.name)) {
+                delete preferences._localPrefsCache[info.name];
             }
         }
         if (info.command == "setDefault") {
-            this._localDefaultsCache[info.name] = info.value;
+            preferences._localDefaultsCache[info.name] = info.value;
         }
+        
+        // If this preference was loaded into the UI, update its value.
+        preferences._updateElements(info.name);
     },
 
-    // returns a value from the local cache if init() has been called, or a Promise
-    // for the preference value otherwise
+    // Returns a value from the local cache if initCache() has been called, or a Promise
+    // for the preference value otherwise.
     getPref: function(aName, aFallback = null) {
         if (this._localCacheInitialized) {
             if (this._localPrefsCache.hasOwnProperty(aName)) {
@@ -121,12 +116,12 @@ var preferences = {
         }
     },
 
-    // If init() has been called, the function returns a Promise which resolves when the value has
+    // If initCache() has been called, the function returns a Promise which resolves when the value has
     // been updated in the background script, otherwise it returns immediately after updating the
     // local cache.
     setPref: function(aName, aValue) {
         let rv = null;
-        // send update requests, but do not await them (fire and forget)
+        // Send update requests, but do not await them (fire and forget).
         if (typeof messenger == "object") {
             rv = messenger.runtime.sendMessage({
                 command: "setPref",
@@ -150,12 +145,12 @@ var preferences = {
         }
     },
 
-    // If init() has been called, the function returns a Promise which resolves when the value has
+    // If initCache() has been called, the function returns a Promise which resolves when the value has
     // been cleared in the background script, otherwise it returns immediately after updating the
     // local cache.
     clearPref: function(aName) {
         let rv = null;
-        // send update requests, but do not await them (fire and forget)
+        // Send update requests, but do not await them (fire and forget).
         if (typeof messenger == "object") {
             return messenger.runtime.sendMessage({
                 command: "clearPref",
@@ -194,13 +189,14 @@ var preferences = {
     
     const elements = this._getElementsByAttribute("preference");
     for (const element of elements) {
-      this._userChangedValue(element, /* instant */ true);
+      await this._userChangedValue(element, /* instant */ true);
     }
   },
 
   // Load preferences into elements.
   load: async function (window) {
     this.window = window;
+    this._initListeners();
     
     // Gather all preference elements in this document and load their values.
     const elements = this._getElementsByAttribute("preference");
@@ -209,7 +205,7 @@ var preferences = {
       if (!this._prefElements.includes(prefName)) {
         this._prefElements.push(prefName);
       }
-      this._updateElements(prefName);
+      await this._updateElements(prefName);
     }
     
     this.window.addEventListener("change", preferences);
@@ -229,13 +225,13 @@ var preferences = {
       : this.window.document.querySelectorAll(`[${name}]`);
   },
   
-  _updateElements: function(prefName) {
+  _updateElements: async function(prefName) {
     if (!this._prefElements.includes(prefName)) {
       return;
     }
     const elements = this._getElementsByAttribute("preference", prefName);
     for (const element of elements) {
-      this._setElementValue(element);
+      await this._setElementValue(element);
     }
   },
 
@@ -277,13 +273,13 @@ var preferences = {
     }
   },
 
-  _setElementValue: function(aElement) {
+  _setElementValue: async function(aElement) {
     if (aElement.hasAttribute("preference")) {
       if (!this._isElementEditable(aElement)) {
         return;
       }
 
-      const val = this.getPref(aElement.getAttribute("preference"));    
+      const val = await this.getPref(aElement.getAttribute("preference"));    
       if (aElement.localName == "checkbox") {
         this._setValue(aElement, "checked", val);
       } else {
@@ -305,7 +301,7 @@ var preferences = {
     return element.getAttribute(attribute);
   },
 
-  _getElementValue: function (aElement) {
+  _getElementValue: async function (aElement) {
     let value;
     if (aElement.hasAttribute("preference")) {
       if (aElement.localName == "checkbox") {
@@ -315,7 +311,7 @@ var preferences = {
       }
 
       // Convert the value into the required type.
-      switch (typeof this.getPref(aElement.getAttribute("preference"))) {
+      switch (typeof (await this.getPref(aElement.getAttribute("preference")))) {
         case "number":
           return parseInt(value, 10) || 0;
         case "boolean":
@@ -355,22 +351,24 @@ var preferences = {
   },
 
   
-  _userChangedValue: function(aElement, instant) {
+  _userChangedValue: async function(aElement, instant) {
     const element = this._getPreferenceElement(aElement);
     if (element.hasAttribute("instantApply") &&  element.getAttribute("instantApply").toLowerCase() == "false")
       return;
     
-    if (!element.hasAttribute("preference") || this.getPref(element.getAttribute("preference")) == this._getElementValue(element))
+    let newValue = await this._getElementValue(element);
+    let curValue = await this.getPref(element.getAttribute("preference"));
+    if (!element.hasAttribute("preference") || newValue == curValue)
       return;
     
     if (instant || element.getAttribute("delayprefsave") != "true") {
       // Update value directly.
-      this.setPref(element.getAttribute("preference"), this._getElementValue(element));
+      await this.setPref(element.getAttribute("preference"), newValue);
     } else {
       if (element._deferredValueUpdateTimout) {
         this.window.clearTimeout(element._deferredValueUpdateTimout);
       }
-      element._deferredValueUpdateTimout = this.window.setTimeout(this.setPref.bind(this), 1000, element.getAttribute("preference"), this._getElementValue(element));
+      element._deferredValueUpdateTimout = this.window.setTimeout(this.setPref.bind(this), 1000, element.getAttribute("preference"), newValue);
     }
   },
 

@@ -57,5 +57,5 @@ If a linked preference is modified elsewhere, the element's value in the given w
 
 ### async preferences.save();
 
-This will search the `window` provided by a previous call to `preferences.loadPreferences` for elements with a `preference` attribute (containing the name of a preference) and will update those preferences with the current values of the linked elements.
+This will search the `window` provided by a previous call to `preferences.loadPreferences()` for elements with a `preference` attribute (containing the name of a preference) and will update those preferences with the current values of the linked elements.
 
