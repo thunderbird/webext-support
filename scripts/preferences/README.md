@@ -9,7 +9,7 @@
 The script will use either [`runtime.sendMessage()`](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/sendMessage)
 (if loaded in a WebExtension page) or [notifyTools.js](https://github.com/thundernest/addon-developer-support/tree/master/scripts/notifyTools)
 (if loaded in a privileged script) to delegate the preference handling to the WebExtension background page.
-
+ 
 ## Usage
 
 This script provides the following public methods:
@@ -24,7 +24,7 @@ can update the local cache.
 After the cache has been set up, the `getPref()`, `setPref()` and `clearPref()` functions
 will interact synchronously with local cache instead of making asynchronous calls to the
 WebExtention background page.
- 
+
 
 
 ### preferences.getPref(aName, [aFallback]);
