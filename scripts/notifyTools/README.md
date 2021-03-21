@@ -11,6 +11,8 @@ to your WebExtension background page and await a return value.
 
 ![messaging](https://user-images.githubusercontent.com/5830621/111921572-90db8d80-8a95-11eb-8673-4e1370d49e4b.png)
 
+More details can be found in the [update tutorial introducing this script](https://github.com/thundernest/addon-developer-support/wiki/Tutorial:-Convert-add-on-parts-individually-by-using-a-messaging-system).
+
 ## Usage
 
 This script provides the following public methods:
@@ -39,7 +41,7 @@ Example:
 notifyTools.removeListener(id);
 ```
 
-### notifyBackground(data)
+### async notifyBackground(data)
 
 This function can be called from any privileged script in an Experiment to send data to the
 WebExtension's background page. The function will return a Promise for whatever the listener
