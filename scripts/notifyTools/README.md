@@ -1,6 +1,6 @@
 ## Objective
 
-This script is intened to be used together with the WindowListener API (WL API v1.44 or later).
+This script is intened to be used together with the WindowListener API (WL API v1.45 or later).
 
 The WL API provides a `notifyExperiment()` method, which allows to send data from your
 WebExtension's background page to any privileged script running in any of your Experiments.
