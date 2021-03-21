@@ -1,8 +1,8 @@
 ## Objective
 
-* delegate preference handling to the WebExtension background page to be independent of the used preference storage back-end
+* delegate the actual preference handling to the WebExtension background page to be independent of the used preference storage back-end
 
-* provide an automated preference load/save mechanism as formally provided by the preferencesBindings.js script
+* provide an automated preference load/save mechanism, similar to the former preferencesBindings.js script
 
 * universal design to be used in WebExtension HTML pages as well as in privileged scripts loaded by the WindowListener API
 
@@ -10,6 +10,8 @@ The script will use either [`runtime.sendMessage()`](https://developer.mozilla.o
 (if loaded in a WebExtension page) or [notifyTools.js](https://github.com/thundernest/addon-developer-support/tree/master/scripts/notifyTools)
 (if loaded in a privileged script) to delegate the preference handling to the WebExtension background page.
  
+The WebExtension background page needs to load a preference handler, which answers the requests from preference.js. The currently available background handlers are [prefBranchHandler.js](https://github.com/thundernest/addon-developer-support/tree/master/scripts/preferences/backgroundHandler) and [localStorageHandler.js](https://github.com/thundernest/addon-developer-support/tree/master/scripts/preferences/backgroundHandler).
+
 ## Usage
 
 This script provides the following public methods:
@@ -22,8 +24,8 @@ be notified by the background page, after a preference has been changed elsewher
 can update the local cache.
 
 After the cache has been set up, the `getPref()`, `setPref()` and `clearPref()` functions
-will interact synchronously with local cache instead of making asynchronous calls to the
-WebExtention background page.
+will interact synchronously with the local cache instead of making asynchronous calls to
+the WebExtention background page.
 
 
 
