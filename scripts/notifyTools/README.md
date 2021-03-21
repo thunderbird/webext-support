@@ -47,7 +47,7 @@ This function can be called from any privileged script in an Experiment to send 
 WebExtension's background page. The function will return a Promise for whatever the listener
 registered in the WebExtension's background script is returning. 
 
-Note: If multiple listeners are registered and more than one is returning data, the value
+**Note**: If multiple listeners are registered and more than one is returning data, the value
 from the first one used. This may lead to inconsistent behavior, so make sure that for each
 request only one listener is returning data.
 
