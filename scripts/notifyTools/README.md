@@ -9,6 +9,8 @@ The recieving script must include `notifyTools.js` and register a listener.
 It also allows to send data from any privileged script running in any of your Experiments
 to your WebExtension background page and await a return value.
 
+![messaging](https://user-images.githubusercontent.com/5830621/111921572-90db8d80-8a95-11eb-8673-4e1370d49e4b.png)
+
 ## Usage
 
 This script provides the following public methods:
