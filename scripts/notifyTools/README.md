@@ -3,7 +3,7 @@
 This script is intened to be used together with the WindowListener API (WL API v1.46 or later) or
 BootstrapLoader API (BL API v 1.12).
 
-The WL API provides a `notifyExperiment()` method, which allows to send data from your
+The WL API and the BL API provide a `notifyExperiment()` method, which allows to send data from your
 WebExtension's background page to any privileged script running in any of your Experiments.
 The recieving script must include `notifyTools.js` and register a listener. The value returned by
 the registered listener is passed back as the return value of `notifyExperiment(data)` (as a Promise).
