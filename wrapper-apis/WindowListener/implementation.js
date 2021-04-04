@@ -2,6 +2,9 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
+ * Version: 1.46
+ * - notifyExperiment() can now await a return value (need notifyTools v1.3 or newer)
+ *
  * Version: 1.45
  * - Add notifyExperiment() function to send data to privileged scripts inside
  *   an Experiment. The privileged script must include notifyTools.js from the
@@ -544,20 +547,20 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
     // Add observer for notifyTools.js
     Services.obs.addObserver(
       this.onNotifyBackgroundObserver,
-      "WindowListenerNotifyBackgroundObserver",
+      "NotifyBackgroundObserver",
       false
     );
 
     return {
       WindowListener: {
         notifyExperiment(data) {
-          Services.obs.notifyObservers(
-            // Stuff data in an array so simple strings can be used as payload
-            // without the observerService complaining.
-            [data],
-            "WindowListenerNotifyExperimentObserver",
-            self.extension.id
-          );
+          return new Promise(resolve => {
+            Services.obs.notifyObservers(
+              { data, resolve },
+              "NotifyExperimentObserver",
+              self.extension.id
+            );
+          });
         },
 
         onNotifyBackground: new ExtensionCommon.EventManager({
@@ -1244,10 +1247,10 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
   }
 
   onShutdown(isAppShutdown) {
-    // Remove bbserver for notifyTools.js
+    // Remove observer for notifyTools.js
     Services.obs.removeObserver(
       this.onNotifyBackgroundObserver,
-      "WindowListenerNotifyBackgroundObserver"
+      "NotifyBackgroundObserver"
     );
 
     // Unload from all still open windows
