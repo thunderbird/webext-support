@@ -1,7 +1,7 @@
 ## Objective
 
 This script is intened to be used together with the WindowListener API (WL API v1.46 or later) or
-BootstrapLoader API (BL API v 1.12.
+BootstrapLoader API (BL API v 1.12).
 
 The WL API provides a `notifyExperiment()` method, which allows to send data from your
 WebExtension's background page to any privileged script running in any of your Experiments.
