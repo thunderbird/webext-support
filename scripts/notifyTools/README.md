@@ -79,3 +79,14 @@ messenger.WindowListener.onNotifyBackground.addListener(async (info) => {
 This allows to work on the add-on uprade in smaller steps, as single calls (like `window.openDialog()`)
 in the middle of legacy code can be replaced by WebExtension calls, by stepping out of the Experiment
 and back in when the task has been finished.
+
+### enable()
+
+The script attaches its `enable()` method to the `load` event of the current window. If the script is
+loaded into a window-less environment, `enable()` needs to be called manually.
+
+### disable()
+
+The script attaches its `disable()` method to the `unload` event of the current window. If the script is
+loaded into a window-less environment, `disable()` needs to be called manually.
+
