@@ -1,6 +1,6 @@
 ## Objective
 
-Use this API to add CSS files to Thunderbird windows. Before using this, please check out if the built-in theme_experiments API is already providing the needed flexibility.
+Use this API to add CSS files to Thunderbird windows. Before using this, please check out if the built-in [theme_experiments API](https://webextension-api.thunderbird.net/en/latest/theme.html) is already providing the needed flexibility.
 
 ## Usage
 
