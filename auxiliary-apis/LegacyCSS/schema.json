@@ -1,0 +1,36 @@
+[
+  {
+    "namespace": "LegacyCSS",    
+    "events": [
+      {
+        "name": "onWindowOpened",
+        "type": "function",
+        "description": "",
+        "parameters": [
+          {
+            "name": "url",
+            "type": "string"
+          }
+        ]
+      }    
+    ],
+    "functions": [
+      {
+        "name": "inject",
+        "type": "function",
+        "async": true,
+        "description": "Injects the given CSS file into the window with the given url. Returns false if window was not open.",
+        "parameters": [
+          {
+            "name": "url",
+            "type": "string"
+          },
+          {
+            "name": "cssFile",
+            "type": "string"
+          }
+        ]
+      }
+    ]
+  }
+]
