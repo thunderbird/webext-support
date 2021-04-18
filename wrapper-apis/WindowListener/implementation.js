@@ -2,46 +2,8 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
- * Version: 1.46
- * - notifyExperiment() can now await a return value (need notifyTools v1.3 or newer)
- *
- * Version: 1.45
- * - Add notifyExperiment() function to send data to privileged scripts inside
- *   an Experiment. The privileged script must include notifyTools.js from the
- *   addon-developer-support repository.
- *
- *   // In a WebExtension background script:
- *   // Note: Restrictions of the structured clone algorythm apply to the send data.
- *   messenger.WindowListener.notifyExperiment({data: "voilá"});
- *
- *   // In a privileged script inside an Experiment:
- *   let Listerner1 = notifyTools.registerListener((rv) => console.log("listener #1", rv));
- *   let Listerner2 = notifyTools.registerListener((rv) => console.log("listener #2", rv));
- *   let Listerner3 = notifyTools.registerListener((rv) => console.log("listener #3", rv));
- *   notifyTools.removeListener(Listerner2);
- *
- * - Add onNotifyBackground event, which can be registered in the background page,
- *   to receive data from privileged scripts inside an Experiment. The privileged
- *   script must include notifyTools.js from the addon-developer-support repository.
- *
- *   // In a WebExtension background script:
- *   messenger.WindowListener.onNotifyBackground.addListener(async (info) => {
- *    switch (info.command) {
- *     case "doSomething":
- *      let rv = await doSomething(info.data);
- *      return {
- *       result: rv,
- *       data: [1,2,3]
- *      };
- *      break;
- *    }
- *   });
- *
- *   // In a privileged script inside an Experiment:
- *   let rv = await notifyTools.notifyBackground({command: "doSomething", data: [1,2,3]});
- *   // rv will be whatever has been returned by the background script.
- *   // Note: Restrictions of the structured clone algorythm apply to
- *   // the send and recieved data.
+ * Version: 1.48
+ * - moved notifyTools into its own NotifyTools API.
  *
  * Version: 1.39
  * - fix for 68
@@ -499,82 +461,8 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
       },
     };
 
-    this.onNotifyBackgroundObserver = {
-      observe: async function (aSubject, aTopic, aData) {
-        if (
-          Object.keys(self.observerTracker).length > 0 &&
-          aData == self.extension.id
-        ) {
-          let payload = aSubject.wrappedJSObject;
-          // This is called from the WL observer.js and therefore it should have a resolve
-          // payload, but better check.
-          if (payload.resolve) {
-            let observerTrackerPromises = [];
-            // Push listener into promise array, so they can run in parallel
-            for (let listener of Object.values(self.observerTracker)) {
-              observerTrackerPromises.push(listener(payload.data));
-            }
-            // We still have to await all of them but wait time is just the time needed
-            // for the slowest one.
-            let results = [];
-            for (let observerTrackerPromise of observerTrackerPromises) {
-              let rv = await observerTrackerPromise;
-              if (rv != null) results.push(rv);
-            }
-            if (results.length == 0) {
-              payload.resolve();
-            } else {
-              if (results.length > 1) {
-                console.warn(
-                  "Received multiple results from onNotifyBackground listeners. Using the first one, which can lead to inconsistent behavior.",
-                  results
-                );
-              }
-              payload.resolve(results[0]);
-            }
-          } else {
-            // Just call the listener.
-            for (let listener of Object.values(self.observerTracker)) {
-              listener(payload.data);
-            }
-          }
-        }
-      },
-    };
-
-    this.observerTracker = {};
-    this.observerTrackerNext = 1;
-    // Add observer for notifyTools.js
-    Services.obs.addObserver(
-      this.onNotifyBackgroundObserver,
-      "NotifyBackgroundObserver",
-      false
-    );
-
     return {
       WindowListener: {
-        notifyExperiment(data) {
-          return new Promise(resolve => {
-            Services.obs.notifyObservers(
-              { data, resolve },
-              "NotifyExperimentObserver",
-              self.extension.id
-            );
-          });
-        },
-
-        onNotifyBackground: new ExtensionCommon.EventManager({
-          context,
-          name: "WindowListener.onNotifyBackground",
-          register: (fire) => {
-            let trackerId = self.observerTrackerNext++;
-            self.observerTracker[trackerId] = fire.sync;
-            return () => {
-              delete self.observerTracker[trackerId];
-            };
-          },
-        }).api(),
-
         async waitForMasterPassword() {
           // Wait until master password has been entered (if needed)
           while (!Services.logins.isLoggedIn) {
@@ -1247,12 +1135,6 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
   }
 
   onShutdown(isAppShutdown) {
-    // Remove observer for notifyTools.js
-    Services.obs.removeObserver(
-      this.onNotifyBackgroundObserver,
-      "NotifyBackgroundObserver"
-    );
-
     // Unload from all still open windows
     let urls = Object.keys(this.registeredWindows);
     if (urls.length > 0) {
