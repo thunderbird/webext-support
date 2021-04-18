@@ -16,7 +16,22 @@ More details can be found in the [update tutorial introducing this script](https
 
 ## Usage
 
-This script provides the following public methods:
+Add the [NotifyTools API](https://github.com/thundernest/addon-developer-support/tree/master/auxiliary-apis/NotifyTools) to your add-on. Your manifest.json needs an entry like this:
+
+```
+  "experiment_apis": {
+    "NotifyTools": {
+      "schema": "api/NotifyTools/schema.json",
+      "parent": {
+        "scopes": ["addon_parent"],
+        "paths": [["NotifyTools"]],
+        "script": "api/NotifyTools/implementation.js"
+      }
+    }
+  },
+```
+
+The `notifyTools.js` provides the following public methods:
 
 ### registerListener(callback);
 
