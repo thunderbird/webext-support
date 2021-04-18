@@ -1,9 +1,8 @@
 ## Objective
 
-This script is intened to be used together with the WindowListener API (WL API v1.46 or later) or
-BootstrapLoader API (BL API v 1.12).
+This script is intened to be used together with the NotifyTools API (WL API v1.0 or later).
 
-The WL API and the BL API provide a `notifyExperiment()` method, which allows to send data from your
+The NotifyTools API provides a `notifyExperiment()` method, which allows to send data from your
 WebExtension's background page to any privileged script running in any of your Experiments.
 The recieving script must include `notifyTools.js` and register a listener. The value returned by
 the registered listener is passed back as the return value of `notifyExperiment(data)` (as a Promise).
@@ -21,7 +20,7 @@ This script provides the following public methods:
 
 ### registerListener(callback);
 
-This registers a function in a privileged script to be called, when `messenger.WindowListener.notifyExperiment(data)` is
+This registers a function in a privileged script to be called, when `messenger.NotifyTools.notifyExperiment(data)` is
 called from the WebExtension's background script. It returns an `id` which can be used to remove the listener again.
 
 Example:
@@ -65,7 +64,7 @@ notifyTools.notifyBackground({command: "doSomething"}).then((data) => {
 The WebExtension background script needs to register a listener:
 
 ```
-messenger.WindowListener.onNotifyBackground.addListener(async (info) => {
+messenger.NotifyTools.onNotifyBackground.addListener(async (info) => {
   switch (info.command) {
     case "doSomething":
       //do something
