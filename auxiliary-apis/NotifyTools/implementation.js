@@ -16,6 +16,7 @@ var { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 var NotifyTools = class extends ExtensionCommon.ExtensionAPI {
   getAPI(context) {
+    var self = this;
 
     this.onNotifyBackgroundObserver = {
       observe: async function (aSubject, aTopic, aData) {
