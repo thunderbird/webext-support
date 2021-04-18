@@ -8,7 +8,7 @@
 
 ## prefBranchHandler
 
-The prefBranchHandler provides the following public methods:
+The prefBranchHandler needs the [LegacyPrefs API](https://github.com/thundernest/addon-developer-support/tree/master/auxiliary-apis/LegacyPrefs) and provides the following public methods:
 
 ### async prefBranchHandler.init(defaults, branch)
 
