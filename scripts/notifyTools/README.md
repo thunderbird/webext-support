@@ -16,7 +16,7 @@ More details can be found in the [update tutorial introducing this script](https
 
 ## Usage
 
-Add the [NotifyTools API](https://github.com/thundernest/addon-developer-support/tree/master/auxiliary-apis/NotifyTools) to your add-on. Your manifest.json needs an entry like this:
+Add the [NotifyTools API](https://github.com/thundernest/addon-developer-support/tree/master/auxiliary-apis/NotifyTools) to your add-on. Your `manifest.json` needs an entry like this:
 
 ```
   "experiment_apis": {
