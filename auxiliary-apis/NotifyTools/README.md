@@ -1,1 +1,1 @@
-Usage description can be found in the [here](https://github.com/thundernest/addon-developer-support/tree/master/scripts/notifyTools).
+Usage description can be found [here](https://github.com/thundernest/addon-developer-support/tree/master/scripts/notifyTools).
