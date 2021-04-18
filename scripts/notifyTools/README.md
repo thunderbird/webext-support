@@ -1,6 +1,6 @@
 ## Objective
 
-This script is intened to be used together with the NotifyTools API (WL API v1.0 or later).
+This script is intened to be used together with the [NotifyTools API](https://github.com/thundernest/addon-developer-support/tree/master/auxiliary-apis/NotifyTools).
 
 The NotifyTools API provides a `notifyExperiment()` method, which allows to send data from your
 WebExtension's background page to any privileged script running in any of your Experiments.
