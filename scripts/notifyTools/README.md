@@ -5,7 +5,7 @@ This script is intened to be used together with the [NotifyTools API](https://gi
 The NotifyTools API provides a `notifyExperiment()` method, which allows to send data from your
 WebExtension's background page to any privileged script running in any of your Experiments.
 The recieving script must include `notifyTools.js` and register a listener. The value returned by
-the registered listener is passed back as the return value of `notifyExperiment(data)` (as a Promise).
+the registered listener is passed back as the return value of `notifyExperiment()` (as a Promise).
 
 This script also allows to send data from any privileged script running in any of your Experiments
 to your WebExtension background page and await a return value.
