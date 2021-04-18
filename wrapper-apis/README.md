@@ -11,3 +11,5 @@ To support developers, we created these wrapper APIs which do not require all of
 
 _Please note: Updating add-ons with these wrapper APIs should only be the first step, as they are [experimental APIs](https://thunderbird-webextensions.readthedocs.io/en/latest/how-to/experiments.html) which are only a temporary solution. We encourage add-on developers to continue the upgrade process to pure MailExtensions, following the tutorials listed in the [tutorials section](https://github.com/thundernest/addon-developer-support/issues/37). These tutorials are each designed to be completed in a short amount of time, to get the legacy components out piece by piece._
 
+**Please note: Do not use the provided wrapper APIs to create new add-ons. New add-ons can be created as proper WebExtensions with dedicated Experiments directly. Feel free to ask questions on [discuss.thunderbird.net](https://thunderbird.topicbox.com/groups/addons) about creating new add-ons.**
+
