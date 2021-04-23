@@ -323,6 +323,8 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
     }
     managerWindow.document.addEventListener("ViewChanged", this);
     managerWindow.document.addEventListener("update", this);
+    managerWindow.document.addEventListener("view-loaded", this);
+    
     managerWindow[this.uniqueRandomID] = {};
     managerWindow[this.uniqueRandomID].hasAddonManagerEventListeners = true;
     if (paint) {
@@ -1172,6 +1174,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
               managerWindow[this.uniqueRandomID].hasAddonManagerEventListeners
             ) {
               managerWindow.document.removeEventListener("ViewChanged", this);
+              managerWindow.document.removeEventListener("view-loaded", this);
               managerWindow.document.removeEventListener("update", this);
 
               let cards = this.getCards(managerWindow);
