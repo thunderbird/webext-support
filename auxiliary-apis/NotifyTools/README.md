@@ -5,7 +5,7 @@ WebExtension's background page to any privileged script running in any of your E
 The recieving script must include the [notifyTools.js](https://github.com/thundernest/addon-developer-support/tree/master/scripts/notifyTools) script and register a listener. The value returned by
 the registered listener is passed back as the return value of `notifyExperiment()` (as a Promise).
 
-This NotifyTools API also provides a `onNotifyBackground` event which can be registered in the background page. The [notifyTools.js](https://github.com/thundernest/addon-developer-support/tree/master/scripts/notifyTools) script provides a `notifyBackground()` function, which sends a notification to that listener and will await its return value.
+The NotifyTools API also has a `onNotifyBackground` event which can be registered in the background page. The [notifyTools.js](https://github.com/thundernest/addon-developer-support/tree/master/scripts/notifyTools) script provides a `notifyBackground()` function to send a notification from any Experiment script to that listener and will await its return value.
 
 ![messaging](https://user-images.githubusercontent.com/5830621/111921572-90db8d80-8a95-11eb-8673-4e1370d49e4b.png)
 
