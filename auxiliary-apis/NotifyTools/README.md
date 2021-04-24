@@ -67,7 +67,9 @@ request only one listener is returning data.
 Use the `notifyExperiment()` method to send a notification from the WebExtension's background page to Experiment scripts:
 
 ```
-let rv = await messenger.NotifyTools.notifyExperiment({command: "doSomething"});
+messenger.NotifyTools.notifyExperiment({command: "doSomething"}).then((data) => {
+  console.log(data)
+});
 ```
 
 The receiving Experiment script needs to include the [notifyTools.js](https://github.com/thundernest/addon-developer-support/tree/master/scripts/notifyTools) script  and must setup a listener using the following methods:
