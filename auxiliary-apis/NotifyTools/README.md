@@ -58,7 +58,7 @@ notifyTools.notifyBackground({command: "doSomething"}).then((data) => {
 Include the [notifyTools.js](https://github.com/thundernest/addon-developer-support/tree/master/scripts/notifyTools) script in your Experiment script to be able to use `notifyTools.notifyBackground()`.
 
 **Note**: If multiple `onNotifyBackground` listeners are registered in the WebExtension's background page and more than one is returning data, the value
-from the first one used. This may lead to inconsistent behavior, so make sure that for each
+from the first one is returned to the Experiment. This may lead to inconsistent behavior, so make sure that for each
 request only one listener is returning data.
 
 
