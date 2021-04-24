@@ -47,7 +47,7 @@ messenger.NotifyTools.onNotifyBackground.addListener(async (info) => {
 });
 ```
 
-The `onNotifyBackground` event will receive notifications send from your Experiment scripts:
+The `onNotifyBackground` event will receive and respond to notifications send from your Experiment scripts:
 
 ```
 notifyTools.notifyBackground({command: "doSomething"}).then((data) => {
