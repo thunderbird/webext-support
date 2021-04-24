@@ -7,8 +7,7 @@ WebExtension's background page to any privileged script running in any of your E
 The recieving script must include `notifyTools.js` and register a listener. The value returned by
 the registered listener is passed back as the return value of `notifyExperiment()` (as a Promise).
 
-This script also allows to send data from any privileged script running in any of your Experiments
-to your WebExtension background page and await a return value.
+This NotifyTools API also provides a `onNotifyBackground` event which can be registered in the background page. The `notifyTools.js` script provides a `notifyBackground()` function, which will send data to that listener and will await its return value.
 
 ![messaging](https://user-images.githubusercontent.com/5830621/111921572-90db8d80-8a95-11eb-8673-4e1370d49e4b.png)
 
