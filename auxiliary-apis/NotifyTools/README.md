@@ -1,6 +1,6 @@
 ## Objective
 
-The NotifyTools API has a `onNotifyBackground` event which can be registered in the background page. The [notifyTools.js](https://github.com/thundernest/addon-developer-support/tree/master/scripts/notifyTools) script provides a `notifyBackground()` function to send a notification from any Experiment script to that listener and will await its return value.
+The NotifyTools API has a `onNotifyBackground` event which can be registered in the WebExtension background page. The [notifyTools.js](https://github.com/thundernest/addon-developer-support/tree/master/scripts/notifyTools) script provides a `notifyBackground()` function to send a notification from any Experiment script to that listener and will await its return value.
 
 The NotifyTools API also provides a `notifyExperiment()` method, which allows to send a notifications from your
 WebExtension's background page to any Experiment script. The recieving script must include the [notifyTools.js](https://github.com/thundernest/addon-developer-support/tree/master/scripts/notifyTools) script and register a listener. The value returned by
