@@ -1,16 +1,16 @@
-## Objective
+# Objective
 
-The NotifyTools API has a `onNotifyBackground` event which can be registered in the WebExtension background page. The [notifyTools.js](https://github.com/thundernest/addon-developer-support/tree/master/scripts/notifyTools) script provides a `notifyBackground()` function to send a notification from any Experiment script to that listener and will await its return value.
-
-The NotifyTools API also provides a `notifyExperiment()` method, which allows to send a notifications from your
-WebExtension's background page to any Experiment script. The recieving script must include the [notifyTools.js](https://github.com/thundernest/addon-developer-support/tree/master/scripts/notifyTools) script and register a listener. The value returned by
-the registered listener is passed back as the return value of `notifyExperiment()` (as a Promise).
+The NotifyTools provide a bidirectional messaging system between Experiments scripts and the WebExtension's background page (even with [e10s](https://developer.thunderbird.net/add-ons/updating/tb91/changes#thunderbird-is-now-multi-process-e-10-s) being enabled in Thunderbird Beta 86).
 
 ![messaging](https://user-images.githubusercontent.com/5830621/111921572-90db8d80-8a95-11eb-8673-4e1370d49e4b.png)
 
-More details can be found in the [update tutorial introducing this script](https://github.com/thundernest/addon-developer-support/wiki/Tutorial:-Convert-add-on-parts-individually-by-using-a-messaging-system).
+They allow to work on add-on uprades in smaller steps, as single calls (like `window.openDialog()`)
+in the middle of legacy code can be replaced by WebExtension calls, by stepping out of the Experiment
+and back in when the task has been finished.
 
-## Usage
+More details can be found in [this update tutorial](https://github.com/thundernest/addon-developer-support/wiki/Tutorial:-Convert-add-on-parts-individually-by-using-a-messaging-system).
+
+# Usage
 
 Add the [NotifyTools API](https://github.com/thundernest/addon-developer-support/tree/master/auxiliary-apis/NotifyTools) to your add-on. Your `manifest.json` needs an entry like this:
 
@@ -27,12 +27,54 @@ Add the [NotifyTools API](https://github.com/thundernest/addon-developer-support
   },
 ```
 
-The `notifyTools.js` provides the following public methods:
+Additionally to the [NotifyTools API](https://github.com/thundernest/addon-developer-support/tree/master/auxiliary-apis/NotifyTools) the [notifyTools.js](https://github.com/thundernest/addon-developer-support/tree/master/scripts/notifyTools) script is needed as the counterpart in Experiment scripts.
+
+**Note:** You need to adjust the `notifyTools.js` script and add your add-on ID at the top.
+
+## Receiving notifications from Experiment scripts
+
+Add a listener for the `onNotifyBackground` event in your WebExtension's background page:
+
+```
+messenger.NotifyTools.onNotifyBackground.addListener(async (info) => {
+  switch (info.command) {
+    case "doSomething":
+      //do something
+      let rv = await doSomething();
+      return rv;
+      break;
+  }
+});
+```
+
+The `onNotifyBackground` event will receive notifications send from your Experiment scripts:
+
+```
+notifyTools.notifyBackground({command: "doSomething"}).then((data) => {
+  console.log(data);
+});
+```
+
+Include the [notifyTools.js](https://github.com/thundernest/addon-developer-support/tree/master/scripts/notifyTools) script in your Experiment script to be able to use `notifyTools.notifyBackground()`.
+
+**Note**: If multiple `onNotifyBackground` listeners are registered in the WebExtension's background page and more than one is returning data, the value
+from the first one used. This may lead to inconsistent behavior, so make sure that for each
+request only one listener is returning data.
+
+
+## Sending notifications to Experiments scripts
+
+Use the `notifyExperiment()` method to send a notification from the WebExtension's background page to Experiment scripts:
+
+```
+let rv = await messenger.NotifyTools.notifyExperiment({command: "doSomething"});
+```
+
+The receiving Experiment script needs to include the [notifyTools.js](https://github.com/thundernest/addon-developer-support/tree/master/scripts/notifyTools) script  and must setup a listener using the following methods:
 
 ### registerListener(callback);
 
-This registers a function in a privileged script to be called, when `messenger.NotifyTools.notifyExperiment(data)` is
-called from the WebExtension's background script. It returns an `id` which can be used to remove the listener again.
+Registers a callback function, which is called when a notification from the WebExtension's background page has been received. The `registerListener()` function returns an `id` which can be used to remove the listener again.
 
 Example:
 
@@ -54,49 +96,10 @@ Example:
 notifyTools.removeListener(id);
 ```
 
-### async notifyBackground(data)
-
-This function can be called from any privileged script in an Experiment to send data to the
-WebExtension's background page. The function will return a Promise for whatever the listener
-registered in the WebExtension's background script is returning. 
-
-**Note**: If multiple listeners are registered and more than one is returning data, the value
-from the first one used. This may lead to inconsistent behavior, so make sure that for each
-request only one listener is returning data.
-
-Example:
-
-```
-notifyTools.notifyBackground({command: "doSomething"}).then((data) => {
-  console.log(data);
-});
-```
-
-The WebExtension background script needs to register a listener:
-
-```
-messenger.NotifyTools.onNotifyBackground.addListener(async (info) => {
-  switch (info.command) {
-    case "doSomething":
-      //do something
-      let rv = await doSomething();
-      return rv;
-      break;
-  }
-});
-```
-
-This allows to work on the add-on uprade in smaller steps, as single calls (like `window.openDialog()`)
-in the middle of legacy code can be replaced by WebExtension calls, by stepping out of the Experiment
-and back in when the task has been finished.
-
 ### enable()
 
-The script attaches its `enable()` method to the `load` event of the current window. If the script is
-loaded into a window-less environment, `enable()` needs to be called manually.
+The [notifyTools.js](https://github.com/thundernest/addon-developer-support/tree/master/scripts/notifyTools) script attaches its `enable()` method to the `load` event of the current window. If the script is loaded into a window-less environment, `enable()` needs to be called manually.
 
 ### disable()
 
-The script attaches its `disable()` method to the `unload` event of the current window. If the script is
-loaded into a window-less environment, `disable()` needs to be called manually.
-
+The [notifyTools.js](https://github.com/thundernest/addon-developer-support/tree/master/scripts/notifyTools) script attaches its `disable()` method to the `unload` event of the current window. If the script is loaded into a window-less environment, `disable()` needs to be called manually.
