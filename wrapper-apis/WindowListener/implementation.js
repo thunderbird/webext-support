@@ -2,8 +2,9 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
-  * Version: 1.50
+ * Version: 1.50
  * - use built-in CSS rules to fix options button for dark themes (thanks to Thunder)
+ * - fix some occasions where options button was not added
  *
  * Version: 1.49
  * - fixed missing eventListener for Beta + Daily
@@ -301,26 +302,22 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
     }
   }
 
-  setupAddonManager(managerWindow, paint = true) {
+  setupAddonManager(managerWindow) {
     if (!managerWindow) {
       return;
     }
-    if (
+    if (!(
       managerWindow &&
       managerWindow[this.uniqueRandomID] &&
       managerWindow[this.uniqueRandomID].hasAddonManagerEventListeners
-    ) {
-      return;
+    )) {
+      managerWindow.document.addEventListener("ViewChanged", this);
+      managerWindow.document.addEventListener("update", this);
+      managerWindow.document.addEventListener("view-loaded", this);   
+      managerWindow[this.uniqueRandomID] = {};
+      managerWindow[this.uniqueRandomID].hasAddonManagerEventListeners = true;
     }
-    managerWindow.document.addEventListener("ViewChanged", this);
-    managerWindow.document.addEventListener("update", this);
-    managerWindow.document.addEventListener("view-loaded", this);
-    
-    managerWindow[this.uniqueRandomID] = {};
-    managerWindow[this.uniqueRandomID].hasAddonManagerEventListeners = true;
-    if (paint) {
-      this.handleEvent(managerWindow);
-    }
+    this.handleEvent(managerWindow);
   }
 
   getMessenger(context) {
@@ -420,7 +417,9 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
       onTabClosing(aTab) {},
       onTabPersist(aTab) {},
       onTabRestored(aTab) {},
-      onTabSwitched(aNewTab, aOldTab) {},
+      onTabSwitched(aNewTab, aOldTab) {
+        self.setupAddonManager(self.getAddonManagerFromTab(aNewTab));
+      },
       async onTabOpened(aTab) {
         if (!aTab.pageLoaded) {
           // await a location change if browser is not loaded yet
@@ -447,10 +446,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
             aTab.browser.addProgressListener(reporterListener);
           });
         }
-        // Setup the ViewChange event listener in the outer browser of the add-on,
-        // but do not actually add the button/menu, as the inner browser is not yet ready,
-        // let the ViewChange event do it
-        self.setupAddonManager(self.getAddonManagerFromTab(aTab), false);
+        self.setupAddonManager(self.getAddonManagerFromTab(aTab));
       },
     };
 
