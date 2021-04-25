@@ -2,6 +2,12 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
+  * Version: 1.50
+ * - use built-in CSS rules to fix options button for dark themes (thanks to Thunder)
+ *
+ * Version: 1.49
+ * - fixed missing eventListener for Beta + Daily
+ *
  * Version: 1.48
  * - moved notifyTools into its own NotifyTools API.
  *
@@ -248,33 +254,18 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
             } else {
               // Add-on button in 88
               let addonOptionsButton = card.querySelector(
-                ".extension-options-button2"
+                ".windowlistener-options-button"
               );
               if (card.addon.isActive && !addonOptionsButton) {
                 addonOptionsButton = card.ownerDocument.createElement("button");
-                addonOptionsButton.classList.add("extension-options-button2");
-                addonOptionsButton.style["min-width"] = "auto";
-                addonOptionsButton.style["min-height"] = "auto";
-                addonOptionsButton.style["width"] = "24px";
-                addonOptionsButton.style["height"] = "24px";
-                addonOptionsButton.style["margin"] = "0";
-                addonOptionsButton.style["margin-inline-start"] = "8px";
-                addonOptionsButton.style["-moz-context-properties"] = "fill";
-                addonOptionsButton.style["fill"] = "currentColor";
-                addonOptionsButton.style["background-image"] =
-                  "url('chrome://messenger/skin/icons/developer.svg')";
-                addonOptionsButton.style["background-repeat"] = "no-repeat";
-                addonOptionsButton.style["background-position"] =
-                  "center center";
-                addonOptionsButton.style["padding"] = "1px";
-                addonOptionsButton.style["display"] = "flex";
-                addonOptionsButton.style["justify-content"] = "flex-end";
+                addonOptionsButton.classList.add("windowlistener-options-button");
+                addonOptionsButton.classList.add("extension-options-button");
                 card.optionsButton.parentNode.insertBefore(
                   addonOptionsButton,
                   card.optionsButton
                 );
                 card
-                  .querySelector(".extension-options-button2")
+                  .querySelector(".windowlistener-options-button")
                   .addEventListener("click", this);
               } else if (!card.addon.isActive && addonOptionsButton) {
                 addonOptionsButton.remove();
@@ -1191,7 +1182,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
                 for (let card of cards) {
                   if (card.addon.id == this.extension.id) {
                     let addonOptionsButton = card.querySelector(
-                      ".extension-options-button2"
+                      ".windowlistener-options-button"
                     );
                     if (addonOptionsButton) addonOptionsButton.remove();
                     break;
