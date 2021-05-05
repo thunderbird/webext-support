@@ -19,6 +19,7 @@
       {
         "name": "notifyExperiment",
         "type": "function",
+        "async": true,
         "description": "Notifies notifyTools.js in an Experiment and sends data.",
         "parameters": [
           {
