@@ -111,7 +111,7 @@ var notifyTools = {
 };
 
 
-if (window) {
+if (typeof window != "undefined" && window) {
   window.addEventListener(
     "load",
     function (event) {
