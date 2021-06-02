@@ -184,7 +184,7 @@ var BootstrapLoader = class extends ExtensionCommon.ExtensionAPI {
           if (card.addon.id == this.extension.id) {
             let optionsMenu = 
               (this.getThunderbirdVersion().major > 78 && this.getThunderbirdVersion().major < 88) ||
-              (this.getThunderbirdVersion().major == 78 && this.getThunderbirdVersion().minor < 11);
+              (this.getThunderbirdVersion().major == 78 && this.getThunderbirdVersion().minor < 10);
             if (optionsMenu) {
               // Options menu in 78.0-78.10 and 79-87
               let addonOptionsLegacyEntry = card.querySelector(".extension-options-legacy");
