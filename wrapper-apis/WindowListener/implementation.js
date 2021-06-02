@@ -2,6 +2,9 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
+ * Version: 1.51
+ * - use wrench button for options for TB78.10
+ *
  * Version: 1.50
  * - use built-in CSS rules to fix options button for dark themes (thanks to Thunder)
  * - fix some occasions where options button was not added
@@ -120,8 +123,12 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
     if (this.debug) console.log("WindowListener API: " + msg);
   }
 
-  getThunderbirdMajorVersion() {
-    return parseInt(Services.appinfo.version.split(".").shift());
+  getThunderbirdVersion() {
+    let parts = Services.appinfo.version.split(".");
+    return {
+      major: parseInt(parts[0]),
+      minor: parseInt(parts[1]),
+    }
   }
 
   getCards(e) {
@@ -130,10 +137,10 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
     let doc;
 
     // 78,86, and 87+ need special handholding. *Yeah*.
-    if (this.getThunderbirdMajorVersion() < 86) {
+    if (this.getThunderbirdVersion().major < 86) {
       let ownerDoc = e.document || e.target.ownerDocument;
       doc = ownerDoc.getElementById("html-view-browser").contentDocument;
-    } else if (this.getThunderbirdMajorVersion() < 87) {
+    } else if (this.getThunderbirdVersion().major < 87) {
       let ownerDoc = e.document || e.target;
       doc = ownerDoc.getElementById("html-view-browser").contentDocument;
     } else {
@@ -223,8 +230,11 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
           // Setup either the options entry in the menu or the button
           //window.document.getElementById(id).addEventListener("command", function() {window.openDialog(self.pathToOptionsPage, "AddonOptions", "chrome,resizable,centerscreen", WL)});
           if (card.addon.id == this.extension.id) {
-            if (this.getThunderbirdMajorVersion() < 88) {
-              // Options menu in 78-87
+            let optionsMenu = 
+              (this.getThunderbirdVersion().major > 78 && this.getThunderbirdVersion().major < 88) ||
+              (this.getThunderbirdVersion().major == 78 && this.getThunderbirdVersion().minor < 10);
+            if (optionsMenu) {
+              // Options menu in 78.0-78.10 and 79-87
               let addonOptionsLegacyEntry = card.querySelector(
                 ".extension-options-legacy"
               );
@@ -667,7 +677,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
                       "chrome://messenger/content/messenger.xhtml"
                   ) {
                     if (self.pathToOptionsPage) {
-                      if (self.getThunderbirdMajorVersion() < 78) {
+                      if (self.getThunderbirdVersion().major < 78) {
                         let element_addonPrefs = window.document.getElementById(
                           self.menu_addonPrefs_id
                         );
@@ -1135,7 +1145,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
             window.location.href ==
               "chrome://messenger/content/messenger.xhtml")
         ) {
-          if (this.getThunderbirdMajorVersion() < 78) {
+          if (this.getThunderbirdVersion().major < 78) {
             let element_addonPrefs = window.document.getElementById(
               this.menu_addonPrefs_id
             );
@@ -1165,7 +1175,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
               managerWindow.document.removeEventListener("update", this);
 
               let cards = this.getCards(managerWindow);
-              if (this.getThunderbirdMajorVersion() < 88) {
+              if (this.getThunderbirdVersion().major < 88) {
                 // Remove options menu in 78-87
                 for (let card of cards) {
                   let addonOptionsLegacyEntry = card.querySelector(
