@@ -37,7 +37,7 @@ Version: 1.33
 
 Version: 1.30
 -------------
-- replace setCharPref by setStringPref to cope with URTF-8 encoding
+- replace setCharPref by setStringPref to cope with UTF-8 encoding
 
 Version: 1.29
 -------------

@@ -2,7 +2,7 @@
 
 The Thunderbird team is adding new APIs to Thunderbird Daily and Beta. But not all of them can be backported to the current ESR, because the code base has diverted too much. Specifically the tests for each new feature are problematic. However, we can provide some of the new features as drop-in Experiments, so they can be used before the new ESR has been released.
 
-Currently the follwoing backports are available:
+Currently the following backports are available:
 
 * messenger.messages.listAttachment()
 * messenger.messages.getAttachmentFile()

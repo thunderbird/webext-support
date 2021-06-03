@@ -10,7 +10,7 @@
           {
             "name": "data",
             "type": "any",
-            "description": "Restrictions of the structured clone algorythm apply."
+            "description": "Restrictions of the structured clone algorithm apply."
           }
         ]
       }
@@ -25,7 +25,7 @@
           {
             "name": "data",
             "type": "any",
-            "description": "Restrictions of the structured clone algorythm apply."
+            "description": "Restrictions of the structured clone algorithm apply."
           }
         ]
       }
