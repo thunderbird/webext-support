@@ -2,7 +2,7 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
- * Version: 1.15
+ * Version: 1.16
  *
  * Author: John Bieling (john@thunderbird.net)
  *
@@ -213,9 +213,11 @@ var BootstrapLoader = class extends ExtensionCommon.ExtensionAPI {
   // returns the outer browser, not the nested browser of the add-on manager
   // events must be attached to the outer browser
   getAddonManagerFromTab(tab) {
-    let win = tab.browser.contentWindow;
-    if (win && win.location.href == "about:addons") {
-      return win;
+    if (tab.browser) {
+      let win = tab.browser.contentWindow;
+      if (win && win.location.href == "about:addons") {
+        return win;
+      }
     }
   }
 

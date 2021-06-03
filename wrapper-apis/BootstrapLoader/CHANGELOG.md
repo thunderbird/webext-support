@@ -1,3 +1,7 @@
+Version: 1.16
+-------------
+- fix " tab.browser is undefined" bug
+
 Version 1.15
 ------------
 - clear cache only if add-on is uninstalled/updated, not on app shutdown
