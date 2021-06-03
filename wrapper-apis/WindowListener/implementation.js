@@ -2,7 +2,7 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
- * Version: 1.51
+ * Version: 1.52
  *
  * Author: John Bieling (john@thunderbird.net)
  *
@@ -1036,6 +1036,10 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
   }
 
   onShutdown(isAppShutdown) {
+    if (isAppShutdown) {
+      return; // the application gets unloaded anyway
+    }
+    
     // Unload from all still open windows
     let urls = Object.keys(this.registeredWindows);
     if (urls.length > 0) {

@@ -1,3 +1,7 @@
+Version: 1.52
+-------------
+- clear cache only if add-on is uninstalled/updated, not on app shutdown
+
 Version: 1.51
 -------------
 - use wrench button for options for TB78.10

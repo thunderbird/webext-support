@@ -100,6 +100,10 @@ var NotifyTools = class extends ExtensionCommon.ExtensionAPI {
   }
 
   onShutdown(isAppShutdown) {
+    if (isAppShutdown) {
+      return; // the application gets unloaded anyway
+    }
+    
     // Remove observer for notifyTools.js
     Services.obs.removeObserver(
       this.onNotifyBackgroundObserver,

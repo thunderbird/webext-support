@@ -1,3 +1,7 @@
+Version 1.15
+------------
+- clear cache only if add-on is uninstalled/updated, not on app shutdown
+
 Version 1.14
 ------------
 - fix for TB90 ("view-loaded" event) and TB78.10 (wrench icon for options)

@@ -2,7 +2,7 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
- * Version: 1.14
+ * Version: 1.15
  *
  * Author: John Bieling (john@thunderbird.net)
  *
@@ -428,6 +428,10 @@ var BootstrapLoader = class extends ExtensionCommon.ExtensionAPI {
   }
 
   onShutdown(isAppShutdown) {
+    if (isAppShutdown) {
+      return; // the application gets unloaded anyway
+    }
+    
     //remove our entry in the add-on options menu
     if (this.pathToOptionsPage) {
       for (let window of Services.wm.getEnumerator("mail:3pane")) {
