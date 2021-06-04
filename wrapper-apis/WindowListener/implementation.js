@@ -30,7 +30,7 @@ var WindowListener = class extends ExtensionCommon.ExtensionAPI {
     return {
       major: parseInt(parts[0]),
       minor: parseInt(parts[1]),
-      revision: parseInt(parts[2]),
+      revision: parts.length > 2 ? parseInt(parts[2]) : 0,
     }
   }
 
