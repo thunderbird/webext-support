@@ -21,7 +21,8 @@ Add the [NotifyTools API](https://github.com/thundernest/addon-developer-support
       "parent": {
         "scopes": ["addon_parent"],
         "paths": [["NotifyTools"]],
-        "script": "api/NotifyTools/implementation.js"
+        "script": "api/NotifyTools/implementation.js",
+        "events": ["startup"]
       }
     }
   },

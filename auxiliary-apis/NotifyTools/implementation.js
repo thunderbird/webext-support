@@ -2,6 +2,8 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
+ * Version 1.1
+ *
  * Author: John Bieling (john@thunderbird.net)
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -99,6 +101,11 @@ var NotifyTools = class extends ExtensionCommon.ExtensionAPI {
     };
   }
 
+  // Force API to run at startup, otherwise event listeners might not be added at the requested time. Also needs
+  // "events": ["startup"] in the experiment manifest
+
+  onStartup() {}
+  
   onShutdown(isAppShutdown) {
     if (isAppShutdown) {
       return; // the application gets unloaded anyway
