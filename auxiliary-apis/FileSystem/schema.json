@@ -1,7 +1,6 @@
 [
   {
-    "namespace": "FileSystem",    
-
+    "namespace": "FileSystem",
     "functions": [
       {
         "name": "writeFile",
@@ -31,7 +30,6 @@
           }
         ]
       }
-      
     ]
   }
 ]

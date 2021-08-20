@@ -1,5 +1,5 @@
 var hackToolbarbutton = {
-  
+
   // enable/disable the default action of the button
   allowDefaultAction(window, buttonId, allow = true) {
     let innerButton = window.document.getElementById(`${buttonId}-inner-button`);
@@ -7,7 +7,7 @@ var hackToolbarbutton = {
       innerButton.setAttribute("allowevents", allow ? "true" : "false");
     }
   },
-  
+
   //check if the button still contains menuitems and downgrade the button if that is not the case anymore
   cleanupIfNeeded(window, buttonId) {
     let button = window.document.getElementById(buttonId);
@@ -29,46 +29,46 @@ var hackToolbarbutton = {
           if (dropmarker) {
             dropmarker.remove();
           }
-          
+
           button.querySelector("label").hidden = false;
-          button.querySelector("image").hidden = false;        
+          button.querySelector("image").hidden = false;
         }
       }
-    }      
+    }
   },
-  
+
   // returns the menupopup element of the button, 
   // check if the button needs to converted beforehand and adds the menupopup element if needed first
-  getMenupopupElement(window, buttonId) {   
+  getMenupopupElement(window, buttonId) {
     let button = window.document.getElementById(buttonId);
-    if (!button) 
+    if (!button)
       return null;
 
     if (!(button.hasAttribute("type") && button.getAttribute("type") == "menu-button")) {
       let origLabel = button.getAttribute("label");
       let origCommand = button.getAttribute("command");
-      
+
       button.setAttribute("is", "toolbarbutton-menu-button");
       button.setAttribute("type", "menu-button");
       button.setAttribute("wantdropmarker", "true");
 
       button.appendChild(window.MozXULElement.parseXULToFragment(
-      `<toolbarbutton
+        `<toolbarbutton
             id="${buttonId}-inner-button"
             class="box-inherit toolbarbutton-menubutton-button" 
             flex="1" 
             allowevents="true"
             command="${origCommand}"
-            label="${origLabel}"/>`));    
+            label="${origLabel}"/>`));
 
       button.appendChild(window.MozXULElement.parseXULToFragment(
-      `<dropmarker 
+        `<dropmarker 
             type="menu-button"
             class="toolbarbutton-menubutton-dropmarker"/>`));
-      
+
       button.querySelector("label").hidden = true;
       button.querySelector("image").hidden = true;
-    } 
+    }
 
     // check if we need to add popup
     let popup = button.querySelector("menupopup");
@@ -77,15 +77,15 @@ var hackToolbarbutton = {
       popup.setAttribute("id", `${buttonId}-popup`);
       popup.setAttribute("oncommand", "event.stopPropagation();");
       button.appendChild(popup);
-    }  
+    }
     return popup;
   },
-  
+
   addMenuitem(window, buttonId, menuitemId, attributes = null) {
-    let popup = this.getMenupopupElement(window, buttonId); 
+    let popup = this.getMenupopupElement(window, buttonId);
     if (!popup)
       return null;
-    
+
     // add menuitem
     let menuitem = window.document.createXULElement("menuitem");
     menuitem.id = menuitemId;
@@ -93,7 +93,7 @@ var hackToolbarbutton = {
       for (let [attribute, value] of Object.entries(attributes)) {
         menuitem.setAttribute(attribute, value);
       }
-    }  
+    }
     popup.appendChild(menuitem);
     return popup;
   },

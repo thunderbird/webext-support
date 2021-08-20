@@ -71,7 +71,7 @@ var NotifyTools = class extends ExtensionCommon.ExtensionAPI {
       "NotifyBackgroundObserver",
       false
     );
-    
+
     return {
       NotifyTools: {
 
@@ -104,13 +104,13 @@ var NotifyTools = class extends ExtensionCommon.ExtensionAPI {
   // Force API to run at startup, otherwise event listeners might not be added at the requested time. Also needs
   // "events": ["startup"] in the experiment manifest
 
-  onStartup() {}
-  
+  onStartup() { }
+
   onShutdown(isAppShutdown) {
     if (isAppShutdown) {
       return; // the application gets unloaded anyway
     }
-    
+
     // Remove observer for notifyTools.js
     Services.obs.removeObserver(
       this.onNotifyBackgroundObserver,

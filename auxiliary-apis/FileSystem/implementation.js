@@ -26,10 +26,10 @@ var { ExtensionError } = ExtensionUtils;
 var { FileUtils } = ChromeUtils.import("resource://gre/modules/FileUtils.jsm");
 var { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
-var FileSystem = class extends ExtensionCommon.ExtensionAPI { 
+var FileSystem = class extends ExtensionCommon.ExtensionAPI {
   getAPI(context) {
     context.callOnClose(this);
-    
+
     this.context = context;
     let self = this;
 
@@ -50,11 +50,11 @@ var FileSystem = class extends ExtensionCommon.ExtensionAPI {
           let fileObj = FileUtils.getFile("ProfD", ["FileSystemAPI", context.extension.id, filename]);
           return win.IOUtils.writeUTF8(fileObj.path, data)
         },
-        
+
       }
     };
   }
-  
+
   close() {
   }
 };

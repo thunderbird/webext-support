@@ -34,7 +34,7 @@ var BackportsMessages = class extends ExtensionCommon.ExtensionAPI {
         partName: attachment.partName,
       };
     }
-    
+
     return {
       Backports: {
         messages: {
@@ -85,7 +85,7 @@ var BackportsMessages = class extends ExtensionCommon.ExtensionAPI {
               );
             }
             console.log(attachment.url);
-            
+
             // This does not seem to work in TB78, duno why.
             /* let channel = Services.io.newChannelFromURI(
               Services.io.newURI(attachment.url),
@@ -99,7 +99,7 @@ var BackportsMessages = class extends ExtensionCommon.ExtensionAPI {
               uri: Services.io.newURI(attachment.url),
               loadUsingSystemPrincipal: true,
             });
-            
+
             let byteArray = await new Promise(resolve => {
               let listener = Cc[
                 "@mozilla.org/network/stream-loader;1"
@@ -115,7 +115,7 @@ var BackportsMessages = class extends ExtensionCommon.ExtensionAPI {
             return new File([byteArray], attachment.name, {
               type: attachment.contentType,
             });
-          },        
+          },
         }
       }
     };

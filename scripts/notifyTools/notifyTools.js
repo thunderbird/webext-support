@@ -67,7 +67,7 @@ var notifyTools = {
         )) {
           registeredCallback(payload.data);
         }
-      }    
+      }
     },
   },
 
@@ -93,8 +93,8 @@ var notifyTools = {
       );
     });
   },
-  
-  enable: function() {
+
+  enable: function () {
     Services.obs.addObserver(
       this.onNotifyExperimentObserver,
       "NotifyExperimentObserver",
@@ -102,7 +102,7 @@ var notifyTools = {
     );
   },
 
-  disable: function() {
+  disable: function () {
     Services.obs.removeObserver(
       this.onNotifyExperimentObserver,
       "NotifyExperimentObserver"

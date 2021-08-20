@@ -1,6 +1,6 @@
 [
   {
-    "namespace": "LegacyCSS",    
+    "namespace": "LegacyCSS",
     "events": [
       {
         "name": "onWindowOpened",
@@ -12,7 +12,7 @@
             "type": "string"
           }
         ]
-      }    
+      }
     ],
     "functions": [
       {

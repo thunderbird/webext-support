@@ -25,29 +25,29 @@ var LegacyCSS = class extends ExtensionCommon.ExtensionAPI {
     if (!this.windowTracker.includes(window))
       this.windowTracker.push(window);
   }
-    
+
   untrackWindow(window) {
     this.windowTracker = this.windowTracker.filter(w => w != window);
   }
 
   getWindows(url) {
-    return  this.windowTracker.filter(w => w.location.href == url);
+    return this.windowTracker.filter(w => w.location.href == url);
   }
 
-  
-  
+
+
   // The API implementation.
   getAPI(context) {
     context.callOnClose(this);
-    
+
     this.context = context;
     this.windowTracker = [];
     this.windowOpenListener = {};
     this.windowOpenListenerNext = 0;
     this.uniqueRandomID = context.extension.uuid + "_" + context.extension.instanceId;
-    
+
     let self = this;
-    
+
     ExtensionSupport.registerWindowListener(
       "windowListener_" + this.uniqueRandomID,
       {
@@ -61,7 +61,7 @@ var LegacyCSS = class extends ExtensionCommon.ExtensionAPI {
           self.untrackWindow(window);
         }
       }
-    );    
+    );
 
     return {
       LegacyCSS: {
@@ -76,7 +76,7 @@ var LegacyCSS = class extends ExtensionCommon.ExtensionAPI {
             };
           },
         }).api(),
-        
+
         async inject(url, cssFile) {
           let windows = self.getWindows(url);
           if (windows.length == 0) {
@@ -86,14 +86,14 @@ var LegacyCSS = class extends ExtensionCommon.ExtensionAPI {
             }
             windows = self.getWindows(url);
           }
-          
+
           // If the window is still not know, return false
           if (windows.length == 0) {
             return false;
           }
-          
+
           let path = context.extension.rootURI.resolve(cssFile);
-          for (let window of windows) {          
+          for (let window of windows) {
             let element = window.document.createElement("link");
             element.setAttribute("css_injected", self.uniqueRandomID);
             element.setAttribute("rel", "stylesheet");
@@ -101,17 +101,17 @@ var LegacyCSS = class extends ExtensionCommon.ExtensionAPI {
             window.document.documentElement.appendChild(element);
           }
         }
-        
+
       }
     };
   }
-  
+
   close() {
     ExtensionSupport.unregisterWindowListener(
       "windowListener_" + this.uniqueRandomID,
-    );    
+    );
 
-  // Remove all injected CSS.
+    // Remove all injected CSS.
     for (let window of Services.wm.getEnumerator(null)) {
       let elements = Array.from(
         window.document.querySelectorAll(

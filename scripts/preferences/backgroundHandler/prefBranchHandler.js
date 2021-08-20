@@ -14,8 +14,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
- 
- var prefBranchHandler = {
+
+var prefBranchHandler = {
   _defaults: {},
   _branch: null,
 
@@ -71,19 +71,19 @@
     // Listener for messages from WebExtension scripts
     await messenger.runtime.onMessage.addListener(this.handler);
     // Add storage change listener.
-    await messenger.LegacyPrefs.setObservingBranch(this._branch);  	  
-    await messenger.LegacyPrefs.onChanged.addListener(this.storageChanged);  	  
+    await messenger.LegacyPrefs.setObservingBranch(this._branch);
+    await messenger.LegacyPrefs.onChanged.addListener(this.storageChanged);
   },
 
   disableListeners: async function () {
-    await messenger.LegacyPrefs.onChanged.removeListener(this.storageChanged);  
+    await messenger.LegacyPrefs.onChanged.removeListener(this.storageChanged);
     if (messenger.NotifyTools) {
       await messenger.NotifyTools.onNotifyBackground.removeListener(this.handler);
     }
     await messenger.runtime.onMessage.removeListener(this.handler);
   },
 
-	// Listener for storage changes to inform pref caches of changes.
+  // Listener for storage changes to inform pref caches of changes.
   storageChanged: function (name, value) {
     let command = value == null ? "clearPref" : "setPref";
     messenger.runtime.sendMessage({ command, name, value }).catch(() => {
@@ -93,7 +93,7 @@
       messenger.NotifyTools.notifyExperiment({ command, name, value });
     }
   },
-  
+
   // Global preference handler, called by WebExtension scripts and Legacy scripts.
   handler: function (info) {
     if (info && info.command) {

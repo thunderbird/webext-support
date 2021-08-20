@@ -312,7 +312,7 @@ var preferences = {
 
       // Convert the value into the required type.
       switch (
-        typeof (await this.getPref(aElement.getAttribute("preference")))
+      typeof (await this.getPref(aElement.getAttribute("preference")))
       ) {
         case "number":
           return parseInt(value, 10) || 0;

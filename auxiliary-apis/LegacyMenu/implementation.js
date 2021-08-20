@@ -338,7 +338,7 @@
   }
 
 
-  
+
   class LegacyMenu extends ExtensionCommon.ExtensionAPI {
     getAPI(context) {
 
@@ -347,89 +347,89 @@
       });
 
       return {
-          LegacyMenu: {
+        LegacyMenu: {
 
-            onCommand: new ExtensionCommon.EventManager({
-              context,
-              name: "LegacyMenu.onCommand",
-              register: (fire) => {
+          onCommand: new ExtensionCommon.EventManager({
+            context,
+            name: "LegacyMenu.onCommand",
+            register: (fire) => {
 
-                const callback = async (windowsId, id) => {
-                  return await fire.async(windowsId, id);
-                };
+              const callback = async (windowsId, id) => {
+                return await fire.async(windowsId, id);
+              };
 
-                callbacks.add(callback);
+              callbacks.add(callback);
 
-                return () => {
-                  callbacks.delete(callback);
-                };
-              }
-            }).api(),
-
-            /**
-             * Adds the widget to the given window.
-             *
-             * @param {string} windowId
-             *   the window id to which the element should be added.
-             * @param {object} widget
-             *   the widget description.
-             */
-            async add(windowId, widget) {
-
-              const item = createWidget(widget);
-              const document = getDocumentByWindow(windowId);
-
-              const id = item.getId();
-
-              switch (widget.position) {
-                case "child":
-                  document.appendChild(widget.reference, item);
-                  break;
-
-                case "before":
-                  document.insertBefore(widget.reference, item);
-                  break;
-
-                case "after":
-                  document.insertAfter(widget.reference, item);
-                  break;
-
-                default:
-                  throw new Error(`Invalid position ${widget.position}`);
-              }
-
-              ids.add(id);
-
-              await document.getNode(id)
-                .addEventListener("command", () => { invokeCallback(windowId, id); });
-            },
-
-            /**
-             * Removes a menu item from the window.
-             *
-             * @param {string} windowId
-             *   the unique window id.
-             * @param {string} id
-             *   the menu elements id
-             */
-            async remove(windowId, id) {
-              await getDocumentByWindow(windowId).removeNode(id);
-            },
-
-            /**
-             * Checks if the given menu item exist in the given window.
-             * @param {string} windowId
-             *   the unique window id.
-             * @param {string} id
-             *   the menu element's id
-             *
-             * @returns {boolean}
-             *   true in case the element exists otherwise false.
-             */
-            async has(windowId, id) {
-              return await getDocumentByWindow(windowId).hasNode(id);
+              return () => {
+                callbacks.delete(callback);
+              };
             }
+          }).api(),
+
+          /**
+           * Adds the widget to the given window.
+           *
+           * @param {string} windowId
+           *   the window id to which the element should be added.
+           * @param {object} widget
+           *   the widget description.
+           */
+          async add(windowId, widget) {
+
+            const item = createWidget(widget);
+            const document = getDocumentByWindow(windowId);
+
+            const id = item.getId();
+
+            switch (widget.position) {
+              case "child":
+                document.appendChild(widget.reference, item);
+                break;
+
+              case "before":
+                document.insertBefore(widget.reference, item);
+                break;
+
+              case "after":
+                document.insertAfter(widget.reference, item);
+                break;
+
+              default:
+                throw new Error(`Invalid position ${widget.position}`);
+            }
+
+            ids.add(id);
+
+            await document.getNode(id)
+              .addEventListener("command", () => { invokeCallback(windowId, id); });
+          },
+
+          /**
+           * Removes a menu item from the window.
+           *
+           * @param {string} windowId
+           *   the unique window id.
+           * @param {string} id
+           *   the menu elements id
+           */
+          async remove(windowId, id) {
+            await getDocumentByWindow(windowId).removeNode(id);
+          },
+
+          /**
+           * Checks if the given menu item exist in the given window.
+           * @param {string} windowId
+           *   the unique window id.
+           * @param {string} id
+           *   the menu element's id
+           *
+           * @returns {boolean}
+           *   true in case the element exists otherwise false.
+           */
+          async has(windowId, id) {
+            return await getDocumentByWindow(windowId).hasNode(id);
           }
+        }
       };
     }
   }
