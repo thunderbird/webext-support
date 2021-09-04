@@ -14,15 +14,13 @@ body {
 <div class="search-banner">	
 	<img class="banner-image" src='/ThunderKdB/docs/images/Thunderbird-Banner.png'
 		style="padding-right: 60px; height: 40px; width: 170px" />
-	<label class="banner-header">Extensions compatible with Thunderbird 78 (303)</label>
+	<label class="banner-header">Extensions compatible with Thunderbird 78 excluding any legacy extension (303)</label>
 	<label class="banner-header-rt">2021-09-04</label>
 </div>
 <div>
 	<hr>
 	<br>
 </div>
-
-	row += `${rank} | ${extJson.id} |  ${homepage_icon} ${name_link} | ${extJson.average_daily_users} | ${cv(60)} | ${cv(68)} | ${cv(78)} | ${cv(91)} |  ${current_version.version.substr(0, 12)} | ${current_version.files[0].created.split('T')[0]} | ${v_min} | ${v_max} | ${v_strict} | ${comp_badges} |\n`;
 
 | # | Id | Name | Users | TB60 | TB68 | TB78 | TB91 | Latest | Last activity | Min (ATN) | Max (ATN) | Max (XPI) | Compatibility |
 |---: |---: |---|---: |---: |---: |---: |---: |---: |---: |---: |---: |---: |---|

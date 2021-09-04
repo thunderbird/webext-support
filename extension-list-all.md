@@ -22,8 +22,6 @@ body {
 	<br>
 </div>
 
-	row += `${rank} | ${extJson.id} |  ${homepage_icon} ${name_link} | ${extJson.average_daily_users} | ${cv(60)} | ${cv(68)} | ${cv(78)} | ${cv(91)} |  ${current_version.version.substr(0, 12)} | ${current_version.files[0].created.split('T')[0]} | ${v_min} | ${v_max} | ${v_strict} | ${comp_badges} |\n`;
-
 | # | Id | Name | Users | TB60 | TB68 | TB78 | TB91 | Latest | Last activity | Min (ATN) | Max (ATN) | Max (XPI) | Compatibility |
 |---: |---: |---|---: |---: |---: |---: |---: |---: |---: |---: |---: |---: |---|
 |1 | 4631 |  <a id="4631-provider-for-google-calendar" href="https://addons.thunderbird.net/en-US/thunderbird/addon/provider-for-google-calendar/"><img src='/ThunderKdB/docs/images/home1.png' tooltip='test link' height='18px' width='18px' style="padding-bottom: -2px; padding-right: 6px;" /></a> [Provider for Google Calendar](/ThunderKdB/xall/x68/4631-provider-for-google-calendar/4631-provider-for-google-calendar-details.html) | 228480 | 4.4.2 | 68.2.1 | 78.0.2 | 91.0.1 |  91.0.1 | 2021-09-01 | 91.0 | 102.0 |  |  <a href='undefined' ><img src='https://img.shields.io/badge//91-%20cV-blue.png' title='TB91 Compatible'></a> <a href='undefined' ><img src='https://img.shields.io/badge//Type-MX-purple.png' title='Extension Type :&#10; - MX : MailExtension (manifest.json)'></a> <a href='..\xall\x68\4631-provider-for-google-calendar\src\manifest.json' ><img src='https://img.shields.io/badge//WebExp-%20+-blue.png' title='Click for manifest.json&#010;SchemaNames:&#010;&#10;gdata&#10;'></a> |

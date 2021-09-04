@@ -22,8 +22,6 @@ body {
 	<br>
 </div>
 
-	row += `${rank} | ${extJson.id} |  ${homepage_icon} ${name_link} | ${extJson.average_daily_users} | ${cv(60)} | ${cv(68)} | ${cv(78)} | ${cv(91)} |  ${current_version.version.substr(0, 12)} | ${current_version.files[0].created.split('T')[0]} | ${v_min} | ${v_max} | ${v_strict} | ${comp_badges} |\n`;
-
 | # | Id | Name | Users | TB60 | TB68 | TB78 | TB91 | Latest | Last activity | Min (ATN) | Max (ATN) | Max (XPI) | Compatibility |
 |---: |---: |---|---: |---: |---: |---: |---: |---: |---: |---: |---: |---: |---|
 |250 | 986655 |  <a id="986655-framewhite" href="https://addons.thunderbird.net/en-US/thunderbird/addon/framewhite/"><img src='/ThunderKdB/docs/images/home1.png' tooltip='test link' height='18px' width='18px' style="padding-bottom: -2px; padding-right: 6px;" /></a> [FrameWhite](/ThunderKdB/xall/x68/986655-framewhite/986655-framewhite-details.html) | 416 | 57.8 |  | 64.8 | 64.8 |  64.8 | 2021-04-30 | 78.0 | * |  |  <a href='undefined' ><img src='https://img.shields.io/badge//91-%20cV-blue.png' title='TB91 Compatible'></a> <a href='undefined' ><img src='https://img.shields.io/badge//Type-MX-purple.png' title='Extension Type :&#10; - MX : MailExtension (manifest.json)'></a> |
