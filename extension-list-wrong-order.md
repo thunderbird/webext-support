@@ -15,7 +15,7 @@ body {
 	<img class="banner-image" src='/ThunderKdB/docs/images/Thunderbird-Banner.png'
 		style="padding-right: 60px; height: 40px; width: 170px" />
 	<label class="banner-header">Extension with wrong upper limit setting in older versions (0)</label>
-	<label class="banner-header-rt">2021-09-04</label>
+	<label class="banner-header-rt">2021-09-05</label>
 </div>
 <div>
 	<hr>

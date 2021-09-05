@@ -15,7 +15,7 @@ body {
 	<img class="banner-image" src='/ThunderKdB/docs/images/Thunderbird-Banner.png'
 		style="padding-right: 60px; height: 40px; width: 170px" />
 	<label class="banner-header">Extensions which have been lost from TB68 to TB78 (112)</label>
-	<label class="banner-header-rt">2021-09-04</label>
+	<label class="banner-header-rt">2021-09-05</label>
 </div>
 <div>
 	<hr>
