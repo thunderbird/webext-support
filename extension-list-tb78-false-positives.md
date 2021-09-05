@@ -22,7 +22,7 @@ body {
 	<br>
 </div>
 
-| # | Id | Name | Users | TB60 | TB68 | TB78 | TB91 | Current | Activity | Min (ATN) | Max (ATN) | Max (XPI) | Notes |
+| # | Id | Name | Users | TB60 | TB68 | TB78 | TB91 | Activity | Current | Min (ATN) | Max (ATN) | Max (XPI) | Notes |
 |---: |---: |---|---: |---: |---: |---: |---: |---: |---: |---: |---: |---: |---|
 
 
