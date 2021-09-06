@@ -14,7 +14,7 @@ body {
 <div class="search-banner">	
 	<img class="banner-image" src='/ThunderKdB/docs/images/Thunderbird-Banner.png'
 		style="padding-right: 60px; height: 40px; width: 170px" />
-	<label class="banner-header">Extensions, where the latest upload is for an older release (3)</label>
+	<label class="banner-header">Extensions, where the latest upload is for an older release, which will fail to install in current ESR (current = defined current in ATN) from within the add-on manager. (3)</label>
 	<label class="banner-header-rt">2021-09-06</label>
 </div>
 <div>
