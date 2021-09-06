@@ -14,7 +14,7 @@ body {
 <div class="search-banner">	
 	<img class="banner-image" src='/ThunderKdB/docs/images/Thunderbird-Banner.png'
 		style="padding-right: 60px; height: 40px; width: 170px" />
-	<label class="banner-header">Pure MailExtensions, marked incompatible with TB91, which they probably are not. (5)</label>
+	<label class="banner-header">[TB91] Pure MailExtensions, marked incompatible with TB91, which they probably are not. (5)</label>
 	<label class="banner-header-rt">2021-09-06</label>
 </div>
 <div>
