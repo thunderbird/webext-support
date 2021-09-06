@@ -1,0 +1,95 @@
+@import url('https://fonts.googleapis.com/css?family=Roboto|Roboto+Condensed|Roboto+Mono&display=swap');
+@font-face {
+	font-family: 'Roboto';
+	src: url("https://fonts.googleapis.com/css?family=Roboto:200")
+}
+
+body {
+	font-family: 'Roboto' !important
+}
+
+.container {
+	margin-right: 20px !important;
+	margin-left: 20px !important
+}
+
+table {
+	width: 100%;
+	max-width: 100%;
+	margin-bottom: 1rem
+}
+
+table th,
+table td {
+	padding: 0.75rem;
+	vertical-align: top;
+	border-top: 1px solid #eceeef
+}
+
+table thead th {
+	vertical-align: bottom;
+	border-bottom: 2px solid #eceeef
+}
+
+table tbody+tbody {
+	border-top: 2px solid #eceeef
+}
+
+table {
+	background-color: #fff
+}
+
+table th,
+table td {
+	padding: 0.3rem
+}
+
+table {
+	border: 1px solid #eceeef
+}
+
+table th,
+table td {
+	border: 1px solid #eceeef
+}
+
+table thead th,
+table thead td {
+	border-bottom-width: 2px
+}
+
+table tbody tr:nth-of-type(odd) {
+	background-color: rgba(0, 0, 0, 0.05)
+}
+
+
+table {
+	border-collapse: collapse
+}
+
+table thead th {
+	background-color: #002275;
+	color: whitesmoke;
+	text-align: left
+}
+
+td {
+	text-align: left;
+	padding-left: 4px;
+	padding-right: 4px
+}
+
+table tr td:nth-child(1) {
+	width: 30px;
+	font-weight: bold
+}
+
+table tr td:nth-child(2) {
+	width: 40px;
+	text-align: right
+}
+
+table tr td:nth-child(5) {
+	width: 90px;
+	text-align: right
+}
