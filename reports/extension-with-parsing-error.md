@@ -24,7 +24,7 @@ body {
 
 | # | Id | Name | Users | TB60 | TB68 | TB78 | TB91 | Activity | Current | Min (ATN) | Max (ATN) | Max (XPI) |
 |---: |---: |---|---: |---: |---: |---: |---: |---: |---: |---: |---: |---: |
-|1176 | 775 |  <a id="775-mr-tech-disable-xpi-install-de" href="https://addons.thunderbird.net/en-US/thunderbird/addon/mr-tech-disable-xpi-install-de/"><img src='/ThunderKdB/docs/images/home1.png' tooltip='test link' height='18px' width='18px' style="padding-bottom: -2px; padding-right: 6px;" /></a> MR Tech Disable XPI Install Delay | 0 |  |  |  |  | undefined |  | * | * |  |
+|1176 | 775 |  <a id="775-mr-tech-disable-xpi-install-de" href="https://addons.thunderbird.net/en-US/thunderbird/addon/mr-tech-disable-xpi-install-de/"><img src='/ThunderKdB/docs/images/home1.png' tooltip='test link' height='18px' width='18px' style="padding-bottom: -2px; padding-right: 6px;" /></a> MR Tech Disable XPI Install Delay | 0 |  |  |  |  | undefined |  | * | * | * |
 
 
 
