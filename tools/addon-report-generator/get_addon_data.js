@@ -152,6 +152,11 @@ async function getExtensionFiles(extension) {
 			if (!result.compatibility.thunderbird)
 				continue;
 
+			// Add current version (but use the data from the versions query, to avoid caching issues).
+			if (result.version == extension.current_version.version) {
+				esr_data.current = result;
+			}
+
 			// Update ESR comp data.
 			let MIN = result.compatibility.thunderbird.min || "*";
 			let MAX = result.compatibility.thunderbird.max || "*";
@@ -163,9 +168,6 @@ async function getExtensionFiles(extension) {
 			}
 		}
 		
-		// Add current version
-		esr_data.current = extension.current_version;
-
 		// Some logs
 		console.log(`    Current version for ${addon_identifier} is ${esr_data.current.version} with ATN compMax = ${esr_data.current.compatibility.thunderbird.max || "*"}`);
 
