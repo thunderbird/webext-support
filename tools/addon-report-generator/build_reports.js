@@ -7,77 +7,27 @@
 const debugLevel = 0;
 
 const fs = require('fs-extra');
+const { get } = require('http');
+const request = require('requestretry');
 
 const rootDir = "data";
 const reportDir = "reports";
 const extsAllJsonFileName = `${rootDir}/xall.json`;
 
-function debug(...args) {
-	if (debugLevel > 0) {
-		console.debug(...args);
-	}
-}
+var gAlternativeData;
 
-function makeBadgeElement(bOpt) {
-	return `<img src='${bOpt.badgeBasedURL}/${bOpt.bLeftText}-${bOpt.bRightText}-${bOpt.bColor}.png' title='${bOpt.bTooltip}'>`;
-}
-
-// A versioncompare, taken from https://jsfiddle.net/vanowm/p7uvtbor/
-function compareVer(a, b) {
-	function prep(t) {
-		return ("" + t)
-			//treat non-numerical characters as lower version
-			//replacing them with a negative number based on charcode of first character
-			.replace(/[^0-9\.]+/g, function (c) { return "." + ((c = c.replace(/[\W_]+/, "")) ? c.toLowerCase().charCodeAt(0) - 65536 : "") + "." })
-			//remove trailing "." and "0" if followed by non-numerical characters (1.0.0b);
-			.replace(/(?:\.0+)*(\.-[0-9]+)(\.[0-9]+)?\.*$/g, "$1$2")
-			.split('.');
-	}
-
-	if (a != "*" && b == "*") return -1;
-	if (a == "*" && b != "*") return 1;
-	if (a == "*" && b == "*") return 0;
-
-	a = prep(a);
-	b = prep(b);
-	for (var i = 0; i < Math.max(a.length, b.length); i++) {
-		//convert to integer the most efficient way
-		a[i] = ~~a[i];
-		b[i] = ~~b[i];
-		if (a[i] > b[i])
-			return 1;
-		else if (a[i] < b[i])
-			return -1;
-	}
-	return 0;
-}
-
-// Returns the special xpilib object for the given ESR (or current).
-function getExtData(extJson, esr) {
-	let cmp_data = extJson?.xpilib?.cmp_data;
-	let version = cmp_data
-		? cmp_data[esr]
-		: null;
-
-	let ext_data = extJson?.xpilib?.ext_data;
-	let data = version && ext_data
-		? ext_data[version]
-		: null;
-
-	return { version, data };
-}
 var groups = [
 	{
 		id: "atn-errors",
 		header: "Extensions with invalid ATN settings"
 	},
 	{
-		id: "lost",
-		header: "Lost extensions reports"
-	},
-	{
 		id: "91",
 		header: "Special Thunderbird 91 reports"
+	},
+	{
+		id: "lost",
+		header: "Lost extensions"
 	},
 	{
 		id: "atn",
@@ -88,10 +38,9 @@ var groups = [
 		header: "General reports"
 	},
 ]
-var reports = [
-	{
+var reports = {
+	"all": {
 		group: "all",
-		name: "report-all",
 		header: "All Extensions compatible with TB60 or newer.",
 		template: "report-template.html",
 		enabled: true,
@@ -104,9 +53,8 @@ var reports = [
 			return !!vHighest;
 		},
 	},
-	{
+	"parsing-error": {
 		group: "all",
-		name: "report-with-parsing-error",
 		header: "Extensions whose XPI files could not be parsed properly and are excluded from analysis.",
 		template: "report-template.html",
 		enabled: true,
@@ -115,9 +63,8 @@ var reports = [
 			return !current_version;
 		}
 	},
-	{
+	"recent-activity": {
 		group: "all",
-		name: "report-recent-activity",
 		header: "Extensions updated within the last 2 weeks.",
 		template: "report-template.html",
 		enabled: true,
@@ -136,9 +83,8 @@ var reports = [
 	},
 	// -- ATN status reports------------------------------------------------------------------------
 
-	{
+	"atn-tb60": {
 		group: "atn",
-		name: "report-atn-tb60",
 		header: "Extensions compatible with Thunderbird 60 as seen by ATN.",
 		template: "report-template.html",
 		enabled: true,
@@ -146,9 +92,8 @@ var reports = [
 			return !!(getExtData(extJson, "60").version);
 		},
 	},
-	{
+	"atn-tb68": {
 		group: "atn",
-		name: "report-atn-tb68",
 		header: "Extensions compatible with Thunderbird 68 as seen by ATN.",
 		template: "report-template.html",
 		enabled: true,
@@ -156,9 +101,8 @@ var reports = [
 			return !!(getExtData(extJson, "68").version);
 		}
 	},
-	{
+	"atn-tb78": {
 		group: "atn",
-		name: "report-atn-tb78",
 		header: "Extensions compatible with Thunderbird 78 as seen by ATN.",
 		template: "report-template.html",
 		enabled: true,
@@ -166,9 +110,8 @@ var reports = [
 			return !!(getExtData(extJson, "78").version);
 		}
 	},
-	{
+	"atn-tb91": {
 		group: "atn",
-		name: "report-atn-tb91",
 		header: "Extensions compatible with Thunderbird 91 as seen by ATN.",
 		template: "report-template.html",
 		enabled: true,
@@ -176,21 +119,8 @@ var reports = [
 			return !!(getExtData(extJson, "91").version);
 		}
 	},
-	{
+	"max-atn-value-raised-above-max-xpi-value": {
 		group: "atn",
-		name: "report-without-upper-limit",
-		header: "Extensions without upper limit in ATN (excluding Experiments). This should list only pure MailExtension.",
-		template: "report-template.html",
-		enabled: true,
-		filter: function (extJson) {
-			let data = getExtData(extJson, "current").data;
-			let atn_max = data?.atn?.compatibility?.thunderbird?.max || "*";
-			return !!data && !data.experiment && atn_max == "*";
-		}
-	},
-	{
-		group: "atn",
-		name: "report-extensions-atn-value-raised-above-xpi",
 		header: "Extensions whose max version has been raised in ATN above the XPI value (excluding legacy extensions).",
 		template: "report-template.html",
 		enabled: true,
@@ -208,9 +138,8 @@ var reports = [
 		}
 	},
 	// -- ATN error reports ------------------------------------------------------------------------
-	{
+	"wrong-order": {
 		group: "atn-errors",
-		name: "report-wrong-order",
 		header: "Extension with wrong upper limit setting in older versions, which will lead to the wrong version reported compatible by ATN.",
 		template: "report-template.html",
 		enabled: true,
@@ -232,10 +161,9 @@ var reports = [
 			return false;
 		},
 	},
-	{
+	"max-atn-value-reduced-below-max-xpi-value": {
 		group: "atn-errors",
-		name: "report-experiments-atn-value-reduced-below-xpi",
-		header: "Extensions whose max version has been reduced in ATN below the XPI value (which is ignored during install and app upgrade).",
+		header: "Extensions whose max version has been reduced in ATN below the XPI value, which is ignored during install and app upgrade (excluding legacy).",
 		template: "report-template.html",
 		enabled: true,
 		filter: function (extJson) {
@@ -248,12 +176,11 @@ var reports = [
 				vCurrent.manifest?.browser_specific_settings?.gecko?.strict_max_version ||
 				"*";
 
-			return vCurrent.mext && vCurrent.experiment && (compareVer(strict_max, atn_max) > 0)
+			return vCurrent.mext && !vCurrent.legacy && (compareVer(strict_max, atn_max) > 0)
 		}
 	},
-	{
+	"latest-current-mismatch": {
 		group: "atn-errors",
-		name: "report-latest-current-mismatch",
 		header: "Extensions, where the latest upload is for an older release, which will fail to install in current ESR (current = defined current in ATN) from within the add-on manager.",
 		template: "report-template.html",
 		enabled: true,
@@ -264,12 +191,11 @@ var reports = [
 				getExtData(extJson, "60").version;
 
 			let vCurrent = getExtData(extJson, "current").version;
-			return !!vHighest && vHighest != vCurrent;
+			return !reports["wrong-order"].filter(extJson) && !!vHighest && vHighest != vCurrent;
 		},
 	},
-	{
+	"false-positives-tb68": {
 		group: "atn-errors",
-		name: "report-false-positives-tb68",
 		header: "Extensions claiming to be compatible with Thunderbird 68, but are legacy extensions and therefore unsupported.",
 		template: "report-template.html",
 		enabled: true,
@@ -278,9 +204,8 @@ var reports = [
 			return !!data && data.legacy && !data.mext;
 		}
 	},
-	{
+	"false-positives-tb78": {
 		group: "atn-errors",
-		name: "report-false-positives-tb78",
 		header: "Extensions claiming to be compatible with Thunderbird 78, but are legacy extensions or legacy WebExtensions and therefore unsupported.",
 		template: "report-template.html",
 		enabled: true,
@@ -290,10 +215,9 @@ var reports = [
 		}
 	},
 	// -- Lost extensions (only useful if all false positives have been removed) -------------------
-	{
+	"lost-tb60-to-tb68": {
 		group: "lost",
-		name: "report-lost-tb60-to-tb68",
-		header: "Extensions which have been lost from TB60 to TB68.",
+		header: "Extensions which have been lost from TB60 to TB68 (including alternatives).",
 		template: "report-template.html",
 		enabled: true,
 		filter: function (extJson) {
@@ -302,10 +226,9 @@ var reports = [
 			return !!v60 && !v68;
 		}
 	},
-	{
+	"lost-tb68-to-tb78": {
 		group: "lost",
-		name: "report-lost-tb68-to-tb78",
-		header: "Extensions which have been lost from TB68 to TB78.",
+		header: "Extensions which have been lost from TB68 to TB78 (including alternatives).",
 		template: "report-template.html",
 		enabled: true,
 		filter: function (extJson) {
@@ -314,10 +237,9 @@ var reports = [
 			return !!v68 && !v78;
 		}
 	},
-	{
+	"lost-tb78-to-tb91": {
 		group: "lost",
-		name: "report-lost-tb78-to-tb91",
-		header: "Extensions which have been lost from TB78 to TB91.",
+		header: "Extensions which have been lost from TB78 to TB91 (including alternatives).",
 		template: "report-template.html",
 		enabled: true,
 		filter: function (extJson) {
@@ -326,10 +248,39 @@ var reports = [
 			return !!v78 && !v91;
 		}
 	},
+	// -- Lost extensions without alternatives -----------------------------------------------------
+	"lost-tb60-to-tb68-no-alternatives": {
+		group: "lost",
+		header: "Extensions which have been lost from TB60 to TB68.",
+		template: "report-template.html",
+		enabled: true,
+		filter: function (extJson) {
+			return !getAlternative(extJson) && reports['lost-tb60-to-tb68'].filter(extJson);
+		}
+	},
+	"lost-tb68-to-tb78-no-alternatives": {
+		group: "lost",
+		header: "Extensions which have been lost from TB68 to TB78.",
+		template: "report-template.html",
+		enabled: true,
+		filter: function (extJson) {
+			let v78 = getExtData(extJson, "78").version;
+			let v68 = getExtData(extJson, "68").version;
+			return !getAlternative(extJson) && reports['lost-tb68-to-tb78'].filter(extJson);
+		}
+	},
+	"lost-tb78-to-tb91-no-alternatives": {
+		group: "lost",
+		header: "Extensions which have been lost from TB78 to TB91.",
+		template: "report-template.html",
+		enabled: true,
+		filter: function (extJson) {
+			return !getAlternative(extJson) && reports['lost-tb78-to-tb91'].filter(extJson);
+		}
+	},
 	// -- Specials v91 -----------------------------------------------------------------------------
-	{
+	"tb91-pure-mx-incompatible": {
 		group: "91",
-		name: "report-tb91-pure-mx-incompatible",
 		header: "Pure MailExtensions, marked incompatible with TB91, which they probably are not.",
 		template: "report-template.html",
 		enabled: true,
@@ -339,9 +290,29 @@ var reports = [
 			return !!v78 && !v91 && v78.mext && !v78.experiment && !v78.legacy
 		}
 	},
-	{
+	"tb91-max-atn-value-reduced-below-max-xpi-value": {
 		group: "91",
-		name: "report-tb91-experiments-without-upper-limit",
+		header: "Extensions whose max version has been reduced in ATN below the XPI value to be marked as not compatible with TB91, which is ignored during install and app upgrade.",
+		template: "report-template.html",
+		enabled: true,
+		filter: function (extJson) {
+			let vCurrent = getExtData(extJson, "current").data;
+			if (!vCurrent)
+				return false;
+
+			let v78 = getExtData(extJson, "78").data;
+			let v91 = getExtData(extJson, "91").data;
+
+			let atn_max = vCurrent?.atn?.compatibility?.thunderbird?.max || "*";
+			let strict_max = vCurrent.manifest?.applications?.gecko?.strict_max_version ||
+				vCurrent.manifest?.browser_specific_settings?.gecko?.strict_max_version ||
+				"*";
+
+			return !!v78 && !v91 && (compareVer(strict_max, atn_max) > 0)
+		}
+	},
+	"tb91-experiments-without-upper-limit": {
+		group: "91",
 		header: "Experiments without upper limit in ATN, which might not be compatible with TB91 (excluding reported positives).",
 		template: "report-template.html",
 		enabled: true,
@@ -416,9 +387,123 @@ var reports = [
 
 		}
 	},
-]
+}
 
-function genReport(extsJson, report) {
+
+function debug(...args) {
+	if (debugLevel > 0) {
+		console.debug(...args);
+	}
+}
+
+function makeBadgeElement(bOpt) {
+	return `<img src='${bOpt.badgeBasedURL}/${bOpt.bLeftText}-${bOpt.bRightText}-${bOpt.bColor}.png' title='${bOpt.bTooltip}'>`;
+}
+
+// A versioncompare, taken from https://jsfiddle.net/vanowm/p7uvtbor/
+function compareVer(a, b) {
+	function prep(t) {
+		return ("" + t)
+			//treat non-numerical characters as lower version
+			//replacing them with a negative number based on charcode of first character
+			.replace(/[^0-9\.]+/g, function (c) { return "." + ((c = c.replace(/[\W_]+/, "")) ? c.toLowerCase().charCodeAt(0) - 65536 : "") + "." })
+			//remove trailing "." and "0" if followed by non-numerical characters (1.0.0b);
+			.replace(/(?:\.0+)*(\.-[0-9]+)(\.[0-9]+)?\.*$/g, "$1$2")
+			.split('.');
+	}
+
+	if (a != "*" && b == "*") return -1;
+	if (a == "*" && b != "*") return 1;
+	if (a == "*" && b == "*") return 0;
+
+	a = prep(a);
+	b = prep(b);
+	for (var i = 0; i < Math.max(a.length, b.length); i++) {
+		//convert to integer the most efficient way
+		a[i] = ~~a[i];
+		b[i] = ~~b[i];
+		if (a[i] > b[i])
+			return 1;
+		else if (a[i] < b[i])
+			return -1;
+	}
+	return 0;
+}
+
+// Returns the special xpilib object for the given ESR (or current).
+function getExtData(extJson, esr) {
+	let cmp_data = extJson?.xpilib?.cmp_data;
+	let version = cmp_data
+		? cmp_data[esr]
+		: null;
+
+	let ext_data = extJson?.xpilib?.ext_data;
+	let data = version && ext_data
+		? ext_data[version]
+		: null;
+
+	return { version, data };
+}
+
+async function loadAlternativeData() {
+	let extRequestOptions = {
+		url: "https://raw.githubusercontent.com/thundernest/extension-finder/master/data.yaml",
+		//		json: true,
+		maxAttempts: 5,   // (default) try 5 times
+		retryDelay: 5000,  // (default) wait for 5s before trying again
+		retryStrategy: request.RetryStrategies.HTTPOrNetworkError, // (default) retry on 5xx or network errors
+		headers: {
+			'User-Agent': 'request'
+		}
+	}
+	return request(extRequestOptions).then(r => r.body).then(alternativeDataToLinks);
+}
+
+async function alternativeDataToLinks(data) {
+	let entries = {};
+
+	let lines = data.split(/\r\n|\n/);
+	let i = 0;
+
+	do {
+		let entry = {};
+		while (i < lines.length) {
+			i++;
+			let line = lines[i - 1].trim();
+
+			// End of Block
+			if (line.startsWith("---")) {
+				break;
+			}
+			// Skip comments.
+			if (line.startsWith("#")) {
+				continue;
+			}
+			let parts = line.split(":");
+			let key = parts.shift().trim();
+			if (key) {
+				let value = parts.join(":").trim();
+				entry[key] = value;
+			}
+		}
+
+		// Add found entry.
+		if (Object.keys(entry).length > 0) {
+			if (!entries[entry.u_id]) {
+				entries[entry.u_id] = [];
+			}
+			entries[entry.u_id].push(`<br> &#8627; <a href="${entry.r_link}">${entry.r_name}</a>`);
+		}
+	} while (i < lines.length);
+
+	return entries;
+}
+
+function getAlternative(extJson) {
+	return gAlternativeData[extJson.guid];
+}
+
+function genReport(extsJson, name, report) {
 	let extsListFile = fs.readFileSync(report.template, 'utf8');
 	let extRows = "";
 	let rows = 0;
@@ -456,7 +541,7 @@ function genReport(extsJson, report) {
 	extsListFile = extsListFile.replace('__date__', today);
 	extsListFile = extsListFile.replace('__table__', extRows);
 	fs.ensureDirSync(`${reportDir}`);
-	fs.writeFileSync(`${reportDir}/${report.name}.html`, extsListFile);
+	fs.writeFileSync(`${reportDir}/${name}.html`, extsListFile);
 
 	debug('Done');
 	return rows;
@@ -564,7 +649,7 @@ function createExtMDTableRow(extJson) {
 	<tr>
 	  <th style="text-align: right" valign="top">${rank}</th>
 	  <th style="text-align: right" valign="top">${extJson.id}</th>
-	  <th style="text-align: left"  valign="top">${name_link}</th>
+	  <th style="text-align: left"  valign="top">${name_link}${getAlternative(extJson) ? getAlternative(extJson).join("") : ""}</th>
 	  <th style="text-align: right" valign="top">${extJson.average_daily_users}</th>
 	  <th style="text-align: right" valign="top">${cv("60")}</th>
 	  <th style="text-align: right" valign="top">${cv("68")}</th>
@@ -573,22 +658,29 @@ function createExtMDTableRow(extJson) {
 	  <th style="text-align: right" valign="top">${current_version?.atn.files[0].created.split('T')[0]}</th>
 	  <th style="text-align: right" valign="top">${cv("current")}</th>
 	  <th style="text-align: right" valign="top">${v_min}</th>
-	  <th style="text-align: right" valign="top">${v_max}</th>
 	  <th style="text-align: right" valign="top">${v_strict_max}</th>
+	  <th style="text-align: right" valign="top">${v_max}</th>
 	</tr>`;
 }
 
-console.log('Generating reports...');
-let extsJson = fs.readJSONSync(extsAllJsonFileName);
-let index = [];
-for (let group of groups) {
-	index.push(`<h1>${group.header}</h1>`);
-	for (let report of reports) {
-		if (report.enabled && report.group == group.id) {
-			console.log("  -> " + report.name);
-			let counts = genReport(extsJson, report);
-			index.push(`<p><a href="${report.name}.html">${report.name}</a> (${counts})</p><blockquote><p>${report.header}</p></blockquote>`);
+async function main() {
+	console.log("Downloading alternative add-ons data...");
+	gAlternativeData = await loadAlternativeData();
+
+	console.log('Generating reports...');
+	let extsJson = fs.readJSONSync(extsAllJsonFileName);
+	let index = [];
+	for (let group of groups) {
+		index.push(`<h1>${group.header}</h1>`);
+		for (let [name, report] of Object.entries(reports)) {
+			if (report.enabled && report.group == group.id) {
+				console.log("  -> " + name);
+				let counts = genReport(extsJson, name, report);
+				index.push(`<p><a href="${name}.html">${name}</a> (${counts})</p><blockquote><p>${report.header}</p></blockquote>`);
+			}
 		}
 	}
+	genIndex(index);
 }
-genIndex(index);
+
+main();

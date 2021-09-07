@@ -10,7 +10,7 @@
 // Define which ESR are supported.
 const SUPPORTED_ESR = [91, 78, 68, 60];
 // Debug logging (0 - errors and basic logs only, 1 - verbose debug)
-const debugLevel = 0;
+const debugLevel = 1;
 // Debug option to speed up processing.
 const maxNumberOfAddonPages = 0;
 
@@ -28,11 +28,7 @@ const {
 } = require('comment-json');
 
 const rootDir = "data";
-const extGroupTB78Dir = 'x78'; // MailExtensions
-const extGroupTB68Dir = 'x68'; // legacy WebExtensions
-const extGroupTB60Dir = 'x60'; // legacy
-const extGroupTBOtherDir = 'xOther';
-
+const downloadDir = 'downloads';
 const extsAllJsonFileName = `${rootDir}/xall.json`;
 
 function debug(...args) {
@@ -117,17 +113,15 @@ function isCompatible(esr, min, max) {
 }
 
 async function downloadURL(url, destFile) {
-    fs.writeFileSync(`${destFile}`, await download(url));	
+	fs.writeFileSync(`${destFile}`, await download(url));
 	debug('done!');
 }
 
 async function getExtensionFiles(extension) {
 	const addon_identifier = extension.guid;
-	const extRootName = `${extension.guid}-${extension.slug}`;
+	const extRootName = `${extension.id}-${extension.slug}`;
 
 	try {
-		console.log('    Get Files for ' + addon_identifier);
-
 		// Get the full version history.
 		let qs = { page: 0, page_size: 50 };
 		let ext_versions = [];
@@ -167,7 +161,7 @@ async function getExtensionFiles(extension) {
 				}
 			}
 		}
-		
+
 		// Some logs
 		console.log(`    Current version for ${addon_identifier} is ${esr_data.current.version} with ATN compMax = ${esr_data.current.compatibility.thunderbird.max || "*"}`);
 
@@ -195,20 +189,8 @@ async function getExtensionFiles(extension) {
 				experiment: false,
 			};
 
-			// Prepare download folders based on max version.
-			let targetGroupDir = extGroupTBOtherDir;
-			
-			// TODO: Maybe use min or max for actual determination.
-			if (ESR == "current" || ESR >= 78) {
-				targetGroupDir = extGroupTB78Dir;
-			} else if (ESR == 68) {
-				targetGroupDir = extGroupTB68Dir;
-			} else if (ESR == 60) {
-				targetGroupDir = extGroupTB60Dir;
-			}
-
-			// Download the XPI (us id instead of version, as version could be not save for filesystem)
-			const extRootDir = `${rootDir}/${targetGroupDir}/${extRootName}/${esr_data[ESR].id}`;
+			// Download the XPI (use id instead of version, as version could be not save for filesystem)
+			const extRootDir = `${rootDir}/${downloadDir}/${extRootName}/${esr_data[ESR].id}`;
 			const xpiFileURL = esr_data[ESR].files[0].url;
 			// Do not use original filename, as it could be too long for the fs and truncated.
 			const xpiFileName = "ext.xpi";
@@ -225,7 +207,7 @@ async function getExtensionFiles(extension) {
 				//fs.removeSync(`${extRootDir}/src`);
 				await fileUnzip(path.resolve(`${extRootDir}/xpi/${xpiFileName}`), { dir: path.resolve(`${extRootDir}/src`) });
 			}
-			
+
 			// Try to read the manifest.json.
 			if (fs.existsSync(`${extRootDir}/src/manifest.json`)) {
 				let manifestJson = parse(fs.readFileSync(`${extRootDir}/src/manifest.json`).toString())
@@ -285,7 +267,7 @@ async function getExtensionFiles(extension) {
 		extension.xpilib = {};
 		extension.xpilib.cmp_data = cmp_data; // for each esr + current the version number
 		extension.xpilib.ext_data = ext_data; // ext data for each esr relevant version
-		
+
 		return 1;
 	} catch (e) {
 		console.error('Error in getExtensionFiles() ' + e + ' ' + e.stack);
@@ -332,8 +314,12 @@ async function main() {
 	await writePrettyJSONFile(extsAllJsonFileName, extensions);
 
 	console.log(" => Downloading XPIs and additional version Information from ATN ...");
+	let total = extensions.length;
+	let current = 1;
 	for (let extension of extensions) {
+		console.log(`    Getting files for ${addon_identifier} (${current}/${total})`);
 		await getExtensionFiles(extension);
+		current++;
 	};
 
 	console.log(" => Updating master JSON file...");
