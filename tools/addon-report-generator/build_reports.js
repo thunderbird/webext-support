@@ -530,7 +530,11 @@ async function alternativeDataToLinks(data) {
 			if (!entries[entry.u_id]) {
 				entries[entry.u_id] = [];
 			}
-			entries[entry.u_id].push(`<br> &#8627; <a href="${entry.r_link}">${entry.r_name}</a>`);
+			if (entry.r_link) 
+				entries[entry.u_id].push(`<br> &#8627; <a href="${entry.r_link}">${entry.r_name}</a>`);
+			else
+				entries[entry.u_id].push(`<br> &#8627; ${entry.r_name}`);
+
 		}
 	} while (i < lines.length);
 
