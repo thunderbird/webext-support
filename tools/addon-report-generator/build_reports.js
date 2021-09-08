@@ -23,15 +23,15 @@ var groups = [
 	},
 	{
 		id: "91",
-		header: "Special Thunderbird 91 reports"
+		header: "Thunderbird 91 reports"
 	},
 	{
 		id: "lost",
-		header: "Lost extensions"
+		header: "Other lost extension reports"
 	},
 	{
 		id: "atn",
-		header: "ATN reports"
+		header: "Other ATN reports"
 	},
 	{
 		id: "all",
@@ -111,7 +111,7 @@ var reports = {
 		}
 	},
 	"atn-tb91": {
-		group: "atn",
+		group: "91",
 		header: "Extensions compatible with Thunderbird 91 as seen by ATN.",
 		template: "report-template.html",
 		enabled: true,
@@ -238,7 +238,7 @@ var reports = {
 		}
 	},
 	"lost-tb78-to-tb91": {
-		group: "lost",
+		group: "91",
 		header: "Extensions which have been lost from TB78 to TB91 (including alternatives).",
 		template: "report-template.html",
 		enabled: true,
@@ -270,7 +270,7 @@ var reports = {
 		}
 	},
 	"lost-tb78-to-tb91-no-alternatives": {
-		group: "lost",
+		group: "91",
 		header: "Extensions which have been lost from TB78 to TB91.",
 		template: "report-template.html",
 		enabled: true,
