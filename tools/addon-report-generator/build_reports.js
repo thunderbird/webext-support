@@ -7,7 +7,6 @@
 const debugLevel = 0;
 
 const fs = require('fs-extra');
-const { get } = require('http');
 const request = require('requestretry');
 
 const rootDir = "data";
