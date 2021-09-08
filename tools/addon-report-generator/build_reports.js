@@ -313,7 +313,7 @@ var reports = {
 	},
 	"tb91-experiments-without-upper-limit": {
 		group: "91",
-		header: "Experiments without upper limit in ATN, which might not be compatible with TB91 (excluding reported positives).",
+		header: "Experiments without upper limit in ATN, which might not be compatible with TB91 (excluding confirmed positives).",
 		template: "report-template.html",
 		enabled: true,
 		filter: function (extJson) {
@@ -598,22 +598,25 @@ function createExtMDTableRow(extJson) {
 			let cBadge_legacy_setup = { bLeftText: 'L', bRightText: '+', bColor: 'green', bTooltip: "Legacy Type:", badgeBasedURL: 'https://img.shields.io/badge/' };
 			let cBadge_experiment_setup = { bLeftText: 'E', bRightText: '+', bColor: 'blue', bTooltip: 'Experiment APIs: ', badgeBasedURL: 'https://img.shields.io/badge/' };
 
-			if (data.mext == true) {
+			if (data.mext == true && data.legacy == false) {
 				cBadge_type_setup.bRightText = "MX"
 				cBadge_type_setup.bTooltip += "&#10; - MX : MailExtension (manifest.json)";
+			} else if (data.mext == true && data.legacy == true) {
+				cBadge_type_setup.bRightText = "WE"
+				cBadge_type_setup.bTooltip += "&#10; - WE : Legacy WebExtension (manifest.json)";
 			} else {
 				cBadge_type_setup.bRightText = "RDF";
-				cBadge_type_setup.bTooltip += "&#10; - RDF : Legacy (install.rdf)";
+				cBadge_type_setup.bTooltip += "&#10; - RDF : Legacy Extension (install.rdf)";
 			}
 			rv.push(makeBadgeElement(cBadge_type_setup));
 
 			if (data.legacy == true) {
 				if (data.legacy_type == 'xul') {
-					cBadge_legacy_setup.bRightText = "RS"
-					cBadge_legacy_setup.bTooltip += "&#10; - RS : Legacy, Requires Restart";
+					cBadge_legacy_setup.bRightText = "XUL"
+					cBadge_legacy_setup.bTooltip += "&#10; - XUL : XUL overlay (requires restart)";
 				} else {
 					cBadge_legacy_setup.bRightText = "BS"
-					cBadge_legacy_setup.bTooltip += "&#10; - RS : Legacy, Bootstrap";
+					cBadge_legacy_setup.bTooltip += "&#10; - RS : Bootstrap";
 				}
 				rv.push(makeBadgeElement(cBadge_legacy_setup));
 			}
@@ -627,15 +630,13 @@ function createExtMDTableRow(extJson) {
 
 				let schema = data.experimentSchemaNames;
 				if (schema) {
-					cBadge_experiment_setup.bTooltip += "&#10;";
 					let max = Math.min(schema.length, 14);
 					for (let index = 0; index < max; index++) {
-						const element = schema[index];
-						cBadge_experiment_setup.bTooltip += (element + "&#10;");
+						cBadge_experiment_setup.bTooltip += `&#10; - ${schema[index]}`;
 					};
 
 					if (data.experimentSchemaNames.length > 15) {
-						cBadge_experiment_setup.bTooltip += "&#10;...";
+						cBadge_experiment_setup.bTooltip += "&#10; ...";
 					}
 				}
 				rv.push(makeBadgeElement(cBadge_experiment_setup));
@@ -671,7 +672,7 @@ async function main() {
 	let extsJson = fs.readJSONSync(extsAllJsonFileName);
 	let index = [];
 	for (let group of groups) {
-		index.push(`<h1>${group.header}</h1>`);
+		index.push(`<h1><a name="group${group.id}"></a>${group.header}</h1>`);
 		for (let [name, report] of Object.entries(reports)) {
 			if (report.enabled && report.group == group.id) {
 				console.log("  -> " + name);
