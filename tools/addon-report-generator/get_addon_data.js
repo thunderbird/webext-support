@@ -257,7 +257,7 @@ async function getExtensionFiles(extension) {
 					data.legacy_type = 'xul';
 				}
 			} else {
-				console.error("Error in getExtensionFiles(), no manifest.json and no index.rdf found.", extRootDir)
+				console.error(`Error in getExtensionFiles() for ${extension.slug}, no manifest.json and no index.rdf found.`)
 				continue;
 			}
 			ext_data[ext_version] = data;
@@ -288,7 +288,7 @@ async function getExtensionFiles(extension) {
 
 		return 1;
 	} catch (e) {
-		console.error('Error in getExtensionFiles() ' + e + ' ' + e.stack);
+		console.error(`Error in getExtensionFiles() for ${extension.slug}`,e,e.stack);
 		return 0;
 	}
 }
@@ -310,6 +310,9 @@ async function getExtensions() {
 		}
 	} while ((maxNumberOfAddonPages == 0 || maxNumberOfAddonPages > qs.page) && r && r.next !== null);
 
+	for (let extension of extensions) {
+		debug(`Found Extension: ${extension.slug}`);
+	}
 	debug('Execution time for getExtensions(): ' + (new Date() - startTime) / 1000);
 
 	debug('Total Extensions found: ' + extensions.length);
