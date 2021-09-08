@@ -19,7 +19,7 @@ const fs = require('fs-extra');
 const download = require('download');
 const path = require('path');
 const extract = require('extract-zip')
-const xml_util = require('./includes/xml-util.js');
+const convert = require('xml-js');
 
 const {
 	parse,
@@ -42,6 +42,24 @@ function fileUnzip(source, options) {
 		// extraction is complete. make sure to handle the err
 		console.error("Error in fileUnzip()", source, err);
 	});
+}
+
+// cleidigh - Utility to get install.rdf values
+function rdfGetValue(file, valuePath) {
+
+	var xml = fs.readFileSync(file, 'utf8');
+	var options = { ignoreComment: true, alwaysChildren: true, compact: true };
+	var result = convert.xml2js(xml, options); 
+
+	var rdfXMLPath = 'result.RDF.' + valuePath + '._text';
+	try {
+		if (eval(rdfXMLPath) === undefined || eval(rdfXMLPath) === null) {
+			return null;
+		}
+	} catch (error) {
+		return null;
+	}
+	return eval(rdfXMLPath);
 }
 
 async function writePrettyJSONFile(f, json) {
@@ -231,8 +249,8 @@ async function getExtensionFiles(extension) {
 				}
 			} else if (fs.existsSync(`${extRootDir}/src/install.rdf`)) {
 				data.legacy = true;
-				const installRDFExtType = xml_util.rdfGetValue(`${extRootDir}/src/install.rdf`, 'Description[\"em:type\"]');
-				const installRDFExtBootstrap = xml_util.rdfGetValue(`${extRootDir}/src/install.rdf`, 'Description[\"em:bootstrap\"]');
+				const installRDFExtType = rdfGetValue(`${extRootDir}/src/install.rdf`, 'Description[\"em:type\"]');
+				const installRDFExtBootstrap = rdfGetValue(`${extRootDir}/src/install.rdf`, 'Description[\"em:bootstrap\"]');
 				if (installRDFExtType === 2 && installRDFExtBootstrap) {
 					data.legacy_type = 'bootstrap';
 				} else {
