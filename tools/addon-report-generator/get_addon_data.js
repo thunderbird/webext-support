@@ -30,6 +30,7 @@ const {
 const rootDir = "data";
 const downloadDir = 'downloads';
 const extsAllJsonFileName = `${rootDir}/xall.json`;
+const extsAllLogFileName = `${rootDir}/log.json`;
 
 function debug(...args) {
 	if (debugLevel > 0) {
@@ -345,6 +346,9 @@ async function main() {
 
 	console.log(" => Updating master JSON file...");
 	await writePrettyJSONFile(extsAllJsonFileName, extensions);
+		
+	let list = extensions.map(e => e.slug).sort();
+	await writePrettyJSONFile(extsAllLogFileName, list);
 
 	console.log(" => Execution time for main(): " + (new Date() - startTime) / 1000);
 }
