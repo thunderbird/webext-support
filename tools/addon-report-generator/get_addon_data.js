@@ -288,7 +288,7 @@ async function getExtensionFiles(extension) {
 
 		return 1;
 	} catch (e) {
-		console.error(`Error in getExtensionFiles() for ${extension.slug}`,e,e.stack);
+		console.error(`Error in getExtensionFiles() for ${extension.slug}`, e);
 		return 0;
 	}
 }
