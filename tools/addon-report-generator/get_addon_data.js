@@ -312,11 +312,7 @@ async function getExtensions() {
 		}
 	} while ((maxNumberOfAddonPages == 0 || maxNumberOfAddonPages > qs.page) && r && r.next !== null);
 
-	for (let extension of extensions) {
-		debug(`Found Extension: ${extension.slug}`);
-	}
 	debug('Execution time for getExtensions(): ' + (new Date() - startTime) / 1000);
-
 	debug('Total Extensions found: ' + extensions.length);
 	return extensions;
 }
