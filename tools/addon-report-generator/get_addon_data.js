@@ -30,7 +30,7 @@ const {
 const rootDir = "data";
 const downloadDir = 'downloads';
 const extsAllJsonFileName = `${rootDir}/xall.json`;
-const extsAllLogFileName = `${rootDir}/log.json`;
+const extsAllLogFileName = `log.json`;
 
 function debug(...args) {
 	if (debugLevel > 0) {
@@ -298,7 +298,8 @@ async function getExtensions() {
 	let startTime = new Date();
 
 	debug('Requesting information about all Thunderbird extensions using ATN API v4.');
-	let qs = { page: 0, app: "thunderbird", type: "extension", sort: "users" };
+	// We need to sort by created, which is a non-changing order, users broke the pagination.
+	let qs = { page: 0, app: "thunderbird", type: "extension", sort: "created" };
 	let r = null;
 	let extensions = [];
 
@@ -333,23 +334,30 @@ async function main() {
 
 	console.log(" => Creating master JSON file...");
 	fs.ensureDirSync(`${rootDir}`);
-	await writePrettyJSONFile(extsAllJsonFileName, extensions);
+	await writePrettyJSONFile(extsAllLogFileName, extensions.map(e => `${e.id}-${e.guid}-${e.slug}`).sort());
+
+	let sorted_extensions = extensions.sort((a,b) => {
+        if(a.average_daily_users < b.average_daily_users){
+			return 1;
+		} else if(a.average_daily_users > b.average_daily_users) {
+			return -1;
+		} else{
+			return 0;
+		}		
+	})
+
 
 	console.log(" => Downloading XPIs and additional version Information from ATN ...");
-	let total = extensions.length;
+	let total = sorted_extensions.length;
 	let current = 1;
-	for (let extension of extensions) {
+	for (let extension of sorted_extensions) {
 		console.log(`    Getting files for ${extension.guid} (${current}/${total})`);
 		await getExtensionFiles(extension);
 		current++;
 	};
 
 	console.log(" => Updating master JSON file...");
-	await writePrettyJSONFile(extsAllJsonFileName, extensions);
-		
-	let list = extensions.map(e => e.slug).sort();
-	await writePrettyJSONFile(extsAllLogFileName, list);
-
+	await writePrettyJSONFile(extsAllJsonFileName, sorted_extensions);
 	console.log(" => Execution time for main(): " + (new Date() - startTime) / 1000);
 }
 
