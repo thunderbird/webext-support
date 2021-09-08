@@ -1,7 +1,7 @@
 Install needed packages
 =======================
 
-npm install fs-extra requestretry download path extract-zip
+npm install fs-extra requestretry download path extract-zip comment-json
 
 Run
 ===
