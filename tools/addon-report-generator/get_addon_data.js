@@ -335,7 +335,7 @@ async function main() {
 	let total = extensions.length;
 	let current = 1;
 	for (let extension of extensions) {
-		console.log(`    Getting files for ${addon_identifier} (${current}/${total})`);
+		console.log(`    Getting files for ${extension.guid} (${current}/${total})`);
 		await getExtensionFiles(extension);
 		current++;
 	};
