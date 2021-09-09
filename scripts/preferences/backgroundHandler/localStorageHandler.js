@@ -5,6 +5,9 @@
  * For usage descriptions, please check:
  * https://github.com/thundernest/addon-developer-support/tree/master/scripts/preferences/backgroundHandler
  *
+ * Version: 1.2
+ * - fix bug in getAllUserPrefs() which did not load any prefs
+ 
  * Version: 1.1
  * - removed dependency from WindowListener API toward NotifyTools API
  *
@@ -29,7 +32,7 @@ var localStorageHandler = {
   getAllUserPrefs: async function () {
     let preferences = {};
     for (let pref of Object.keys(this._defaults)) {
-      const key = `pref.${name}`;
+      const key = `pref.${pref}`;
       let rv = (await messenger.storage.local.get(key))[key];
       if (rv != null) preferences[pref] = rv;
     }
