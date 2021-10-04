@@ -8,6 +8,9 @@ const ADDON_ID = "";
  * For usage descriptions, please check:
  * https://github.com/thundernest/addon-developer-support/tree/master/scripts/notifyTools
  *
+ * Version: 1.4
+ * - auto enable/disable
+ *
  * Version: 1.3
  * - registered listeners for notifyExperiment can return a value
  * - remove WindowListener from name of observer
@@ -72,6 +75,14 @@ var notifyTools = {
   },
 
   registerListener: function (listener) {
+    if (Object.values(this.registeredCallbacks).length == 0) {
+      Services.obs.addObserver(
+        this.onNotifyExperimentObserver,
+        "NotifyExperimentObserver",
+        false
+      );      
+    }
+    
     let id = this.registeredCallbacksNextId++;
     this.registeredCallbacks[id] = listener;
     return id;
@@ -79,6 +90,12 @@ var notifyTools = {
 
   removeListener: function (id) {
     delete this.registeredCallbacks[id];
+    if (Object.values(this.registeredCallbacks).length == 0) {
+      Services.obs.removeObserver(
+        this.onNotifyExperimentObserver,
+        "NotifyExperimentObserver"
+      );  
+    }
   },
 
   notifyBackground: function (data) {
@@ -95,35 +112,10 @@ var notifyTools = {
   },
 
   enable: function () {
-    Services.obs.addObserver(
-      this.onNotifyExperimentObserver,
-      "NotifyExperimentObserver",
-      false
-    );
+    console.log("Manually calling enable() is no longer needed.");
   },
 
   disable: function () {
-    Services.obs.removeObserver(
-      this.onNotifyExperimentObserver,
-      "NotifyExperimentObserver"
-    );
+    console.log("Manually calling disable() is no longer needed.");
   },
 };
-
-
-if (typeof window != "undefined" && window) {
-  window.addEventListener(
-    "load",
-    function (event) {
-      notifyTools.enable();
-      window.addEventListener(
-        "unload",
-        function (event) {
-          notifyTools.disable();
-        },
-        false
-      );
-    },
-    false
-  );
-}
