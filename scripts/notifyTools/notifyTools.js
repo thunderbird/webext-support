@@ -1,4 +1,4 @@
-// Set this to the ID of your add-on.
+// Set this to the ID of your add-on, or call notifyTools.setAddonID().
 var ADDON_ID = "";
 
 /*
@@ -27,13 +27,18 @@ var { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 var notifyTools = {
   registeredCallbacks: {},
   registeredCallbacksNextId: 1,
+  addOnId: ADDON_ID,
+
+  setAddonId: function (addOnId) {
+    this.addOnId = addOnId;
+  },
 
   onNotifyExperimentObserver: {
     observe: async function (aSubject, aTopic, aData) {
-      if (ADDON_ID == "") {
+      if (this.addOnId == "") {
         throw new Error("notifyTools: ADDON_ID is empty!");
       }
-      if (aData != ADDON_ID) {
+      if (aData != this.addOnId) {
         return;
       }
       let payload = aSubject.wrappedJSObject;
@@ -109,14 +114,14 @@ var notifyTools = {
   },  
 
   notifyBackground: function (data) {
-    if (ADDON_ID == "") {
+    if (this.addOnId == "") {
       throw new Error("notifyTools: ADDON_ID is empty!");
     }
     return new Promise((resolve) => {
       Services.obs.notifyObservers(
         { data, resolve },
         "NotifyBackgroundObserver",
-        ADDON_ID
+        this.addOnId
       );
     });
   },
