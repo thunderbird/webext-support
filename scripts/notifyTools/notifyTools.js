@@ -1,5 +1,5 @@
 // Set this to the ID of your add-on.
-const ADDON_ID = "";
+var ADDON_ID = "";
 
 /*
  * This file is provided by the addon-developer-support repository at
@@ -98,6 +98,16 @@ var notifyTools = {
     }
   },
 
+  cleanUp: function () {
+    if (Object.values(this.registeredCallbacks).length != 0) {
+      Services.obs.removeObserver(
+        this.onNotifyExperimentObserver,
+        "NotifyExperimentObserver"
+      );  
+    }
+    this.registeredCallbacks = {};
+  },  
+
   notifyBackground: function (data) {
     if (ADDON_ID == "") {
       throw new Error("notifyTools: ADDON_ID is empty!");
@@ -119,3 +129,13 @@ var notifyTools = {
     console.log("Manually calling disable() is no longer needed.");
   },
 };
+
+if (typeof window != "undefined" && window) {
+  window.addEventListener(
+    "unload",
+    function (event) {
+      notifyTools.cleanUp();
+    },
+    false
+  );
+}
