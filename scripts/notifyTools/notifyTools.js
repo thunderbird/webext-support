@@ -35,10 +35,10 @@ var notifyTools = {
 
   onNotifyExperimentObserver: {
     observe: async function (aSubject, aTopic, aData) {
-      if (this.addOnId == "") {
+      if (notifyTools.addOnId == "") {
         throw new Error("notifyTools: ADDON_ID is empty!");
       }
-      if (aData != this.addOnId) {
+      if (aData != notifyTools.addOnId) {
         return;
       }
       let payload = aSubject.wrappedJSObject;
@@ -128,11 +128,11 @@ var notifyTools = {
 
   enable: function () {
     console.log("Manually calling enable() is no longer needed.");
-  },
+},
 
   disable: function () {
     console.log("Manually calling disable() is no longer needed.");
-  },
+},
 };
 
 if (typeof window != "undefined" && window) {
