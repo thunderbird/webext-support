@@ -10,6 +10,7 @@ var ADDON_ID = "";
  *
  * Version: 1.5
  * - deprecate enable(), disable() and registerListener()
+ * - add setAddOnId()
  *
  * Version: 1.4
  * - auto enable/disable
@@ -110,7 +111,7 @@ var notifyTools = {
     }
   },
 
-  removeAllListener: function () {
+  removeAllListeners: function () {
     if (Object.values(this.registeredCallbacks).length != 0) {
       Services.obs.removeObserver(
         this.onNotifyExperimentObserver,
@@ -141,8 +142,8 @@ var notifyTools = {
   },
 
   disable: function () {
-    console.log("notifyTools.disable() has been deprecated, use notifyTools.removeAllListener() instead.");
-    this.removeAllListener();
+    console.log("notifyTools.disable() has been deprecated, use notifyTools.removeAllListeners() instead.");
+    this.removeAllListeners();
   },
 
   registerListener: function (listener) {
@@ -156,7 +157,7 @@ if (typeof window != "undefined" && window) {
   window.addEventListener(
     "unload",
     function (event) {
-      notifyTools.removeAllListener();
+      notifyTools.removeAllListeners();
     },
     false
   );
