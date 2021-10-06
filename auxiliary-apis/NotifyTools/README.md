@@ -10,6 +10,10 @@ and back in when the task has been finished.
 
 More details can be found in [this update tutorial](https://github.com/thundernest/addon-developer-support/wiki/Tutorial:-Convert-add-on-parts-individually-by-using-a-messaging-system).
 
+# Example
+
+This repository includes the [NotifyToolsExample Add-On](https://github.com/thundernest/addon-developer-support/raw/master/auxiliary-apis/NotifyTools/notifyToolsExample.zip), showcasing how the NotifyTools can be used.
+
 # Usage
 
 Add the [NotifyTools API](https://github.com/thundernest/addon-developer-support/tree/master/auxiliary-apis/NotifyTools) to your add-on. Your `manifest.json` needs an entry like this:
