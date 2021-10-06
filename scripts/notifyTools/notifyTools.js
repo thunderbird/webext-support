@@ -8,6 +8,9 @@ var ADDON_ID = "";
  * For usage descriptions, please check:
  * https://github.com/thundernest/addon-developer-support/tree/master/scripts/notifyTools
  *
+ * Version: 1.5
+ * - deprecate enable(), disable() and registerListener()
+ *
  * Version: 1.4
  * - auto enable/disable
  *
@@ -42,6 +45,9 @@ var notifyTools = {
         return;
       }
       let payload = aSubject.wrappedJSObject;
+
+      // Make sure payload has a resolve function, which we use to resolve the
+      // observer notification.
       if (payload.resolve) {
         let observerTrackerPromises = [];
         // Push listener into promise array, so they can run in parallel
@@ -69,7 +75,8 @@ var notifyTools = {
           payload.resolve(results[0]);
         }
       } else {
-        // Just call the listener.
+        // Older version of NotifyTools, which is not sending a resolve function, deprecated.
+        console.log("Please update the notifyTools API to at least v1.5");
         for (let registeredCallback of Object.values(
           notifyTools.registeredCallbacks
         )) {
@@ -79,7 +86,7 @@ var notifyTools = {
     },
   },
 
-  registerListener: function (listener) {
+  addListener: function (listener) {
     if (Object.values(this.registeredCallbacks).length == 0) {
       Services.obs.addObserver(
         this.onNotifyExperimentObserver,
@@ -103,7 +110,7 @@ var notifyTools = {
     }
   },
 
-  cleanUp: function () {
+  removeAllListener: function () {
     if (Object.values(this.registeredCallbacks).length != 0) {
       Services.obs.removeObserver(
         this.onNotifyExperimentObserver,
@@ -126,20 +133,30 @@ var notifyTools = {
     });
   },
 
+
+  // Deprecated.
+
   enable: function () {
-    console.log("Manually calling enable() is no longer needed.");
+    console.log("Manually calling notifyTools.enable() is no longer needed.");
 },
 
   disable: function () {
-    console.log("Manually calling disable() is no longer needed.");
+    console.log("notifyTools.disable() has been deprecated, use notifyTools.removeAllListener() instead.");
+    this.removeAllListener();
 },
+
+  registerListener: function (listener) {
+    console.log("notifyTools.registerListener() has been deprecated, use notifyTools.addListener() instead.");
+    this.addListener(listener);
+  },
+
 };
 
 if (typeof window != "undefined" && window) {
   window.addEventListener(
     "unload",
     function (event) {
-      notifyTools.cleanUp();
+      notifyTools.removeAllListener();
     },
     false
   );
