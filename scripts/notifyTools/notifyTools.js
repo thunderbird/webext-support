@@ -92,9 +92,9 @@ var notifyTools = {
         this.onNotifyExperimentObserver,
         "NotifyExperimentObserver",
         false
-      );      
+      );
     }
-    
+
     let id = this.registeredCallbacksNextId++;
     this.registeredCallbacks[id] = listener;
     return id;
@@ -106,7 +106,7 @@ var notifyTools = {
       Services.obs.removeObserver(
         this.onNotifyExperimentObserver,
         "NotifyExperimentObserver"
-      );  
+      );
     }
   },
 
@@ -115,10 +115,10 @@ var notifyTools = {
       Services.obs.removeObserver(
         this.onNotifyExperimentObserver,
         "NotifyExperimentObserver"
-      );  
+      );
     }
     this.registeredCallbacks = {};
-  },  
+  },
 
   notifyBackground: function (data) {
     if (this.addOnId == "") {
@@ -138,12 +138,12 @@ var notifyTools = {
 
   enable: function () {
     console.log("Manually calling notifyTools.enable() is no longer needed.");
-},
+  },
 
   disable: function () {
     console.log("notifyTools.disable() has been deprecated, use notifyTools.removeAllListener() instead.");
     this.removeAllListener();
-},
+  },
 
   registerListener: function (listener) {
     console.log("notifyTools.registerListener() has been deprecated, use notifyTools.addListener() instead.");

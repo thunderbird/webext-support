@@ -75,9 +75,9 @@ messenger.NotifyTools.notifyExperiment({command: "doSomething"}).then((data) => 
 
 The receiving Experiment script needs to include the [notifyTools.js](https://github.com/thundernest/addon-developer-support/tree/master/scripts/notifyTools) script  and must setup a listener using the following methods:
 
-### registerListener(callback);
+### addListener(callback);
 
-Registers a callback function, which is called when a notification from the WebExtension's background page has been received. The `registerListener()` function returns an `id` which can be used to remove the listener again.
+Adds a callback function, which is called when a notification from the WebExtension's background page has been received. The `addListener()` function returns an `id` which can be used to remove the listener again.
 
 Example:
 
@@ -86,8 +86,47 @@ function doSomething(data) {
   console.log(data);
   return true;
 }
-let id = notifyTools.registerListener(doSomething);
+let id = notifyTools.addListener(doSomething);
 ```
+
+**Note**: NotifyTools currently is not 100% compatible with the behavior of
+runtime.sendMessage. While runtime messaging is ignoring non-Promise return
+values, NotifyTools only ignores `null`.
+
+Why does this matter? Consider the following three listeners:
+ 
+```
+async function dominant_listener(data) {
+ if (data.type == "A") {
+   return { msg: "I should answer only type A" };
+ }
+}
+ 
+function silent_listener(data) {
+ if (data.type == "B") {
+   return { msg: "I should answer only type B" };
+ }
+}
+
+function selective_listener(data) {
+ if (data.type == "C") {
+   return Promise.resolve({ msg: "I should answer only type C" });
+ }
+}
+```
+ 
+When all 3 listeners are registered for the runtime.onMessage event,
+the dominant listener will always respond, even for `data.type != "A"` requests,
+because it is always returning a Promise (it is an async function). The return
+value of the silent listener is ignored, and the selective listener returns a
+value just for `data.type == "C"`. But since the dominant listener also returns
+`null` for these requests, the actual return value depends on which listener is faster
+and/or was registered first.
+ 
+All notifyTools listener however ignore only `null` return values (so `null` can
+actually never be returned). The above dominant listener will only respond to 
+`type == "A"` requests, the silent listener will only respond to `type == "B"` 
+requests and the selective listener will respond only to `type == "C"` requests.
 
 ### removeListener(id)
 
@@ -99,10 +138,10 @@ Example:
 notifyTools.removeListener(id);
 ```
 
-### enable()
+### removeAllListeners()
 
-The [notifyTools.js](https://github.com/thundernest/addon-developer-support/tree/master/scripts/notifyTools) script attaches its `enable()` method to the `load` event of the current window. If the script is loaded into a window-less environment, `enable()` needs to be called manually.
+You must remove all added listeners when your add-on is disabled/reloaded. Instead of calling `removeListener()` for each added listener, you may call `removeAllListeners()`.
 
-### disable()
+### setAddOnId(add-on-id)
 
-The [notifyTools.js](https://github.com/thundernest/addon-developer-support/tree/master/scripts/notifyTools) script attaches its `disable()` method to the `unload` event of the current window. If the script is loaded into a window-less environment, `disable()` needs to be called manually.
+The `notifyTools.js` script needs to know the ID of your add-on to be able to listen for messages. You may either define the ID directly in the first line of the script, or set it using `setAddOnId()`.
