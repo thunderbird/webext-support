@@ -33,7 +33,7 @@ var notifyTools = {
   registeredCallbacksNextId: 1,
   addOnId: ADDON_ID,
 
-  setAddonId: function (addOnId) {
+  setAddOnId: function (addOnId) {
     this.addOnId = addOnId;
   },
 
