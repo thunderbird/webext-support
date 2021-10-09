@@ -60,7 +60,7 @@ notifyTools.notifyBackground({command: "doSomething"}).then((data) => {
 });
 ```
 
-Include the [notifyTools.js](https://github.com/thundernest/addon-developer-support/tree/master/scripts/notifyTools) script in your Experiment script to be able to use `notifyTools.notifyBackground()`.
+Include the [notifyTools.js](https://github.com/thundernest/addon-developer-support/tree/master/scripts/notifyTools) script in your Experiment script to be able to use `notifyTools.notifyBackground()`. If you are injecting the script into a global Thunderbird window object, make sure to wrap it in your custom namespace.
 
 **Note**: If multiple `onNotifyBackground` listeners are registered in the WebExtension's background page and more than one is returning data, the value
 from the first one is returned to the Experiment. This may lead to inconsistent behavior, so make sure that for each
