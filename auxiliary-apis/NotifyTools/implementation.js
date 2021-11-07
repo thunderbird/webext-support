@@ -2,7 +2,7 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
- * Version 1.2
+ * Version 1.3
  *  - moved registering the observer into startup
  *
  * Version 1.1
@@ -59,22 +59,25 @@ var NotifyTools = class extends ExtensionCommon.ExtensionAPI {
   // "events": ["startup"] in the experiment manifest
 
   onStartup() {
+    let self = this;
+
     this.observerTracker = {};
     this.observerTrackerNext = 1;
+
     this.onNotifyBackgroundObserver = {
       observe: async function (aSubject, aTopic, aData) {
         if (
-          Object.keys(this.observerTracker).length > 0 &&
-          aData == this.extension.id
+          Object.keys(self.observerTracker).length > 0 &&
+          aData == self.extension.id
         ) {
           let payload = aSubject.wrappedJSObject;
-  
+
           // Make sure payload has a resolve function, which we use to resolve the
           // observer notification.
           if (payload.resolve) {
             let observerTrackerPromises = [];
             // Push listener into promise array, so they can run in parallel
-            for (let listener of Object.values(this.observerTracker)) {
+            for (let listener of Object.values(self.observerTracker)) {
               observerTrackerPromises.push(listener(payload.data));
             }
             // We still have to await all of them but wait time is just the time needed
@@ -98,14 +101,13 @@ var NotifyTools = class extends ExtensionCommon.ExtensionAPI {
           } else {
             // Older version of NotifyTools, which is not sending a resolve function, deprecated.
             console.log("Please update the notifyTools API and the notifyTools script to at least v1.5");
-            for (let listener of Object.values(this.observerTracker)) {
+            for (let listener of Object.values(self.observerTracker)) {
               listener(payload.data);
             }
           }
         }
       },
     };
-
     // Add observer for notifyTools.js
     Services.obs.addObserver(
       this.onNotifyBackgroundObserver,
