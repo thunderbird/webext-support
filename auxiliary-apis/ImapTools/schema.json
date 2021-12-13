@@ -1,0 +1,19 @@
+[
+  {
+    "namespace": "ImapTools",
+    "functions": [
+      {
+        "name": "getImapUID",
+        "type": "function",
+        "async": true,
+        "description": "Returns the UID of the IMAP message identified by the given message ID. This is only guaranteed to be unique per folder.",
+        "parameters": [
+          {
+            "name": "messageID",
+            "type": "integer"
+          }
+        ]
+      }
+    ]
+  }
+]
