@@ -4,6 +4,8 @@ The SessionRestore API is a proof of concept of an upcoming sessions API for Thu
 
 This API is under active development and is subject to change.
 
+**Note: As of Thunderbird Beta 98, background scripts are only started after the session has been restored. This causes the onStartupSessionRestore event to block your add-on from starting, as it no longer sees the event.**
+
 # Usage
 
 Add the [SessionRestore API](https://github.com/thundernest/addon-developer-support/tree/master/auxiliary-apis/SessionRestore) to your add-on. Your `manifest.json` needs an entry like this:
