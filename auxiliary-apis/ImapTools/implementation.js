@@ -25,8 +25,6 @@ var { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 var ImapTools = class extends ExtensionCommon.ExtensionAPI {
   getAPI(context) {
-    this.context = context;
-
     return {
       ImapTools: {
         getImapUID(aID) {
