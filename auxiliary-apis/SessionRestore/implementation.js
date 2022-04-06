@@ -31,7 +31,7 @@
         SessionRestore: {
           onStartupSessionRestore: new ExtensionCommon.EventManager({
             context,
-            name: "SessionRestore.onNotifyBackground",
+            name: "SessionRestore.onStartupSessionRestore",
             register: (fire) => {
               onStartupSessionRestoreListener.add(fire.sync);
               return () => {
