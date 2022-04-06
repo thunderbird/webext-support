@@ -28,11 +28,6 @@ var { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 var FileSystem = class extends ExtensionCommon.ExtensionAPI {
   getAPI(context) {
-    context.callOnClose(this);
-
-    this.context = context;
-    let self = this;
-
     return {
       FileSystem: {
 
@@ -53,8 +48,5 @@ var FileSystem = class extends ExtensionCommon.ExtensionAPI {
 
       }
     };
-  }
-
-  close() {
   }
 };
