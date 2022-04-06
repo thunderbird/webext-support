@@ -15,195 +15,206 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-// Import some things we need.
-var { ExtensionCommon } = ChromeUtils.import(
-  "resource://gre/modules/ExtensionCommon.jsm"
-);
-var { ExtensionSupport } = ChromeUtils.import(
-  "resource:///modules/ExtensionSupport.jsm"
-);
-var { ExtensionUtils } = ChromeUtils.import(
-  "resource://gre/modules/ExtensionUtils.jsm"
-);
-var { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
-var { ExtensionError } = ExtensionUtils;
+"use strict";
 
-var LegacyCSS = class extends ExtensionCommon.ExtensionAPI {
-  // Alternative to defining a constructor to init the class, is to use the
-  // onStartup event. However, this causes the API to be instantiated after the
-  // add-on has been loaded, not when the API is first used.
-  constructor(...args) {
-    // The only parameter is extension, but it could change in the future.
-    // super() will add the extension as a member of this.
-    super(...args);
-    let extensionApi = this;
+(function (exports) {
 
-    this.windowTracker = new Map();
-    this.windowOpenListener = new Set();
-    this.uniqueRandomID = this.extension.uuid + "_" + this.extension.instanceId;
+  // Import some things we need.
+  var { ExtensionCommon } = ChromeUtils.import(
+    "resource://gre/modules/ExtensionCommon.jsm"
+  );
+  var { ExtensionSupport } = ChromeUtils.import(
+    "resource:///modules/ExtensionSupport.jsm"
+  );
+  var { ExtensionUtils } = ChromeUtils.import(
+    "resource://gre/modules/ExtensionUtils.jsm"
+  );
+  var { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+  var { ExtensionError } = ExtensionUtils;
 
-    this.chromeData = null;
-    this.resourceData = null;
+  var tracker;
+  
+  class Tracker {
+    constructor(extension) {
+      this.windowTracker = new Map();
+      this.windowOpenListener = new Set();
+      this.chromeData = null;
+      this.resourceData = null;
+      this.uniqueRandomID = extension.uuid + "_" + extension.instanceId;
+    }
 
-    ExtensionSupport.registerWindowListener(
-      "windowListener_" + this.uniqueRandomID,
-      {
-        onLoadWindow(window) {
-          for (let listener of extensionApi.windowOpenListener.values()) {
-            listener(window.location.href);
-          }
-        },
-        onUnloadWindow(window) {
-          extensionApi.untrackAllCssFiles(window);
-        }
-      }
-    );
+    trackCssFile(window, cssFile) {
+      let cssFiles = this.windowTracker.get(window) || [];
+      cssFiles.push(cssFile)
+      this.windowTracker.set(window, cssFiles);
+    }
+
+    hasCssFile(window, cssFile) {
+      let cssFiles = this.windowTracker.get(window) || [];
+      return cssFiles.includes(cssFile);
+    }
+
+    untrackAllCssFiles(window) {
+      this.windowTracker.delete(window);
+    }
   }
 
-  // These functions are "private" helper function and cannot be reached from outside.
-  trackCssFile(window, cssFile) {
-    let cssFiles = this.windowTracker.get(window) || [];
-    cssFiles.push(cssFile)
-    this.windowTracker.set(window, cssFiles);
-  }
+  class LegacyCSS extends ExtensionCommon.ExtensionAPI {
+    // Alternative to defining a constructor here in order to init the class, is
+    // to use the onStartup event. However, this causes the API to be instantiated
+    // directly after the add-on has been loaded, not when the API is first used.
+    constructor(...args) {
+      // The only parameter is extension, but it could change in the future.
+      // super() will add the extension as a member of this.
+      super(...args);
 
-  hasCssFile(window, cssFile) {
-    let cssFiles = this.windowTracker.get(window) || [];
-    return cssFiles.includes(cssFile);
-  }
-
-  untrackAllCssFiles(window) {
-    this.windowTracker.delete(window);
-  }
-
-  // The API implementation.
-  getAPI(context) {
-    let extensionApi = this;
-    return {
-      LegacyCSS: {
-        onWindowOpened: new ExtensionCommon.EventManager({
-          context,
-          name: "LegacyCSS.onWindowOpened",
-          register: (fire) => {
-            extensionApi.windowOpenListener.add(fire.sync);
-            return () => {
-              extensionApi.windowOpenListener.delete(fire.sync);
-            };
+      tracker = new Tracker(this.extension);
+      ExtensionSupport.registerWindowListener(
+        "windowListener_" + tracker.uniqueRandomID,
+        {
+          onLoadWindow(window) {
+            for (let listener of tracker.windowOpenListener.values()) {
+              listener(window.location.href);
+            }
           },
-        }).api(),
+          onUnloadWindow(window) {
+            tracker.untrackAllCssFiles(window);
+          }
+        }
+      );
+    }
 
-        async inject(url, cssFile) {
-          let path = extensionApi.extension.rootURI.resolve(cssFile);
-          let injected = false;
+    // The API implementation.
+    getAPI(context) {
+      return {
+        LegacyCSS: {
+          onWindowOpened: new ExtensionCommon.EventManager({
+            context,
+            name: "LegacyCSS.onWindowOpened",
+            register: (fire) => {
+              tracker.windowOpenListener.add(fire.sync);
+              return () => {
+                tracker.windowOpenListener.delete(fire.sync);
+              };
+            },
+          }).api(),
 
-          for (let window of Services.wm.getEnumerator(null)) {
-            if (
-              window.location.href != url ||
-              extensionApi.hasCssFile(window, path)
-            ) {
-              continue;
+          async inject(url, cssFile) {
+            let path = context.extension.rootURI.resolve(cssFile);
+            let injected = false;
+
+            for (let window of Services.wm.getEnumerator(null)) {
+              if (
+                window.location.href != url ||
+                tracker.hasCssFile(window, path)
+              ) {
+                continue;
+              }
+
+              let element = window.document.createElement("link");
+              element.setAttribute("css_injected", tracker.uniqueRandomID);
+              element.setAttribute("rel", "stylesheet");
+              element.setAttribute("href", path);
+              window.document.documentElement.appendChild(element);
+
+              tracker.trackCssFile(window, path);
+              injected = true;
+            }
+            return injected;
+          },
+
+          registerChromeUrl(data) {
+            if (tracker.chromeData || tracker.resourceData) {
+              throw new ExtensionError(`Cannot call registerChromeUrl more than once.`);
             }
 
-            let element = window.document.createElement("link");
-            element.setAttribute("css_injected", extensionApi.uniqueRandomID);
-            element.setAttribute("rel", "stylesheet");
-            element.setAttribute("href", path);
-            window.document.documentElement.appendChild(element);
+            const aomStartup = Cc[
+              "@mozilla.org/addons/addon-manager-startup;1"
+            ].getService(Ci.amIAddonManagerStartup);
+            const resProto = Cc[
+              "@mozilla.org/network/protocol;1?name=resource"
+            ].getService(Ci.nsISubstitutingProtocolHandler);
 
-            extensionApi.trackCssFile(window, path);
-            injected = true;
-          }
-          return injected;
-        },
+            let chromeData = [];
+            let resourceData = [];
+            for (let entry of data) {
+              if (entry[0] == "resource") resourceData.push(entry);
+              else chromeData.push(entry)
+            }
 
-        registerChromeUrl(data) {
-          if (extensionApi.chromeData || extensionApi.resourceData) {
-            throw new ExtensionError(`Cannot call registerChromeUrl more than once.`);
-          }
+            if (chromeData.length > 0) {
+              const manifestURI = Services.io.newURI(
+                "manifest.json",
+                null,
+                context.extension.rootURI
+              );
+              tracker.chromeHandle = aomStartup.registerChrome(manifestURI, chromeData);
+            }
 
-          const aomStartup = Cc[
-            "@mozilla.org/addons/addon-manager-startup;1"
-          ].getService(Ci.amIAddonManagerStartup);
-          const resProto = Cc[
-            "@mozilla.org/network/protocol;1?name=resource"
-          ].getService(Ci.nsISubstitutingProtocolHandler);
+            for (let res of resourceData) {
+              // [ "resource", "shortname" , "path" ]
+              let uri = Services.io.newURI(
+                res[2],
+                null,
+                context.extension.rootURI
+              );
+              resProto.setSubstitutionWithFlags(
+                res[1],
+                uri,
+                resProto.ALLOW_CONTENT_ACCESS
+              );
+            }
 
-          let chromeData = [];
-          let resourceData = [];
-          for (let entry of data) {
-            if (entry[0] == "resource") resourceData.push(entry);
-            else chromeData.push(entry)
-          }
-
-          if (chromeData.length > 0) {
-            const manifestURI = Services.io.newURI(
-              "manifest.json",
-              null,
-              extensionApi.extension.rootURI
-            );
-            extensionApi.chromeHandle = aomStartup.registerChrome(manifestURI, chromeData);
-          }
-
-          for (let res of resourceData) {
-            // [ "resource", "shortname" , "path" ]
-            let uri = Services.io.newURI(
-              res[2],
-              null,
-              extensionApi.extension.rootURI
-            );
-            resProto.setSubstitutionWithFlags(
-              res[1],
-              uri,
-              resProto.ALLOW_CONTENT_ACCESS
-            );
+            tracker.chromeData = chromeData;
+            tracker.resourceData = resourceData;
           }
 
-          extensionApi.chromeData = chromeData;
-          extensionApi.resourceData = resourceData;
         }
-
-      }
-    };
-  }
-
-  onShutdown(isAppShutdown) {
-    if (isAppShutdown) {
-      return; // the application gets unloaded anyway
+      };
     }
 
-    ExtensionSupport.unregisterWindowListener(
-      "windowListener_" + this.uniqueRandomID,
-    );
+    onShutdown(isAppShutdown) {
+      if (isAppShutdown) {
+        return; // the application gets unloaded anyway
+      }
 
-    // Remove all injected CSS.
-    for (let window of Services.wm.getEnumerator(null)) {
-      let elements = Array.from(
-        window.document.querySelectorAll(
-          '[css_injected="' + this.uniqueRandomID + '"]'
-        )
+      ExtensionSupport.unregisterWindowListener(
+        "windowListener_" + tracker.uniqueRandomID,
       );
-      for (let element of elements) {
-        element.remove();
+
+      // Remove all injected CSS.
+      for (let window of Services.wm.getEnumerator(null)) {
+        let elements = Array.from(
+          window.document.querySelectorAll(
+            '[css_injected="' + tracker.uniqueRandomID + '"]'
+          )
+        );
+        for (let element of elements) {
+          element.remove();
+        }
+      }
+
+      // Flush all caches
+      Services.obs.notifyObservers(null, "startupcache-invalidate");
+      this.registeredWindows = {};
+
+      if (this.resourceData) {
+        const resProto = Cc[
+          "@mozilla.org/network/protocol;1?name=resource"
+        ].getService(Ci.nsISubstitutingProtocolHandler);
+        for (let res of this.resourceData) {
+          // [ "resource", "shortname" , "path" ]
+          resProto.setSubstitution(res[1], null);
+        }
+      }
+
+      if (this.chromeHandle) {
+        this.chromeHandle.destruct();
+        this.chromeHandle = null;
       }
     }
+  };
 
-    // Flush all caches
-    Services.obs.notifyObservers(null, "startupcache-invalidate");
-    this.registeredWindows = {};
+  exports.LegacyCSS = LegacyCSS;
 
-    if (this.resourceData) {
-      const resProto = Cc[
-        "@mozilla.org/network/protocol;1?name=resource"
-      ].getService(Ci.nsISubstitutingProtocolHandler);
-      for (let res of this.resourceData) {
-        // [ "resource", "shortname" , "path" ]
-        resProto.setSubstitution(res[1], null);
-      }
-    }
-
-    if (this.chromeHandle) {
-      this.chromeHandle.destruct();
-      this.chromeHandle = null;
-    }
-  }
-};
+})(this)
