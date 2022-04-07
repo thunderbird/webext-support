@@ -4,7 +4,7 @@
  *
  * Version 1.2
  * - fix multiple context not overwriting class members
- * 
+ *
  * Version: 1.1
  * - initial release
  *
@@ -33,19 +33,43 @@
   var { ExtensionError } = ExtensionUtils;
 
   var tracker;
-  
+
   class Tracker {
     constructor(extension) {
       this.windowTracker = new Map();
-      this.windowOpenListener = new Set();
-      this.chromeData = null;
-      this.resourceData = null;
-      this.uniqueRandomID = extension.uuid + "_" + extension.instanceId;
+      this.windowOpenListener = new ExtensionCommon.EventEmitter();
+      this.chromeHandle = null;
+      this.resourceData = [];
+      this.extension = extension;
+    }
+
+    get hasRegisteredChromeUrl() {
+      return this.chromeHandle || this.resourceData.length > 0
+    }
+
+    get instanceId() {
+      return `${this.extension.uuid}_${this.extension.instanceId}`;
+    }
+
+    get windowListenerId() {
+      return `windowListener_${this.instanceId}`;
+    }
+
+    addOnOpenedListener(callback) {
+      this.windowOpenListener.on("window-opened", callback);
+    }
+
+    removeOnOpenedListener(callback) {
+      this.windowOpenListener.off("window-opened", callback);
+    }
+
+    notifyOnOpenedListener(url) {
+      this.windowOpenListener.emit("window-opened", url);
     }
 
     trackCssFile(window, cssFile) {
       let cssFiles = this.windowTracker.get(window) || [];
-      cssFiles.push(cssFile)
+      cssFiles.push(cssFile);
       this.windowTracker.set(window, cssFiles);
     }
 
@@ -70,12 +94,10 @@
 
       tracker = new Tracker(this.extension);
       ExtensionSupport.registerWindowListener(
-        "windowListener_" + tracker.uniqueRandomID,
+        tracker.windowListenerId,
         {
           onLoadWindow(window) {
-            for (let listener of tracker.windowOpenListener.values()) {
-              listener(window.location.href);
-            }
+            tracker.notifyOnOpenedListener(window.location.href);
           },
           onUnloadWindow(window) {
             tracker.untrackAllCssFiles(window);
@@ -92,39 +114,43 @@
             context,
             name: "LegacyCSS.onWindowOpened",
             register: (fire) => {
-              tracker.windowOpenListener.add(fire.sync);
+              function listener(event, url) {
+                fire.sync(url);
+              } 
+              tracker.addOnOpenedListener(listener);
               return () => {
-                tracker.windowOpenListener.delete(fire.sync);
+                tracker.removeOnOpenedListener(listener);
               };
             },
           }).api(),
 
           async inject(url, cssFile) {
             let path = context.extension.rootURI.resolve(cssFile);
-            let injected = false;
 
-            for (let window of Services.wm.getEnumerator(null)) {
-              if (
-                window.location.href != url ||
-                tracker.hasCssFile(window, path)
-              ) {
-                continue;
-              }
+            // Ignore windows with wrong urls and where the specified css file
+            // has been injected already. Walk through the remaining windows and
+            // inject the sylesheet. The array is reduced to a single boolean,
+            // indicating if at least one stylesheet was injected or not. 
+            return Array.from(Services.wm.getEnumerator(null))
+              .filter(
+                (window) =>
+                  window.location.href === url &&
+                  !tracker.hasCssFile(window, path)
+              )
+              .reduce((injected, window) => {
+                let element = window.document.createElement("link");
+                element.dataset.cssInjected = tracker.instanceId;
+                element.setAttribute("rel", "stylesheet");
+                element.setAttribute("href", path);
+                window.document.documentElement.appendChild(element);
+                tracker.trackCssFile(window, path);
 
-              let element = window.document.createElement("link");
-              element.setAttribute("css_injected", tracker.uniqueRandomID);
-              element.setAttribute("rel", "stylesheet");
-              element.setAttribute("href", path);
-              window.document.documentElement.appendChild(element);
-
-              tracker.trackCssFile(window, path);
-              injected = true;
-            }
-            return injected;
+                return injected || true;
+              }, false);
           },
 
           registerChromeUrl(data) {
-            if (tracker.chromeData || tracker.resourceData) {
+            if (tracker.hasRegisteredChromeUrl) {
               throw new ExtensionError(`Cannot call registerChromeUrl more than once.`);
             }
 
@@ -134,24 +160,19 @@
             const resProto = Cc[
               "@mozilla.org/network/protocol;1?name=resource"
             ].getService(Ci.nsISubstitutingProtocolHandler);
+            const manifestURI = Services.io.newURI(
+              "manifest.json",
+              null,
+              context.extension.rootURI
+            );
 
-            let chromeData = [];
-            let resourceData = [];
-            for (let entry of data) {
-              if (entry[0] == "resource") resourceData.push(entry);
-              else chromeData.push(entry)
-            }
-
+            let chromeData = data.filter(entry => entry[0] != "resource");
             if (chromeData.length > 0) {
-              const manifestURI = Services.io.newURI(
-                "manifest.json",
-                null,
-                context.extension.rootURI
-              );
               tracker.chromeHandle = aomStartup.registerChrome(manifestURI, chromeData);
             }
 
-            for (let res of resourceData) {
+            tracker.resourceData = data.filter(entry => entry[0] == "resource");
+            tracker.resourceData.map(res => {
               // [ "resource", "shortname" , "path" ]
               let uri = Services.io.newURI(
                 res[2],
@@ -163,12 +184,8 @@
                 uri,
                 resProto.ALLOW_CONTENT_ACCESS
               );
-            }
-
-            tracker.chromeData = chromeData;
-            tracker.resourceData = resourceData;
+            })
           }
-
         }
       };
     }
@@ -179,42 +196,37 @@
       }
 
       ExtensionSupport.unregisterWindowListener(
-        "windowListener_" + tracker.uniqueRandomID,
+        tracker.windowListenerId,
       );
 
       // Remove all injected CSS.
       for (let window of Services.wm.getEnumerator(null)) {
-        let elements = Array.from(
+        Array.from(
           window.document.querySelectorAll(
-            '[css_injected="' + tracker.uniqueRandomID + '"]'
-          )
+            `[data-css-injected="${tracker.instanceId}"]`
+          ),
+          element => element.remove()
         );
-        for (let element of elements) {
-          element.remove();
-        }
       }
 
       // Flush all caches
       Services.obs.notifyObservers(null, "startupcache-invalidate");
-      this.registeredWindows = {};
 
-      if (this.resourceData) {
-        const resProto = Cc[
-          "@mozilla.org/network/protocol;1?name=resource"
-        ].getService(Ci.nsISubstitutingProtocolHandler);
-        for (let res of this.resourceData) {
-          // [ "resource", "shortname" , "path" ]
-          resProto.setSubstitution(res[1], null);
-        }
-      }
+      const resProto = Cc[
+        "@mozilla.org/network/protocol;1?name=resource"
+      ].getService(Ci.nsISubstitutingProtocolHandler);
 
-      if (this.chromeHandle) {
-        this.chromeHandle.destruct();
-        this.chromeHandle = null;
+      tracker.resourceData.map(res => {
+        // [ "resource", "shortname" , "path" ]
+        resProto.setSubstitution(res[1], null);
+      });
+
+      if (tracker.chromeHandle) {
+        tracker.chromeHandle.destruct();
+        tracker.chromeHandle = null;
       }
     }
-  };
+  }
 
   exports.LegacyCSS = LegacyCSS;
-
-})(this)
+})(this);
