@@ -8,7 +8,9 @@
  * Version: 1.1
  * - initial release
  *
- * Author: John Bieling (john@thunderbird.net)
+ * Author:
+ * - John Bieling (john@thunderbird.net)
+ * - Arnd Issler (email@arndissler.net)
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -36,7 +38,7 @@
 
   class Tracker {
     constructor(extension) {
-      this.windowTracker = new Map();
+      this.windowTracker = new WeakMap();
       this.windowOpenListener = new ExtensionCommon.EventEmitter();
       this.chromeHandle = null;
       this.resourceData = [];
