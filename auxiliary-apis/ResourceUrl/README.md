@@ -20,3 +20,4 @@ main();
 
 ```
 
+The files in the `modules/*` folder will be accessible via `resource://exampleapi/*`.
