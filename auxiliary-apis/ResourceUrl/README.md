@@ -10,7 +10,7 @@ A background script could look like the following:
 
 ```
 async function main() {
-  // Define the resource URL for the modules folder, which is part of our experiement.
+  // Define the resource URL for the modules folder, which is part of our Experiment.
   await browser.ResourceUrl.register("exampleapi","modules/");
 
  ...
