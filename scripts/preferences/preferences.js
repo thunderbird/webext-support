@@ -5,7 +5,7 @@
  * For usage descriptions, please check:
  * https://github.com/thundernest/addon-developer-support/tree/master/scripts/preferences
  *
- * Version: 2.1
+ * Version 2.1
  *
  * Author (parts): John Bieling (john@thunderbird.net)
  *

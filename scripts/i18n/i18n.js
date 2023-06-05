@@ -5,7 +5,7 @@
  * For usage descriptions, please check:
  * https://github.com/thundernest/addon-developer-support/tree/master/scripts/i18n
  *
- * Version: 1.1
+ * Version 1.1
  *
  * Derived from:
  * http://github.com/piroor/webextensions-lib-l10n

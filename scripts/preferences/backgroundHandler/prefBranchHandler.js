@@ -5,7 +5,7 @@
  * For usage descriptions, please check:
  * https://github.com/thundernest/addon-developer-support/tree/master/scripts/preferences/backgroundHandler
  *
- * Version: 1.1
+ * Version 1.1
  * - removed dependency from WindowListener API toward NotifyTools API
  *
  * Author: John Bieling (john@thunderbird.net)
