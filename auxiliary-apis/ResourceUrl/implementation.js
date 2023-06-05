@@ -2,6 +2,9 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
+ * Version 1.1
+ * - adjusted to Thunderbird Supernova (Services is now in globalThis)
+ *
  * Version 1.0
  * - initial release
  *
@@ -25,8 +28,9 @@
   var { ExtensionUtils } = ChromeUtils.import(
     "resource://gre/modules/ExtensionUtils.jsm"
   );
-  var { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
   var { ExtensionError } = ExtensionUtils;
+  var Services = globalThis.Services || 
+    ChromeUtils.import("resource://gre/modules/Services.jsm").Services;
 
   let resourceUrls = new Set();
 

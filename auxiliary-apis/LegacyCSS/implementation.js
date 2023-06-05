@@ -5,11 +5,12 @@
  * Version 1.3
  * - allow injecting into nested browsers (needed for Thunderbird Supernova,
  *   which loads about:3pane and about:message into nested browsers)
+ * - adjusted to Thunderbird Supernova (Services is now in globalThis)
  *
  * Version 1.2
  * - fix multiple context not overwriting class members
  *
- * Version: 1.1
+ * Version 1.1
  * - initial release
  *
  * Author:
@@ -35,9 +36,10 @@
   var { ExtensionUtils } = ChromeUtils.import(
     "resource://gre/modules/ExtensionUtils.jsm"
   );
-  
-  var Services = globalThis.Services || ChromeUtils.import("resource://gre/modules/Services.jsm").Services;
   var { ExtensionError } = ExtensionUtils;
+  
+  var Services = globalThis.Services || 
+    ChromeUtils.import("resource://gre/modules/Services.jsm").Services;
 
   async function waitForLoad(window) {
     for (let i = 0; i < 20; i++) {
