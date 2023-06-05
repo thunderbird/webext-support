@@ -2,6 +2,10 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
+ * Version 1.3
+ * - allow injecting into nested browsers (needed for Thunderbird Supernova,
+ *   which loads about:3pane and about:message into nested browsers)
+ *
  * Version 1.2
  * - fix multiple context not overwriting class members
  *
@@ -31,14 +35,29 @@
   var { ExtensionUtils } = ChromeUtils.import(
     "resource://gre/modules/ExtensionUtils.jsm"
   );
-  var { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+  
+  var Services = globalThis.Services || ChromeUtils.import("resource://gre/modules/Services.jsm").Services;
   var { ExtensionError } = ExtensionUtils;
+
+  async function waitForLoad(window) {
+    for (let i = 0; i < 20; i++) {
+      await new Promise(r => window.setTimeout(r, 50));
+      if (
+        window.location.href != "about:blank" &&
+        window.document.readyState == "complete"
+      ) {
+        return;
+      }
+      console.log(".")
+    }
+    throw new Error("Window ignored");
+  }
 
   var tracker;
 
   class Tracker {
     constructor(extension) {
-      this.windowTracker = new WeakMap();
+      this.cssInjectionTracker = new WeakMap();
       this.windowOpenListener = new ExtensionCommon.EventEmitter();
       this.chromeHandle = null;
       this.resourceData = [];
@@ -65,23 +84,86 @@
       this.windowOpenListener.off("window-opened", callback);
     }
 
-    notifyOnOpenedListener(url) {
-      this.windowOpenListener.emit("window-opened", url);
+    tabMonitor = {
+      onTabTitleChanged(aTab) { },
+      onTabClosing(aTab) { },
+      onTabPersist(aTab) { },
+      onTabRestored(aTab) { },
+      onTabSwitched(aNewTab, aOldTab) {
+      },
+      async onTabOpened(aTab) {
+        if (aTab.browser) {
+          if (!aTab.pageLoaded) {
+            // await a location change if browser is not loaded yet
+            await new Promise((resolve) => {
+              let reporterListener = {
+                QueryInterface: ChromeUtils.generateQI([
+                  "nsIWebProgressListener",
+                  "nsISupportsWeakReference",
+                ]),
+                onStateChange() { },
+                onProgressChange() { },
+                onLocationChange(
+                  /* in nsIWebProgress*/ aWebProgress,
+                  /* in nsIRequest*/ aRequest,
+                  /* in nsIURI*/ aLocation
+                ) {
+                  aTab.browser.removeProgressListener(reporterListener);
+                  resolve();
+                },
+                onStatusChange() { },
+                onSecurityChange() { },
+                onContentBlockingEvent() { },
+              };
+              aTab.browser.addProgressListener(reporterListener);
+            });
+          }
+          this.notifyOnOpenedListener(aTab.browser.contentWindow);
+        }
+
+        if (aTab.chromeBrowser) {
+          this.notifyOnOpenedListener(aTab.chromeBrowser.contentWindow);
+        }
+      },
+    }
+
+    async notifyOnOpenedListener(window) {
+      // Wait till window is fully loaded.
+      try {
+        await waitForLoad(window);
+      } catch (ex) {
+        return;
+      };
+
+      // Special action if this is the main messenger window.
+      if (window.location.href == "chrome://messenger/content/messenger.xhtml") {
+        // Add a tab monitor. The tabMonitor checks newly opened tabs and injects us.
+        window.gTabmail.registerTabMonitor(this.tabMonitor);
+      }
+
+      // Notify WebExtension.
+      this.windowOpenListener.emit("window-opened", window.location.href);
+
+      // Scan for nested browsers.
+      let browsers = [];
+      browsers = browsers.concat(...window.document.getElementsByTagName("browser"));
+      browsers = browsers.concat(...window.document.getElementsByTagName("xul:browser"));
+      browsers.map(browser => this.notifyOnOpenedListener(browser.contentWindow));
     }
 
     trackCssFile(window, cssFile) {
-      let cssFiles = this.windowTracker.get(window) || [];
+      let cssFiles = this.cssInjectionTracker.get(window) || [];
       cssFiles.push(cssFile);
-      this.windowTracker.set(window, cssFiles);
+      this.cssInjectionTracker.set(window, cssFiles);
     }
 
     hasCssFile(window, cssFile) {
-      let cssFiles = this.windowTracker.get(window) || [];
+      let cssFiles = this.cssInjectionTracker.get(window) || [];
       return cssFiles.includes(cssFile);
     }
 
     untrackAllCssFiles(window) {
-      this.windowTracker.delete(window);
+      this.cssInjectionTracker.delete(window);
     }
   }
 
@@ -93,13 +175,13 @@
       // The only parameter is extension, but it could change in the future.
       // super() will add the extension as a member of this.
       super(...args);
-
       tracker = new Tracker(this.extension);
+      
       ExtensionSupport.registerWindowListener(
         tracker.windowListenerId,
         {
           onLoadWindow(window) {
-            tracker.notifyOnOpenedListener(window.location.href);
+            tracker.notifyOnOpenedListener(window);
           },
           onUnloadWindow(window) {
             tracker.untrackAllCssFiles(window);
@@ -128,27 +210,31 @@
 
           async inject(url, cssFile) {
             let path = context.extension.rootURI.resolve(cssFile);
-
-            // Ignore windows with wrong urls and where the specified css file
-            // has been injected already. Walk through the remaining windows and
-            // inject the sylesheet. The array is reduced to a single boolean,
-            // indicating if at least one stylesheet was injected or not. 
-            return Array.from(Services.wm.getEnumerator(null))
-              .filter(
-                (window) =>
-                  window.location.href === url &&
-                  !tracker.hasCssFile(window, path)
-              )
-              .reduce((injected, window) => {
+            const injectIntoWindow = async window => {
+              // Wait till window is fully loaded.
+              try {
+                await waitForLoad(window);
+              } catch (ex) {
+                return;
+              };
+              
+              // Inject CSS if window is a match.
+              if (window.location.href === url && !tracker.hasCssFile(window, path)) {
                 let element = window.document.createElement("link");
                 element.dataset.cssInjected = tracker.instanceId;
                 element.setAttribute("rel", "stylesheet");
                 element.setAttribute("href", path);
                 window.document.documentElement.appendChild(element);
                 tracker.trackCssFile(window, path);
+              }
 
-                return injected || true;
-              }, false);
+              // Scan for nested browsers.
+              let browsers = [];
+              browsers = browsers.concat(...window.document.getElementsByTagName("browser"));
+              browsers = browsers.concat(...window.document.getElementsByTagName("xul:browser"));
+              return Promise.all(browsers.map(browser => injectIntoWindow(browser.contentWindow)));
+            }
+            Array.from(Services.wm.getEnumerator(null), injectIntoWindow);
           },
 
           registerChromeUrl(data) {
@@ -201,14 +287,24 @@
         tracker.windowListenerId,
       );
 
-      // Remove all injected CSS.
-      for (let window of Services.wm.getEnumerator(null)) {
+      const removeFromWindow = window => {
         Array.from(
           window.document.querySelectorAll(
             `[data-css-injected="${tracker.instanceId}"]`
           ),
           element => element.remove()
         );
+      }
+      
+      // Remove all injected CSS.
+      for (let window of Services.wm.getEnumerator(null)) {
+        removeFromWindow(window);
+        
+        // Scan for nested browsers.
+        let browsers = [];
+        browsers = browsers.concat(...window.document.getElementsByTagName("browser"));
+        browsers = browsers.concat(...window.document.getElementsByTagName("xul:browser"));
+        browsers.map(browser => removeFromWindow(browser.contentWindow));
       }
 
       // Flush all caches
