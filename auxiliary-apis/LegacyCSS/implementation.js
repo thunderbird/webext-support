@@ -2,6 +2,9 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
+ * Version 1.4
+ * - fix bug in waitForLoad()
+ * 
  * Version 1.3
  * - allow injecting into nested browsers (needed for Thunderbird Supernova,
  *   which loads about:3pane and about:message into nested browsers)
@@ -45,12 +48,12 @@
     for (let i = 0; i < 20; i++) {
       await new Promise(r => window.setTimeout(r, 50));
       if (
+        window &&
         window.location.href != "about:blank" &&
         window.document.readyState == "complete"
       ) {
         return;
       }
-      console.log(".")
     }
     throw new Error("Window ignored");
   }

@@ -2,7 +2,7 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
- * Version 1.61
+ * Version 1.62
  *
  * Author: John Bieling (john@thunderbird.net)
  *
@@ -1677,8 +1677,8 @@ var WindowListener_115 = class extends ExtensionCommon.ExtensionAPI {
 
   async _loadIntoWindow(window, isAddonActivation) {
     const fullyLoaded = async window => {
-      for (let i = 0; i < 10; i++) {
-        await this.sleep(100);
+      for (let i = 0; i < 20; i++) {
+        await this.sleep(50);
         if (
           window &&
           window.location.href != "about:blank" &&
@@ -1687,9 +1687,15 @@ var WindowListener_115 = class extends ExtensionCommon.ExtensionAPI {
           return;
         }
       }
+      throw new Error("Window ignored");
     }
 
-    await fullyLoaded(window);
+    try {
+      await fullyLoaded(window);
+    } catch(ex) {
+      return;
+    }
+
     if (!window || window.hasOwnProperty(this.uniqueRandomID)) {
       return;
     }
