@@ -8,7 +8,6 @@ This API is used in the following example: https://github.com/thundernest/sample
 
 ## Usage
 
-
 Add the [ResourceUrl API](https://github.com/thundernest/addon-developer-support/tree/master/auxiliary-apis/ResourceUrl) to your add-on. Your `manifest.json` needs an entry like this:
 
 ```

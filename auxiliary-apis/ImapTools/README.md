@@ -2,10 +2,9 @@
 
 Use this API to extract the IMAP UID from a message.
 
-
 ## Usage
 
-To use the ImapTools API, add the two API files (`schema.json` and `implementation.js`) to your add-on and specify their location by adding and adjusting the following to your `manifest.json` file:
+Add the [ImapTools API](https://github.com/thundernest/addon-developer-support/tree/master/auxiliary-apis/ImapTools) to your add-on. Your `manifest.json` needs an entry like this:
 
 ```
   "experiment_apis": {

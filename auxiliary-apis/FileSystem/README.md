@@ -6,6 +6,21 @@ Use this API to read from and write to files in the user profile folder. Until M
 
 ## Usage
 
+Add the [FileSystem API](https://github.com/thundernest/addon-developer-support/tree/master/auxiliary-apis/FileSystem) to your add-on. Your `manifest.json` needs an entry like this:
+
+```
+  "experiment_apis": {
+    "FileSystem": {
+      "schema": "api/FileSystem/schema.json",
+      "parent": {
+        "scopes": ["addon_parent"],
+        "paths": [["FileSystem"]],
+        "script": "api/FileSystem/implementation.js"
+      }
+    }
+  },
+```
+
 The API is using the following folder for file access:
 
 ```
