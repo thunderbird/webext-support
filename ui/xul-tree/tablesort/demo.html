@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Tablesort Demo Page</title>
+  <link href="tablesort-src/style.css" rel="stylesheet">
+  <link href="tablesort-src/sticky.css" rel="stylesheet" type="text/css">
+</head>
+
+<body>
+  <div class="page" style="margin-top:150px;">
+    <div class="inner">
+      <h1>Tablesort Demo</h1>
+      <table id="sort" class="sort">
+        <thead>
+          <tr>
+            <th class="sort-header">#</th>
+            <th class="sort-header sort-up">Name</th>
+            <th class="sort-header">Birthday</th>
+            <th class="sort-header">Grocery item</th>
+            <th class="sort-header">Price</th>
+            <th class="sort-header">Version</th>
+            <th class="sort-header">Filesize</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>3</td>
+            <td>Bert</td>
+            <td>10/11/1969</td>
+            <td>Broccoli</td>
+            <td>$0.79</td>
+            <td>18.0.1284.49</td>
+            <td>134 B</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td>Cookie Monster</td>
+            <td>1/09/1966</td>
+            <td>Oreo cookies</td>
+            <td>$2.78</td>
+            <td>3.0.0</td>
+            <td>4.13 TiB</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>Ernie</td>
+            <td>10/11/69</td>
+            <td>Fish</td>
+            <td>$12.09</td>
+            <td>11.0.1</td>
+            <td>134.56 GB</td>
+          </tr>
+          <tr>
+            <td>1</td>
+            <td>Gonzo the Great</td>
+            <td>12-2-70</td>
+            <td>Radishes</td>
+            <td>$0.63</td>
+            <td>31.0.1650.57</td>
+            <td>124k</td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td>Kermit</td>
+            <td>12-05-1955</td>
+            <td>Granola</td>
+            <td>$4.73</td>
+            <td>3.0.9</td>
+            <td>12 YB</td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td>Sam the Eagle</td>
+            <td>04/07/75</td>
+            <td>Corn dog</td>
+            <td>$5.50</td>
+            <td>3.1.2</td>
+            <td>19.4 K</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="tablesort-src/tablesort.js"></script>
+  <script src="tablesort-src/tablesort.date.js"></script>
+  <script src="tablesort-src/tablesort.dotsep.js"></script>
+  <script src="tablesort-src/tablesort.filesize.js"></script>
+  <script src="tablesort-src/tablesort.numeric.js"></script>
+  <script src="demo.js"></script>
+</body>
+
+</html>

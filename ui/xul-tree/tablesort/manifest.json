@@ -1,0 +1,15 @@
+{
+  "manifest_version": 2,
+  "version": "2",
+  "name": "Tablesort Example",
+  "applications": {
+    "gecko": {
+      "id": "tablesort@examples.thunderbird.net"
+    }
+  },
+  "background": {
+    "scripts": [
+      "background.js"
+    ]
+  }
+}
