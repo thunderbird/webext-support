@@ -1,3 +1,9 @@
+# Deprecation Notice
+The wrapper APIs provided here are deprecated and will not receive further compatibility updates beyond Thunderbird 115. It is recommended to switch to dedicated single-purpose Experiments.
+
+Examples:
+ - [Attachment API](https://github.com/TB-throwback/LookOut-fix-version/blob/09d7565640317ac0ed10c52570a5774266ccc94c/src/api/Attachment/implementation.js) from Lookout-Fixed Add-on
+
 ## Update add-ons for Thunderbird 78 using wrapper APIs
 
 Thunderbird 78 usually requires significant changes to add-ons, such as the locale and preference system as well converting XUL documents to HTML. Furthermore, the new WebExtension technology does not yet provide all the functions which were available to add-ons by using legacy Thunderbird APIs.
