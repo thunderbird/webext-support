@@ -2,7 +2,7 @@
 
 ### i18n.updateDocument([options]);
 
-Calling this function, for example in a `DOMContentLoaded` event listener, will search the loaded document and replace all i18n locale strings (`__MSG_<message-name>__)` with their corresponding i18n message.
+To replace i18n locale string in HTML WebExtension pages, like option pages or browser action pages, include the `i18n.js` script via an HTML `<script>` tag and execute `i18n.updateDocument()` in a `DOMContentLoaded` event listener. It will search the loaded document and replace all i18n locale strings (`__MSG_<message-name>__)` with their corresponding i18n message:
 
 ```
 document.addEventListener('DOMContentLoaded', () => {
