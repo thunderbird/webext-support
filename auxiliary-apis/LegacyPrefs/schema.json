@@ -128,6 +128,34 @@
             "description": "Name of the preference."
           }
         ]
+      },
+      {
+        "name": "createPref",
+        "type": "function",
+        "async": true,
+        "description": "Create a new pref (even if no default exists) of the legacy pref system.",
+        "parameters": [
+          {
+            "name": "aName",
+            "type": "string",
+            "description": "Name of the preference."
+          },
+          {
+            "name": "aValue",
+            "choices": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "boolean"
+              }
+            ],
+            "description": "Value to be set." 
+          }
+        ]
       }
     ]
   }

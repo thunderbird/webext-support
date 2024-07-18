@@ -125,6 +125,53 @@ var LegacyPrefs = class extends ExtensionCommon.ExtensionAPI {
 
     let legacyPrefsManager = new LegacyPrefsManager();
 
+    async function _setPref(aName, aValue, forced = false) {
+      let prefType = Services.prefs.getPrefType(aName);
+      if (forced && prefType == Services.prefs.PREF_INVALID) {
+        switch (typeof aValue) {
+          case "boolean" :
+            prefType = Services.prefs.PREF_BOOL;
+            break;
+          case "integer" :
+            prefType = Services.prefs.PREF_INT;
+            break;
+          case "string" :
+            prefType = Services.prefs.PREF_STRING;
+            break;
+        }
+      }
+
+      if (prefType == Services.prefs.PREF_INVALID) {
+        console.error(
+          `Unknown legacy preference <${aName}>, forgot to declare a default?.`
+        );
+        return false;
+      }
+
+      switch (prefType) {
+        case Services.prefs.PREF_STRING:
+          Services.prefs.setStringPref(aName, aValue);
+          return true;
+          break;
+
+        case Services.prefs.PREF_INT:
+          Services.prefs.setIntPref(aName, aValue);
+          return true;
+          break;
+
+        case Services.prefs.PREF_BOOL:
+          Services.prefs.setBoolPref(aName, aValue);
+          return true;
+          break;
+
+        default:
+          console.error(
+            `Legacy preference <${aName}> has an unknown type of <${prefType}>.`
+          );
+      }
+      return false;
+    }
+
     return {
       LegacyPrefs: {
         onChanged: new ExtensionCommon.EventManager({
@@ -162,38 +209,13 @@ var LegacyPrefs = class extends ExtensionCommon.ExtensionAPI {
           Services.prefs.clearUserPref(aName);
         },
 
+        createPref: async function(aName, aValue) {
+          return _setPref(aName, aValue, true);
+        },
+
         // sets a pref
         setPref: async function (aName, aValue) {
-          let prefType = Services.prefs.getPrefType(aName);
-          if (prefType == Services.prefs.PREF_INVALID) {
-            console.error(
-              `Unknown legacy preference <${aName}>, forgot to declare a default?.`
-            );
-            return false;
-          }
-
-          switch (prefType) {
-            case Services.prefs.PREF_STRING:
-              Services.prefs.setStringPref(aName, aValue);
-              return true;
-              break;
-
-            case Services.prefs.PREF_INT:
-              Services.prefs.setIntPref(aName, aValue);
-              return true;
-              break;
-
-            case Services.prefs.PREF_BOOL:
-              Services.prefs.setBoolPref(aName, aValue);
-              return true;
-              break;
-
-            default:
-              console.error(
-                `Legacy preference <${aName}> has an unknown type of <${prefType}>.`
-              );
-          }
-          return false;
+          return _setPref(aName, aValue);
         },
 
         setDefaultPref: async function (aName, aValue) {
