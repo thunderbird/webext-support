@@ -2,11 +2,15 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
+ * Version 1.3
+ * - adjusted to TB128 (no longer loading Services and ExtensionCommon)
+ * - use ChromeUtils.importESModule()
+ * 
  * Version 1.2
  * - adjusted to properly work with TB115 and TB102
  *
  * Version 1.1
- * - adjusted to Thunderbird Supernova (Services is now in globalThis)
+ * - adjusted to Thunderbird 115 (Services is now in globalThis)
  *
  * Version 1.0
  * - initial release
@@ -18,12 +22,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+/* global Services, ExtensionCommon */
+
+"use strict";
+
 // Import some things we need.
-var { ExtensionCommon } = ChromeUtils.import(
-  "resource://gre/modules/ExtensionCommon.jsm"
-);
-var { ExtensionUtils } = ChromeUtils.import(
-  "resource://gre/modules/ExtensionUtils.jsm"
+var { ExtensionUtils } = ChromeUtils.importESModule(
+  "resource://gre/modules/ExtensionUtils.sys.mjs"
 );
 var { ExtensionError } = ExtensionUtils;
 

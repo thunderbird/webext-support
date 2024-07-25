@@ -2,13 +2,17 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thundernest/addon-developer-support
  *
+ * version 1.5
+ * - adjusted to TB128 (no longer loading Services and ExtensionCommon)
+ * - use ChromeUtils.importESModule()
+ * 
  * Version 1.4
  * - fix bug in waitForLoad()
  * 
  * Version 1.3
- * - allow injecting into nested browsers (needed for Thunderbird Supernova,
+ * - allow injecting into nested browsers (needed for Thunderbird 115,
  *   which loads about:3pane and about:message into nested browsers)
- * - adjusted to Thunderbird Supernova (Services is now in globalThis)
+ * - adjusted to Thunderbird 115 (Services is now in globalThis)
  *
  * Version 1.2
  * - fix multiple context not overwriting class members
@@ -25,25 +29,21 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+/* global Services, ExtensionCommon */
+
 "use strict";
 
 (function (exports) {
 
   // Import some things we need.
-  var { ExtensionCommon } = ChromeUtils.import(
-    "resource://gre/modules/ExtensionCommon.jsm"
+  var { ExtensionSupport } = ChromeUtils.importESModule(
+    "resource:///modules/ExtensionSupport.sys.mjs"
   );
-  var { ExtensionSupport } = ChromeUtils.import(
-    "resource:///modules/ExtensionSupport.jsm"
-  );
-  var { ExtensionUtils } = ChromeUtils.import(
-    "resource://gre/modules/ExtensionUtils.jsm"
+  var { ExtensionUtils } = ChromeUtils.importESModule(
+    "resource://gre/modules/ExtensionUtils.sys.mjs"
   );
   var { ExtensionError } = ExtensionUtils;
   
-  var Services = globalThis.Services || 
-    ChromeUtils.import("resource://gre/modules/Services.jsm").Services;
-
   async function waitForLoad(window) {
     for (let i = 0; i < 20; i++) {
       await new Promise(r => window.setTimeout(r, 50));
