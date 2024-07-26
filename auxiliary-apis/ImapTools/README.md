@@ -4,7 +4,7 @@ Use this API to extract the IMAP UID from a message.
 
 ## Usage
 
-Add the [ImapTools API](https://github.com/thundernest/addon-developer-support/tree/master/auxiliary-apis/ImapTools) to your add-on. Your `manifest.json` needs an entry like this:
+Add the [ImapTools API](https://github.com/thunderbird/addon-developer-support/tree/master/auxiliary-apis/ImapTools) to your add-on. Your `manifest.json` needs an entry like this:
 
 ```
   "experiment_apis": {

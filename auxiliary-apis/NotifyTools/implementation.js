@@ -1,6 +1,6 @@
 /*
  * This file is provided by the addon-developer-support repository at
- * https://github.com/thundernest/addon-developer-support
+ * https://github.com/thunderbird/addon-developer-support
  *
  * Version 1.6
  * - adjusted to TB128 (no longer loading Services and ExtensionCommon)
@@ -17,7 +17,7 @@
  * Version 1.1
  *  - added startup event, to make sure API is ready as soon as the add-on is starting
  *    NOTE: This requires to add the startup event to the manifest, see:
- *    https://github.com/thundernest/addon-developer-support/tree/master/auxiliary-apis/NotifyTools#usage
+ *    https://github.com/thunderbird/addon-developer-support/tree/master/auxiliary-apis/NotifyTools#usage
  *
  * Author: John Bieling (john@thunderbird.net)
  *
