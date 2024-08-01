@@ -7,10 +7,10 @@
 * universal design to be used in WebExtension HTML pages as well as in privileged scripts loaded by Experiments
 
 The script will use either [`runtime.sendMessage()`](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/sendMessage)
-(if loaded in a WebExtension page) or [notifyTools.js](https://github.com/thundernest/addon-developer-support/tree/master/scripts/notifyTools)
+(if loaded in a WebExtension page) or [notifyTools.js](https://github.com/thunderbird/addon-developer-support/tree/master/scripts/notifyTools)
 (if loaded in a privileged script) to delegate the preference handling to the WebExtension background page.
  
-The WebExtension background page needs to load a preference handler, which answers the requests from preference.js. The currently available background handlers are [prefBranchHandler.js](https://github.com/thundernest/addon-developer-support/tree/master/scripts/preferences/backgroundHandler) and [localStorageHandler.js](https://github.com/thundernest/addon-developer-support/tree/master/scripts/preferences/backgroundHandler).
+The WebExtension background page needs to load a preference handler, which answers the requests from preference.js. The currently available background handlers are [prefBranchHandler.js](https://github.com/thunderbird/addon-developer-support/tree/master/scripts/preferences/backgroundHandler) and [localStorageHandler.js](https://github.com/thunderbird/addon-developer-support/tree/master/scripts/preferences/backgroundHandler).
 
 ## Usage
 

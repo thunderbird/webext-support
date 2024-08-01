@@ -8,15 +8,15 @@ They allow to work on add-on uprades in smaller steps, as single calls (like `wi
 in the middle of legacy code can be replaced by WebExtension calls, by stepping out of the Experiment
 and back in when the task has been finished.
 
-More details can be found in [this update tutorial](https://github.com/thundernest/addon-developer-support/wiki/Tutorial:-Convert-add-on-parts-individually-by-using-a-messaging-system).
+More details can be found in [this update tutorial](https://github.com/thunderbird/addon-developer-support/wiki/Tutorial:-Convert-add-on-parts-individually-by-using-a-messaging-system).
 
 # Example
 
-This repository includes the [NotifyToolsExample Add-On](https://github.com/thundernest/addon-developer-support/raw/master/auxiliary-apis/NotifyTools/notifyToolsExample.zip), showcasing how the NotifyTools can be used.
+This repository includes the [NotifyToolsExample Add-On](https://github.com/thunderbird/addon-developer-support/raw/master/auxiliary-apis/NotifyTools/notifyToolsExample.zip), showcasing how the NotifyTools can be used.
 
 # Usage
 
-Add the [NotifyTools API](https://github.com/thundernest/addon-developer-support/tree/master/auxiliary-apis/NotifyTools) to your add-on. Your `manifest.json` needs an entry like this:
+Add the [NotifyTools API](https://github.com/thunderbird/addon-developer-support/tree/master/auxiliary-apis/NotifyTools) to your add-on. Your `manifest.json` needs an entry like this:
 
 ```
   "experiment_apis": {
@@ -32,7 +32,7 @@ Add the [NotifyTools API](https://github.com/thundernest/addon-developer-support
   },
 ```
 
-Additionally to the [NotifyTools API](https://github.com/thundernest/addon-developer-support/tree/master/auxiliary-apis/NotifyTools) the [notifyTools.js](https://github.com/thundernest/addon-developer-support/tree/master/scripts/notifyTools) script is needed as the counterpart in Experiment scripts.
+Additionally to the [NotifyTools API](https://github.com/thunderbird/addon-developer-support/tree/master/auxiliary-apis/NotifyTools) the [notifyTools.js](https://github.com/thunderbird/addon-developer-support/tree/master/scripts/notifyTools) script is needed as the counterpart in Experiment scripts.
 
 **Note:** You need to adjust the `notifyTools.js` script and add your add-on ID at the top.
 
@@ -60,7 +60,7 @@ notifyTools.notifyBackground({command: "doSomething"}).then((data) => {
 });
 ```
 
-Include the [notifyTools.js](https://github.com/thundernest/addon-developer-support/tree/master/scripts/notifyTools) script in your Experiment script to be able to use `notifyTools.notifyBackground()`. If you are injecting the script into a global Thunderbird window object, make sure to wrap it in your custom namespace, to prevent clashes with other add-ons.
+Include the [notifyTools.js](https://github.com/thunderbird/addon-developer-support/tree/master/scripts/notifyTools) script in your Experiment script to be able to use `notifyTools.notifyBackground()`. If you are injecting the script into a global Thunderbird window object, make sure to wrap it in your custom namespace, to prevent clashes with other add-ons.
 
 **Note**: If multiple `onNotifyBackground` listeners are registered in the WebExtension's background page and more than one is returning data, the value
 from the first one is returned to the Experiment. This may lead to inconsistent behavior, so make sure that for each
@@ -77,7 +77,7 @@ messenger.NotifyTools.notifyExperiment({command: "doSomething"}).then((data) => 
 });
 ```
 
-The receiving Experiment script needs to include the [notifyTools.js](https://github.com/thundernest/addon-developer-support/tree/master/scripts/notifyTools) script  and must setup a listener using the following methods:
+The receiving Experiment script needs to include the [notifyTools.js](https://github.com/thunderbird/addon-developer-support/tree/master/scripts/notifyTools) script  and must setup a listener using the following methods:
 
 ### addListener(callback);
 

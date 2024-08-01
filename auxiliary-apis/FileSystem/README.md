@@ -6,7 +6,7 @@ Use this API to read from and write to files in the user profile folder. Until M
 
 ## Usage
 
-Add the [FileSystem API](https://github.com/thundernest/addon-developer-support/tree/master/auxiliary-apis/FileSystem) to your add-on. Your `manifest.json` needs an entry like this:
+Add the [FileSystem API](https://github.com/thunderbird/addon-developer-support/tree/master/auxiliary-apis/FileSystem) to your add-on. Your `manifest.json` needs an entry like this:
 
 ```
   "experiment_apis": {

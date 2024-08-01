@@ -1,6 +1,6 @@
 ## Objective
 
-* handle preference requests send from [preferences.js](https://github.com/thundernest/addon-developer-support/tree/master/scripts/preferences) to the WebExtension background page
+* handle preference requests send from [preferences.js](https://github.com/thunderbird/addon-developer-support/tree/master/scripts/preferences) to the WebExtension background page
 
 * provide methods for the WebExtension background page to access preferences (directly, not via messaging)
 
@@ -8,7 +8,7 @@
 
 ## prefBranchHandler
 
-The prefBranchHandler needs the [LegacyPrefs API](https://github.com/thundernest/addon-developer-support/tree/master/auxiliary-apis/LegacyPrefs) and provides the following public methods:
+The prefBranchHandler needs the [LegacyPrefs API](https://github.com/thunderbird/addon-developer-support/tree/master/auxiliary-apis/LegacyPrefs) and provides the following public methods:
 
 ### async prefBranchHandler.init(defaults, branch)
 
@@ -28,11 +28,11 @@ Initialize the prefBranch and define defaults. Example:
 
 ### async prefBranchHandler.enableListeners()
 
-Enable listeners for the messages send from [preferences.js](https://github.com/thundernest/addon-developer-support/tree/master/scripts/preferences).
+Enable listeners for the messages send from [preferences.js](https://github.com/thunderbird/addon-developer-support/tree/master/scripts/preferences).
 
 ### async prefBranchHandler.disableListeners()
 
-Disable listeners for the messages send from [preferences.js](https://github.com/thundernest/addon-developer-support/tree/master/scripts/preferences).
+Disable listeners for the messages send from [preferences.js](https://github.com/thunderbird/addon-developer-support/tree/master/scripts/preferences).
 
 &nbsp;
 
@@ -57,11 +57,11 @@ Initialize the WebExtension local storage and define defaults. Example:
 
 ### async localStorageHandler.enableListeners()
 
-Enable listeners for the messages send from [preferences.js](https://github.com/thundernest/addon-developer-support/tree/master/scripts/preferences).
+Enable listeners for the messages send from [preferences.js](https://github.com/thunderbird/addon-developer-support/tree/master/scripts/preferences).
 
 ### async localStorageHandler.disableListeners()
 
-Disable listeners for the messages send from [preferences.js](https://github.com/thundernest/addon-developer-support/tree/master/scripts/preferences).
+Disable listeners for the messages send from [preferences.js](https://github.com/thunderbird/addon-developer-support/tree/master/scripts/preferences).
 
 &nbsp;
 

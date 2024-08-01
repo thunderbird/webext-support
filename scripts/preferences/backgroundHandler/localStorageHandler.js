@@ -1,9 +1,9 @@
 /*
  * This file is provided by the addon-developer-support repository at
- * https://github.com/thundernest/addon-developer-support
+ * https://github.com/thunderbird/addon-developer-support
  *
  * For usage descriptions, please check:
- * https://github.com/thundernest/addon-developer-support/tree/master/scripts/preferences/backgroundHandler
+ * https://github.com/thunderbird/addon-developer-support/tree/master/scripts/preferences/backgroundHandler
  *
  * Version 1.2
  * - fix bug in getAllUserPrefs() which did not load any prefs
