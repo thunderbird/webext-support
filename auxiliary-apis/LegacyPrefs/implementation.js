@@ -2,6 +2,9 @@
  * This file is provided by the addon-developer-support repository at
  * https://github.com/thunderbird/addon-developer-support
  *
+ * Version 1.12
+ * - added createPref(), proposed by Axel Grude
+ * 
  * Version 1.11
  * - adjusted to TB128 (no longer loading Services and ExtensionCommon)
  * - use ChromeUtils.importESModule()
@@ -161,6 +164,28 @@ var LegacyPrefs = class extends ExtensionCommon.ExtensionAPI {
 
         clearUserPref: function (aName) {
           Services.prefs.clearUserPref(aName);
+        },
+
+        // creates a new pref
+        createPref: async function (aName, aValue) {
+          if (typeof aValue == "string") {
+              Services.prefs.setStringPref(aName, aValue);
+              return "string";
+          }
+
+          if (typeof aValue == "boolean") {
+              Services.prefs.setBoolPref(aName, aValue);
+              return "boolean";
+          }
+
+          if (typeof aValue == "number" && Number.isSafeInteger(aValue)) {
+              Services.prefs.setIntPref(aName, aValue);
+              return "integer";
+          }
+          console.error(
+            `The provided value <${aValue}> for the new legacy preference <${aName}> is none of STRING, BOOLEAN or INTEGER.`
+          );
+          return false;
         },
 
         // sets a pref
