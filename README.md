@@ -16,10 +16,10 @@ The `experiments` folder contains the following Experiment APIs:
 
 |                | Description |
 | -------------- | ----------- |
-| FileSystem     | Grant read/write access to a folder in the users profile folder (file system level). |
-| ImapTools      | Extract the IMAP UID from a message. |
-| LegacyCSS      | Add CSS files to Thunderbird windows. |
-| LegacyPrefs    | Access Thunderbird's system preferences. |
+| [FileSystem](experiments/FileSystem/)   | Grant read/write access to a folder in the users profile folder (file system level). |
+| [ImapTools](experiments/ImapTools/)     | Extract the IMAP UID from a message. |
+| [LegacyCSS](experiments/LegacyCSS/)     | Add CSS files to Thunderbird windows. |
+| [LegacyPrefs](experiments/LegacyPrefs/) | Access Thunderbird's system preferences. |
 
 ## Scripts
 
@@ -27,7 +27,7 @@ The `scripts` folder contains the following helper scripts:
 
 |             | Description |
 | ----------- | ----------- |
-| i18n        | Script to replace i18n placeholders in HTML files. |
+| [i18n](scripts/i18n/)     | Script to replace i18n placeholders in HTML files. |
 
 ## Tools
 
@@ -35,7 +35,7 @@ The `tools` folder contains the following tools:
 
 |                  | Description |
 | ---------------- | ----------- |
-| locale converter | A python script to convert legacy DTD and property files to i18n JSON files. |
+| [locale converter](tools/locale-converter/) | A python script to convert legacy DTD and property files to i18n JSON files. |
 
 ## UI
 
@@ -43,5 +43,5 @@ The `ui` folder contains the following elements:
 
 |                    | Description |
 | ------------------ | ----------- |
-| data-table         | Set of 3rd party libraries to present data in tables. | 
-| mail folder picker | A custom element which allows to select one of the user's mail folders (IMAP, POP, Local, ...). |
+| [data-tables](ui/data-tables/)         | Set of 3rd party libraries to present data in tables. | 
+| [mail-folder-picker](ui/mail-folder-picker/) | A custom element which allows to select one of the user's mail folders (IMAP, POP, Local, ...). |
