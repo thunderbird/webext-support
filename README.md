@@ -1,6 +1,6 @@
 # Supporting WebExtension Developers
 
-The goal of this repository is to provide additional tools, scripts, custom elements, Experiment APIs amd other resources to simplify the development of WebExtensions for Thunderbird.
+The goal of this repository is to provide additional tools, scripts, custom elements, Experiment APIs and other resources, to simplify the development of WebExtensions for Thunderbird.
 
 ## Introduction
 
@@ -16,7 +16,7 @@ The `experiments` folder contains the following Experiment APIs:
 
 |                | Description |
 | -------------- | ----------- |
-| FileSystem     | Grant read/write access to folder in the users profile folder (file system level). |
+| FileSystem     | Grant read/write access to a folder in the users profile folder (file system level). |
 | ImapTools      | Extract the IMAP UID from a message. |
 | LegacyCSS      | Add CSS files to Thunderbird windows. |
 | LegacyPrefs    | Access Thunderbird's system preferences. |
@@ -28,7 +28,6 @@ The `scripts` folder contains the following helper scripts:
 |             | Description |
 | ----------- | ----------- |
 | i18n        | Script to replace i18n placeholders in HTML files. |
-| preferences | Mechanism to handle preferences in option pages. |
 
 ## Tools
 
