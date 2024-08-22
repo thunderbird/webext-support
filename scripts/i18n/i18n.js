@@ -20,9 +20,7 @@ var i18n = {
     let re = new RegExp(this.keyPrefix + "(.+?)__", "g");
     return string.replace(re, (matched) => {
       const key = matched.slice(this.keyPrefix.length, -2);
-      let rv = this.extension
-        ? this.extension.localeData.localizeMessage(key)
-        : messenger.i18n.getMessage(key);
+      let rv = messenger.i18n.getMessage(key);
       return rv || matched;
     });
   },
@@ -59,7 +57,6 @@ var i18n = {
     this.extension = null;
     this.keyPrefix = "__MSG_";
     if (options) {
-      if (options.extension) this.extension = options.extension;
       if (options.keyPrefix) this.keyPrefix = options.keyPrefix;
     }
     this.updateSubtree(document);
