@@ -4,6 +4,12 @@ Extensions sometimes need to ask the user to select or pick a mail folder. The m
 
 This folder contains an example extension, which displays the mail-folder-picker in its options page.
 
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/2fad7f25-ed6e-407f-9ce6-620d7105f8e4">
+</p>
+
+**Note:** This is still in a very early development state.
+
 ## Usage
 
 ### HTML
@@ -35,5 +41,3 @@ async function init() {
 
 window.addEventListener('load', init);
 ```
-
-**Note:** This is still in a very early development state.
