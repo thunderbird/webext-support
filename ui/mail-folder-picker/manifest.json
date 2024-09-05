@@ -6,7 +6,7 @@
       "strict_min_version": "128.2.0"
     }
   },
-  "name": "Mail Folder Picker example",
+  "name": "Mail Folder Picker Example",
   "description": "This extension is using the mail-folder-picker custom element in its options page.",
   "version": "1",
   "author": "John Bieling",
