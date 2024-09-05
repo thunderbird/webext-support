@@ -14,7 +14,7 @@ This folder contains an example extension, which displays the mail-folder-picker
 
 This folder of the repository can be used directly as a "temporary add-on", to either try out the current implementation or actively develop the mail-folder-picker custom element. Follow these steps to run the code as a temporary add-on:
 
-1. Clone this repository.
+1. Clone this repository ([zip-file](https://github.com/thunderbird/webext-support/archive/refs/heads/master.zip), [git-link](https://github.com/thunderbird/webext-support.git)).
 2. Open Thunderbird.
 3. Open the Add-on Manager within Thunderbird.
 4. Click on the gear icon of the Add-on Manager and select "Debug Add-ons".
