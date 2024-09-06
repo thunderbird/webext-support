@@ -12,3 +12,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
 The optional `options` object can be used to override standard behavior:
 * `keyPrefix` : Specifies the prefix for the i18n locale strings, defaults to `__MSG_`
+* `extension`: Specifies an `extension` object (available to WebExtension Experiments). If provided, `extension.localeData.localizeMessage()` will be used to localize the strings, instead of `messenger.i18n.getMessage()`.
