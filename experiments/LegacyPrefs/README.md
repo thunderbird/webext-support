@@ -54,5 +54,3 @@ browser.LegacyPrefs.onChanged.addListener(async (name, value) => {
   console.log(`Changed value in "mailnews.": ${name} = ${value}`);
 }, "mailnews.");
 ```
-
----
