@@ -1,6 +1,6 @@
 /*
- * This file is provided by the addon-developer-support repository at
- * https://github.com/thunderbird/addon-developer-support
+ * This file is provided by the webext-support repository at
+ * https://github.com/thunderbird/webext-support
  *
  * version 1.5
  * - adjusted to TB128 (no longer loading Services and ExtensionCommon)

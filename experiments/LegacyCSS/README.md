@@ -4,7 +4,7 @@ Use this API to add CSS files to Thunderbird windows. Before using this, please 
 
 ## Usage
 
-Add the [LegacyCSS API](https://github.com/thunderbird/addon-developer-support/tree/master/auxiliary-apis/LegacyCSS) to your add-on. Your `manifest.json` needs an entry like this:
+Add the [LegacyCSS API](https://github.com/thunderbird/webext-support/tree/master/experiments/LegacyCSS) to your add-on. Your `manifest.json` needs an entry like this:
 
 ```
   "experiment_apis": {

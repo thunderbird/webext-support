@@ -1,6 +1,6 @@
 /*
- * This file is provided by the addon-developer-support repository at
- * https://github.com/thunderbird/addon-developer-support
+ * This file is provided by the webext-support repository at
+ * https://github.com/thunderbird/webext-support
  *
  * Version 1.12
  * - added createPref(), proposed by Axel Grude

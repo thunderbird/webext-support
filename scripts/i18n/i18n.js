@@ -1,9 +1,9 @@
 /*
- * This file is provided by the addon-developer-support repository at
- * https://github.com/thunderbird/addon-developer-support
+ * This file is provided by the webext-support repository at
+ * https://github.com/thunderbird/webext-support
  *
  * For usage descriptions, please check:
- * https://github.com/thunderbird/addon-developer-support/tree/master/scripts/i18n
+ * https://github.com/thunderbird/webext-support/tree/master/scripts/i18n
  *
  * Version 1.1
  *
