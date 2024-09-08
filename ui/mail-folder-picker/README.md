@@ -2,10 +2,10 @@
 
 Extensions sometimes need to ask the user to select or pick a mail folder. The mail-folder-picker custom element aims to be the default UI element add-on developers can use for this purpose.
 
-This folder contains an example extension, which displays the mail-folder-picker in its options page.
+This folder contains an example extension, which creates a new tab and loads a page displaying the mail-folder-picker custom element, after it has been installed / reloaded. The implementation of the custom element is in `/ui/mail-folder-picker/modules/mail-folder-picker.mjs`.
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/2fad7f25-ed6e-407f-9ce6-620d7105f8e4">
+  <img src="https://github.com/user-attachments/assets/36a411e4-b188-4808-ba11-01b43fa1e6bc">
 </p>
 
 **Note:** This is still in a very early development state.
@@ -24,6 +24,10 @@ This folder of the repository can be used directly as a "temporary add-on", to e
 Once the add-on has been loaded, it will create a new tab and load a page displaying the mail-folder-picker custom element.
 
 **Development workflow:** Closing the tab with the example page will return to the "Debugging" tab, which now has an entry for the `Mail Folder Picker Example` add-on. Clicking on its `Reload` button, will reload the add-on and re-open the example page using the most recent implementation of the mail-folder-picker custom element.
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/9a3964bc-5666-4b99-b548-5c45ca77794d">
+</p>
 
 ## Usage in your own add-on
 
