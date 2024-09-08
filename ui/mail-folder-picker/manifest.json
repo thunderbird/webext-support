@@ -7,13 +7,14 @@
     }
   },
   "name": "Mail Folder Picker Example",
-  "description": "This extension is using the mail-folder-picker custom element in its options page.",
+  "description": "This extension is loading a page with the mail-folder-picker.",
   "version": "1",
   "author": "John Bieling",
   "homepage_url": "https://github.com/thunderbird/webext-support/tree/master/ui/mail-folder-picker",
-  "options_ui": {
-    "page": "options/options.html",
-    "open_in_tab": false
+  "background": {
+    "scripts": [
+      "assets/background.js"
+    ]
   },
   "permissions": [
     "accountsRead"

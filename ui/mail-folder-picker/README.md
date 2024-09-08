@@ -20,7 +20,10 @@ This folder of the repository can be used directly as a "temporary add-on", to e
 4. Click on the gear icon of the Add-on Manager and select "Debug Add-ons".
 5. In the new tab click on the "Load Temporary Add-on..." button.
 6. In the file picker select the `manifest.json` file in the `/ui/mail-folder-picker/` folder of the cloned repository.
-7. Go back to the Add-on Manager tab and click on the wrench icon of the `Mail Folder Picker Example` add-on, which will open its options page and load/display the mail-folder-picker custom element.
+
+Once the add-on has been loaded, it will create a new tab and load a page displaying the mail-folder-picker custom element.
+
+**Development workflow:** Closing the tab with the example page will return to the "Debugging" tab, which now has an entry for the `Mail Folder Picker Example` add-on. Clicking on its `Reload` button, will reload the add-on and re-open the example page using the most recent implementation of the mail-folder-picker custom element.
 
 ## Usage in your own add-on
 
