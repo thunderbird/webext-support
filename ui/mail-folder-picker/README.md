@@ -18,7 +18,7 @@ This folder of the repository can be used directly as a "temporary add-on", to e
 2. Open Thunderbird.
 3. Open the Add-on Manager within Thunderbird.
 4. Click on the gear icon of the Add-on Manager and select "Debug Add-ons".
-5. In the new tab click on the "Load Temporary Add-on..." button.
+5. In the new "Debugging" tab click on the "Load Temporary Add-on..." button.
 6. In the file picker select the `manifest.json` file in the `/ui/mail-folder-picker/` folder of the cloned repository.
 
 Once the add-on has been loaded, it will create a new tab and load a page displaying the mail-folder-picker custom element.
