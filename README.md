@@ -21,6 +21,14 @@ The `experiments` folder contains the following Experiment APIs:
 | [LegacyCSS](experiments/LegacyCSS/)     | Add CSS files to Thunderbird windows. |
 | [LegacyPrefs](experiments/LegacyPrefs/) | Access Thunderbird's system preferences. |
 
+## Images
+
+The `images` folder contains the following resources:
+
+|             | Description |
+| ----------- | ----------- |
+| ![get-the-addon](https://raw.githubusercontent.com/thunderbird/webext-support/refs/heads/master/images/get-the-addon.svg)     | A nice looking get-the-add-on badge to be used on websites to promote your Thunderbird Add-on. |
+
 ## Scripts
 
 The `scripts` folder contains the following helper scripts:
@@ -28,14 +36,6 @@ The `scripts` folder contains the following helper scripts:
 |             | Description |
 | ----------- | ----------- |
 | [i18n](scripts/i18n/)     | Script to replace i18n placeholders in HTML files. |
-
-## Images
-
-The `images` folder contains the following resources:
-
-|             | Description |
-| ----------- | ----------- |
-| [get-the-add-on](https://github.com/thunderbird/webext-support/blob/master/images/get-the-addon.svg)     | A nice looking get-the-add-on badge to be used on websites to promote your Thunderbird Add-on. |
 
 ## Tools
 
