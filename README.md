@@ -29,6 +29,14 @@ The `scripts` folder contains the following helper scripts:
 | ----------- | ----------- |
 | [i18n](scripts/i18n/)     | Script to replace i18n placeholders in HTML files. |
 
+## Images
+
+The `images` folder contains the following resources:
+
+|             | Description |
+| ----------- | ----------- |
+| [get-the-add-on](https://github.com/thunderbird/webext-support/blob/master/images/get-the-addon.svg)     | A nice looking get-the-add-on badge to be used on websites to promote your Thunderbird Add-on. |
+
 ## Tools
 
 The `tools` folder contains the following tools:
