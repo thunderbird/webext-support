@@ -12,12 +12,13 @@ You will also learn, that the current set of available WebExtension APIs for Thu
 
 ## Experiment APIs
 
-The `experiments` folder contains the following Experiment APIs:
+The `experiments` folder contains the following Experiment APIs, which may be useful while converting legacy extensions to modern WebExtensions:
 
 |                | Description |
 | -------------- | ----------- |
 | [FileSystem](experiments/FileSystem/)   | Grant read/write access to a folder in the users profile folder (file system level). |
 | [ImapTools](experiments/ImapTools/)     | Extract the IMAP UID from a message. |
+| [LegacyHelper](experiments/LegacyHelper/) | Register legacy `chrome://*/content/` and `resource://*/` urls, and open legacy XUL dialogs. |
 | [LegacyCSS](experiments/LegacyCSS/)     | Add CSS files to Thunderbird windows. |
 | [LegacyPrefs](experiments/LegacyPrefs/) | Access Thunderbird's system preferences. |
 
