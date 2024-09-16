@@ -29,13 +29,13 @@ Register `chrome://*/content/` and `resource://*/` URLs. The function accepts a 
 
 ```
 await browser.LegacyHelper.registerGlobalUrls([
-  ["content", "myaddon", "legacy/"],
+  ["content", "myaddon", "chrome/content/"],
   ["resource", "myaddon", "modules/"],
 ]);
 ```
 
 This registers the following URLs:
-* `chrome://myaddon/content/` pointing to the `/legacy/` folder (the `/content/` part in the URL is fix and does not depend on the name of the folder it is pointing to)
+* `chrome://myaddon/content/` pointing to the `/chrome/content/` folder (the `/content/` part in the URL is fix and does not depend on the name of the folder it is pointing to)
 * `resource://myaddon/` pointing to the `/modules/` folder. To register a `resource://` URL which points to the root folder, use `.` instead".
 
 ### async openDialog(name, path)
