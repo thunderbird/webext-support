@@ -84,6 +84,9 @@
 
       // We have not observed any negative side effects of not un-registering
       // global urls, they are overwritten the next time they are registered.
+
+      // Flush all caches.
+      Services.obs.notifyObservers(null, "startupcache-invalidate");
     }
   };
   exports.LegacyHelper = LegacyHelper;
