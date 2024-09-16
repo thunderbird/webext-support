@@ -1,6 +1,6 @@
 ## Objective
 
-This API is a temporary helper while converting legacy extensions to modern WebExtensions. It allows to `resource://` URLs, which are needed to load custom system modules (*.sys.mjs), and `chrome://` URLs, which are needed to open legacy XUL dialogs.
+This API is a temporary helper while converting legacy extensions to modern WebExtensions. It allows to register `resource://` URLs, which are needed to load custom system modules (*.sys.mjs), and `chrome://` URLs, which are needed to open legacy XUL dialogs.
 
 ## Usage
 
