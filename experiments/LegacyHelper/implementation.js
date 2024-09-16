@@ -69,6 +69,21 @@
     }
 
     onShutdown(isAppShutdown) {
+      // This API intentionally does not unregister any of the registered global
+      // urls. If other Experiment APIs use these registered urls, they could run
+      // into race conditions during shutdown: the order in which Experiments are
+      // unloaded is the same order in which they have been loaded, so this
+      // Experiment is mostly unloaded before all others.
+      
+      // Furthermore it is no longer possible to unload system modules, the accepted
+      // approach is to append a unique identifier as a query when specifying the
+      // module path:
+      // var { TestModule } = ChromeUtils.importESModule(
+      //  "resource://example123/TestModule.sys.mjs?" + Date.now()
+      // );
+
+      // We have not observed any negative side effects of not un-registering
+      // global urls, they are overwritten the next time they are registered.
     }
   };
   exports.LegacyHelper = LegacyHelper;
