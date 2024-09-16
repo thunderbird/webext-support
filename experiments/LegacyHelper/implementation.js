@@ -41,6 +41,7 @@
                   break;
 
                 case "content":
+                case "locale":
                   {
                     let handle = aomStartup.registerChrome(
                       manifestURI,
