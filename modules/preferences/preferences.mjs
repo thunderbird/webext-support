@@ -1,6 +1,11 @@
-export const DEFAULTS = {
+const DEFAULTS = {
     // Default preference values
     enableDebug: false
+}
+
+// Return the current default values as an array of tuples.
+export function getDefaults() {
+    return Object.entries(DEFAULTS)
 }
 
 // Remove stored preference value.
