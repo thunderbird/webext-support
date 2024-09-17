@@ -3,7 +3,7 @@
  * https://github.com/thunderbird/webext-support
  *
  * For usage descriptions, please check:
- * https://github.com/thunderbird/webext-support/tree/master/scripts/i18n
+ * https://github.com/thunderbird/webext-support/tree/master/modules/i18n
  *
  * Version 1.2
  *

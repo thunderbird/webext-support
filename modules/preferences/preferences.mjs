@@ -1,3 +1,14 @@
+/*
+ * This file is provided by the webext-support repository at
+ * https://github.com/thunderbird/webext-support
+ *
+ * For usage descriptions, please check:
+ * https://github.com/thunderbird/webext-support/tree/master/modules/preferences
+ *
+ * Version 1.0
+ *
+ */
+
 const DEFAULTS = {
     // Default preference values
     enableDebug: false
