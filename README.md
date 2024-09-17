@@ -30,13 +30,13 @@ The `images` folder contains the following resources:
 | ----------- | ----------- |
 | ![get-the-addon](https://raw.githubusercontent.com/thunderbird/webext-support/refs/heads/master/images/get-the-addon.svg)     | A nice looking get-the-add-on badge to be used on websites to promote your Thunderbird Add-on. |
 
-## Scripts
+## JavasScript Modules
 
-The `scripts` folder contains the following helper scripts:
+The `modules` folder contains the following helper modules:
 
 |             | Description |
 | ----------- | ----------- |
-| [i18n](scripts/i18n/)     | Script to replace i18n placeholders in HTML files. |
+| [i18n](modules/i18n/)                | Replace `__MSG_*__` i18n placeholders in HTML files. |
 
 ## Tools
 
