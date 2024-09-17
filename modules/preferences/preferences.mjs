@@ -1,4 +1,4 @@
-const DEFAULTS = {
+export const DEFAULTS = {
     // Default preference values
     enableDebug: false
 }
