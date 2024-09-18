@@ -1,6 +1,6 @@
 # Supporting WebExtension Developers
 
-The goal of this repository is to provide additional tools, scripts, custom elements, Experiment APIs and other resources, to simplify the development of WebExtensions for Thunderbird.
+The goal of this repository is to provide additional tools, modules, custom elements, Experiment APIs and other resources, to simplify the development of WebExtensions for Thunderbird.
 
 ## Introduction
 
