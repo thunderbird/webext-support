@@ -36,8 +36,9 @@ The `modules` folder contains the following helper modules:
 
 |             | Description |
 | ----------- | ----------- |
-| [i18n](modules/i18n/)                | Replace `__MSG_*__` i18n placeholders in HTML files. |
-| [preferences](modules/preferences/)  | Convenient wrapper functions to manager add-on preferences. |
+| [i18n](modules/i18n/)                 | Replace `__MSG_*__` i18n placeholders in HTML files. |
+| [messageLists](modules/messageLists/) | Convenient wrapper functions for handling `MessageLists` and the pagination mechanism, simplifying the process of looping over messages |
+| [preferences](modules/preferences/)   | Convenient wrapper functions to manager add-on preferences. |
 
 ## Tools
 
