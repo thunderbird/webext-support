@@ -6,7 +6,7 @@ Use this API to add CSS files to Thunderbird windows. Before using this, please 
 
 Add the [LegacyCSS API](https://github.com/thunderbird/webext-support/tree/master/experiments/LegacyCSS) to your add-on. Your `manifest.json` needs an entry like this:
 
-```
+```json
   "experiment_apis": {
     "LegacyCSS": {
       "schema": "api/LegacyCSS/schema.json",
@@ -23,7 +23,7 @@ In order to inject a CSS file into a window, wait for its `onWindowOpened` event
 
 A background script could look like the following:
 
-```
+```javascript
 // Define all CSS files for core windows.
 let files = {
 	"chrome://messenger/content/activity.xhtml": "style.css"

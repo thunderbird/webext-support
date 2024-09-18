@@ -8,7 +8,7 @@ Use this API to read from and write to files in the user profile folder. Until M
 
 Add the [FileSystem API](https://github.com/thunderbird/webext-support/tree/master/experiments/FileSystem) to your add-on. Your `manifest.json` needs an entry like this:
 
-```
+```json
   "experiment_apis": {
     "FileSystem": {
       "schema": "api/FileSystem/schema.json",

@@ -6,7 +6,7 @@ Use this API to extract the IMAP UID from a message.
 
 Add the [ImapTools API](https://github.com/thunderbird/webext-support/tree/master/experiments/ImapTools) to your add-on. Your `manifest.json` needs an entry like this:
 
-```
+```json
   "experiment_apis": {
     "ImapTools": {
       "schema": "api/ImapTools/schema.json",

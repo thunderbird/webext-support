@@ -35,13 +35,13 @@ Once the add-on has been loaded, it will create a new tab and load a page displa
 
 The HTML page needs to include a core stylesheet for the color definitions:
 
-```
+```markup
 <link rel="stylesheet" href="chrome://global/skin/design-system/tokens-shared.css" />
 ```
 
 The custom element is added to the HTML page as follows:
 
-```
+```markup
 <div style="border:1px solid grey; padding:2em; margin: 2em; width:450px">
   <mail-folder-picker id="mail_folder_picker" aria-placeholder="Select a folder ..." />
 </div>
@@ -51,7 +51,7 @@ The custom element is added to the HTML page as follows:
 
 The custom element needs to be registered through JavaScript:
 
-```
+```javascript
 import { registerMailFolderPicker } from "../modules/mail-folder-picker.mjs";
 
 async function init() {
