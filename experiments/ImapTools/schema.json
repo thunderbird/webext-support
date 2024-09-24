@@ -13,6 +13,22 @@
             "type": "integer"
           }
         ]
+      },
+      {
+        "name": "forceServerUpdate",
+        "type": "function",
+        "async": true,
+        "description": "Force all pending server actions to complete",
+        "parameters": [
+          {
+            "name": "accountId",
+            "type": "string"
+          },
+          {
+            "name": "path",
+            "type": "string"
+          }
+        ]
       }
     ]
   }

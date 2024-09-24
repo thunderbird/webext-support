@@ -23,29 +23,88 @@
 
 "use strict";
 
-// Import some things we need.
-var { ExtensionSupport } = ChromeUtils.importESModule(
-  "resource:///modules/ExtensionSupport.sys.mjs"
-);
-var { ExtensionUtils } = ChromeUtils.importESModule(
-  "resource://gre/modules/ExtensionUtils.sys.mjs"
-);
-var { ExtensionError } = ExtensionUtils;
+(function (exports) {
 
-var ImapTools = class extends ExtensionCommon.ExtensionAPI {
-  getAPI(context) {
-    return {
-      ImapTools: {
-        getImapUID(aID) {
-          let msgHdr = context.extension.messageManager.get(aID);
-          if (msgHdr.folder.server.type == "imap") {
-            return msgHdr.messageKey;
-          }
-          throw new ExtensionError(
-            `Message with id ${aID} is not an IMAP message.`
-          );
-        },
+  var { ExtensionUtils } = ChromeUtils.importESModule(
+    "resource://gre/modules/ExtensionUtils.sys.mjs"
+  );
+  var { MailServices } = ChromeUtils.importESModule(
+    "resource:///modules/MailServices.sys.mjs"
+  );
+
+  var { ExtensionError } = ExtensionUtils;
+  
+  class PromiseUrlListener {
+    #deferred;
+    #wrapped;
+
+    constructor(aWrapped) {
+      this.#wrapped = aWrapped;
+      this.#deferred = Promise.withResolvers();
+      this.QueryInterface = ChromeUtils.generateQI(["nsIUrlListener"]);
+    }
+  
+    OnStartRunningUrl(aUrl) {
+      if (this.#wrapped && this.#wrapped.OnStartRunningUrl) {
+        this.#wrapped.OnStartRunningUrl(aUrl);
       }
-    };
-  }
-};
+    }
+
+    OnStopRunningUrl(aUrl, aExitCode) {
+      if (this.#wrapped && this.#wrapped.OnStopRunningUrl) {
+        this.#wrapped.OnStopRunningUrl(aUrl, aExitCode);
+      }
+      if (aExitCode == Cr.NS_OK) {
+        this.#deferred.resolve();
+      } else {
+        this.#deferred.reject(aExitCode);
+      }
+    }
+
+    get promise() {
+      return this.#deferred.promise;
+    }
+  };
+
+  var ImapTools = class extends ExtensionCommon.ExtensionAPI {
+    getAPI(context) {
+      return {
+        ImapTools: {
+          getImapUID(aID) {
+            let msgHdr = context.extension.messageManager.get(aID);
+            if (msgHdr.folder.server.type == "imap") {
+              return msgHdr.messageKey;
+            }
+            throw new ExtensionError(
+              `Message with id ${aID} is not an IMAP message.`
+            );
+          },
+          async forceServerUpdate(accountId, path) {
+            const server = MailServices.accounts.getAccount(accountId).incomingServer;
+            if (server.type != "imap") {
+              console.log("Not an IMAP folder")
+              return;
+            }
+
+            const folder = context.extension.folderManager.get(
+              accountId,
+              path
+            ).QueryInterface(Ci.nsIMsgImapMailFolder);
+
+            const updateListener = new PromiseUrlListener();
+            folder.updateFolderWithListener(null, updateListener);
+            await updateListener.promise;
+    
+            // ...and download for offline use.
+            const downloadListener = new PromiseUrlListener();
+            folder.downloadAllForOffline(downloadListener, null);
+            await downloadListener.promise;
+          }
+        }
+      };
+    }
+  };
+
+  
+  exports.ImapTools = ImapTools;
+})(this);
