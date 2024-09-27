@@ -1,6 +1,6 @@
 ## About
 
-Convenient wrapper functions for handling `MessageLists` and the pagination mechanism, simplifying the process of looping over messages:
+Convenient wrapper function for handling `MessageLists` and the pagination mechanism, simplifying the process of looping over messages:
 
 ```javascript
 import { getMessageIterator } from "messageLists.mjs"
