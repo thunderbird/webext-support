@@ -34,6 +34,7 @@
       {
         "name": "registerChromeUrl",
         "type": "function",
+        "async": true,
         "description": "Register folders which should be available as chrome:// urls (as defined in the legacy chrome.manifest). You probably only need this to load files which should manipulate the folder tree view.",
         "parameters": [
           {

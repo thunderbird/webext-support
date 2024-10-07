@@ -5,6 +5,7 @@
       {
         "name": "registerGlobalUrls",
         "type": "function",
+        "async": true,
         "description": "Register folders which should be available as legacy chrome:// urls or resource:// urls",
         "parameters": [
           {

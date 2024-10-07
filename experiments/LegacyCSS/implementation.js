@@ -2,7 +2,10 @@
  * This file is provided by the webext-support repository at
  * https://github.com/thunderbird/webext-support
  *
- * version 1.5
+ * Version 1.6
+ * - registerChromeUrl() is now async, to be able to properly await registration
+ * 
+ * Version 1.5
  * - adjusted to TB128 (no longer loading Services and ExtensionCommon)
  * - use ChromeUtils.importESModule()
  * 

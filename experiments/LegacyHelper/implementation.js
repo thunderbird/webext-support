@@ -1,3 +1,21 @@
+/*
+ * This file is provided by the webext-support repository at
+ * https://github.com/thunderbird/webext-support
+ *
+ * Version 1.1
+ * - registerGlobalUrls() is now async, to be able to properly await registration
+ *
+ * Version 1.0
+ * - initial release
+ *
+ * Author:
+ * - John Bieling (john@thunderbird.net)
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
 "use strict";
 
 // Using a closure to not leak anything but the API to the outside world.
