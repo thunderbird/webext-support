@@ -1,8 +1,15 @@
 /*
+ * This file is provided by the webext-support repository at
+ * https://github.com/thunderbird/webext-support
+ *
+ * For usage descriptions, please check:
+ * https://github.com/thunderbird/webext-support/tree/master/modules/i18n
+ *
+ * Version 2.0
+ *
  * Derived from:
  *
  * http://github.com/piroor/webextensions-lib-l10n
- * https://github.com/thunderbird/webext-support/blob/master/modules/i18n/i18n.mjs
  *
  * Original license:
  * The MIT License, Copyright (c) 2016-2019 YUKI "Piro" Hiroshi
