@@ -1,9 +1,9 @@
 /**
  * Opens a Storage Viewer for the given browser.storage area.
  *
- * This function creates a full-featured storage viewer in a new tab or popup,
- * displaying all entries in the specified storage area. Boolean values can be
- * toggled inline, other values can be edited in a textarea with save/cancel controls.
+ * This function creates a storage viewer in a new tab or popup, displaying all
+ * entries in the specified storage area. Boolean values can be toggled inline,
+ * other values can be edited in a textarea with save/cancel controls.
  * 
  * Usage example:
  * 
@@ -21,21 +21,22 @@
  *    `URL.createObjectURL`. This approach allows the module to be self-contained
  *    without requiring separate HTML, CSS, or JS files.
  * 2. Because the blob contains a `<script type="module">` inline in the HTML,
- *    you must configure your `manifest.json` CSP accordingly. For example:
+ *    the CSP setting in the `manifest.json` needs to be configured accordingly.
+ *    For example:
  *
  *    ```json
- *    "content_security_policy": "script-src 'self' 'sha256-pSeZqbIND286+J0FQz+c0m4YoKTRwH/II6GyU3ZM6As=';"
+ *    "content_security_policy": "script-src 'self' 'sha256-AxVIrOAVi+Ub31l6kPlBGZ4S1R6XoMuO457P0vcAc7U=';"
  *    ```
  *
  *    The SHA256 hash corresponds to the inline module script in the blob.
  *
  * 3. The function supports an optional filter string. If provided, the filter
- *    input field will be **readonly** and only matching keys will be displayed.
+ *    input field will be hidden.
  *
  * @param {Object} [options] - Configuration options.
  * @param {'local'|'sync'|'session'} [options.storageArea='local'] - The storage area to display.
  * @param {'tab'|'popup'} [options.type='tab'] - How to open the viewer.
- * @param {string} [options.filter=''] - Optional key filter. Read-only if provided.
+ * @param {string} [options.filter=''] - Optional key filter.
  * 
  * @returns {Promise<void>} Resolves when the tab or popup is created.
  */
@@ -138,8 +139,7 @@ export async function open(options = {}) {
 </head>
 <body>
 <header>
-  <button id="refreshBtn">🔄 Refresh</button>
-  <input class="filter" placeholder="Filter keys..." value="${filter}" ${filter ? 'readonly' : ''}>
+  <input class="filter" placeholder="Filter keys..." value="${filter}" ${filter ? 'readonly style="display:none"' : ''}>
 </header>
 
 <table>
@@ -152,126 +152,257 @@ export async function open(options = {}) {
 </footer>
 
 <script type="module">
-const storage = browser.storage["${storageArea}"];
-let currentFilter = document.querySelector('.filter').value.trim();
-
-async function loadEntries() {
-  const all = await storage.get(null);
+  const storage = browser.storage["${storageArea}"];
+  let currentFilter = document.querySelector('.filter').value.trim();
   const tbody = document.getElementById("entries");
-  tbody.innerHTML = "";
 
-  for (const [key,value] of Object.entries(all)) {
-    if (!key.includes(currentFilter)) continue;
-    const tr = document.createElement("tr");
-    const tdKey = document.createElement("td");
-    const tdVal = document.createElement("td");
-    const tdCtrl = document.createElement("td");
-
-    tdKey.className = "key";
-    tdCtrl.className = "controls";
-    tdKey.textContent = key;
-
-    const displayArea = document.createElement("div");
-    displayArea.className = "displayArea";
-    displayArea.textContent = typeof value==="object"?JSON.stringify(value):String(value);
-
-    const editArea = document.createElement("div");
-    editArea.className="editArea";
-    editArea.style.display="none";
-
-    const errorBox = document.createElement("div");
-    errorBox.className="error";
-
-    const editBtn = document.createElement("button");
-    editBtn.className="editBtn";
-
-    tdVal.append(displayArea,editArea,errorBox);
-    tdCtrl.appendChild(editBtn);
-    tr.append(tdKey,tdVal,tdCtrl);
-    tbody.appendChild(tr);
-
-    attachEditHandler(tr,key,value);
+  function getType(v) {
+    if (v !== null && typeof v === "object") {
+      return "object";
+    }
+    if (v === true || v === false) {
+      return "boolean";
+    }
+    if (typeof v === "number") {
+      return "number";
+    }
+    return "string";
   }
-}
+  function formatDisplayValue(v) {
+    return getType(v) == "object" ? JSON.stringify(v) : String(v);
+  }
+  function formatEditorValue(v) {
+    return getType(v) == "object" ? JSON.stringify(v, null, 2) : String(v);
+  }    
+  function getRowId(key,value) {
+    return \`\${key}.\${getType(value)}\`;
+  } 
 
-function attachEditHandler(tr,key,value){
-  const editBtn = tr.querySelector(".editBtn");
-  const displayArea = tr.querySelector(".displayArea");
-  const editArea = tr.querySelector(".editArea");
-  const errorBox = tr.querySelector(".error");
+  async function loadEntries() {
+    const all = await storage.get(null);
+    const visibleKeys = [];
 
-  const isBoolean = value===true||value===false;
-  if(isBoolean){
-    editBtn.textContent="⇄";
-    editBtn.title="Toggle";
-    editBtn.addEventListener('click',async()=>{
-      try{
-        const newVal = !value;
-        await storage.set({[key]:newVal});
-        displayArea.textContent=newVal?"true":"false";
-        tr.classList.add('row-editing');
-        setTimeout(()=>tr.classList.remove('row-editing'),300);
-        value=newVal;
-      }catch(err){
-        errorBox.textContent="Toggle failed: "+err;
-        errorBox.style.display="";
+    // helper to create a new row for a key/value
+    function createRow(key, value) {
+      const tr = document.createElement("tr");
+      const tdKey = document.createElement("td");
+      const tdVal = document.createElement("td");
+      const tdCtrl = document.createElement("td");
+      const displayValue = formatDisplayValue(value);
+      const editorValue = formatEditorValue(value);
+
+      tdKey.className = "key";
+      tdCtrl.className = "controls";
+      tdKey.textContent = key;
+
+      // Element to display the cells content.
+      const displayArea = document.createElement("div");
+      displayArea.className = "displayArea";
+      displayArea.textContent = displayValue;
+
+      // Element to edit the cells content.
+      const editArea = document.createElement("div");
+      editArea.className = "editArea";
+      editArea.style.display = "none";
+
+      // choose an input for simple values, textarea for objects
+      const rowType = getType(value);  
+      let editorEl;
+      if (rowType == "object") {
+        editorEl = document.createElement("textarea");
+        editorEl.size = 5;
+      } else {
+        editorEl = document.createElement("input");
+        editorEl.type = "text"; // TODO: consider type="number" for numbers
       }
-    });
-    return;
-  }
 
-  editBtn.textContent="✎";
-  editBtn.title="Edit";
+      editorEl.value = "";
+      editArea.appendChild(editorEl);
 
-  editBtn.addEventListener('click',()=>{if(!tr.classList.contains('row-editing')) enterEdit(); else saveEdit();});
-  tr.addEventListener('keydown',ev=>{if(ev.key==="Escape" && tr.classList.contains("row-editing")) exitEdit(true);});
-  editArea.addEventListener('keydown',ev=>{if(ev.key==="Escape") exitEdit(true); if(ev.key==="Enter") saveEdit();});
+      const errorBox = document.createElement("div");
+      errorBox.className = "error";
 
-  function enterEdit(){
-    tr.classList.add('row-editing');
-    const raw = typeof value==="object"?JSON.stringify(value,null,2):String(value);
-    const ta = document.createElement("textarea");
-    ta.value=raw;
-    editArea.innerHTML="";
-    editArea.appendChild(ta);
-    displayArea.style.display="none";
-    editArea.style.display="";
-    errorBox.style.display="none";
-    editBtn.textContent="✓";
-  }
+      const editBtn = document.createElement("button");
+      editBtn.className = "editBtn";
 
-  function exitEdit(cancel=false){
-    tr.classList.remove('row-editing');
-    displayArea.style.display="";
-    editArea.style.display="none";
-    errorBox.style.display="none";
-    editBtn.textContent="✎";
-  }
+      tdVal.append(displayArea, editArea, errorBox);
+      tdCtrl.appendChild(editBtn);
+      tr.append(tdKey, tdVal, tdCtrl);
 
-  async function saveEdit(){
-    try{
-      const ta = editArea.querySelector("textarea");
-      const newText = ta.value;
-      let newVal;
-      try{newVal=JSON.parse(newText);}catch{newVal=newText;}
-      await storage.set({[key]:newVal});
-      value=newVal;
-      displayArea.textContent=typeof newVal==="object"?JSON.stringify(newVal):String(newVal);
-      exitEdit();
-    }catch(err){
-      errorBox.textContent="Save failed: "+err;
-      errorBox.style.display="";
+      // store current value in data attribute for change detection
+      tr.dataset.displayValue = displayValue;
+      tr.dataset.editorValue = editorValue;
+
+      // ensure row is focusable to receive keyboard events
+      tr.tabIndex = 0;
+
+      const rowId = getRowId(key, value);
+      tr.dataset.rowId = rowId;
+      tbody.appendChild(tr);
+      attachEditHandler(tr, key, rowType);
+    }
+
+    for (const [key, value] of Object.entries(all)) {
+      if (!key.includes(currentFilter)) continue;
+
+      const rowId = getRowId(key, value);
+      visibleKeys.push(rowId);
+
+      const displayValue = formatDisplayValue(value);
+      const editorValue = formatEditorValue(value);
+      const tr = document.querySelector(\`tr[data-row-id="\${rowId}"]\`);
+      if (tr) {
+        if (tr.dataset.displayValue !== displayValue) {
+          // update existing row
+          tr.dataset.displayValue = displayValue;
+          tr.dataset.editorValue = editorValue
+
+          const displayArea = tr.querySelector(".displayArea");
+          displayArea.textContent = displayValue;
+          const editArea = tr.querySelector(".editArea");
+          const editorEl = editArea.querySelector("textarea, input");
+          editorEl.value = "";
+        }
+        // appending again moves to end of tbody, keeping the actual sorting
+        tbody.appendChild(tr);
+      } else {
+        // create new row
+        createRow(key, value);
+      }
+    }
+
+    // remove any rows that are no longer present / visible
+    const visibleRows = Array.from(document.querySelectorAll(\`tr[data-row-id\`));
+    for (const visibleRow of visibleRows) {
+      const existingKey = visibleRow.dataset.rowId;
+      if (!visibleKeys.includes(existingKey)) {
+        visibleRow.remove();
+      }
     }
   }
-}
 
-document.querySelector(".filter").addEventListener("input",(e)=>{
-  currentFilter=e.target.value.trim();
-  loadEntries();
-});
-document.getElementById("refreshBtn").addEventListener("click",loadEntries);
+  function attachEditHandler(tr, key, type) {
+    // obtain elements inside row
+    let editBtn = tr.querySelector(".editBtn");
+    const displayArea = tr.querySelector(".displayArea");
+    const editArea = tr.querySelector(".editArea");
+    const errorBox = tr.querySelector(".error");
+    
+    async function setValue(key, newValue) {
+      await storage.set({ [key]: newValue });
+      const displayValue = formatDisplayValue(newValue);
+      const editorValue = formatEditorValue(newValue);
+      displayArea.textContent = displayValue;
+      tr.dataset.displayValue = displayValue;
+      tr.dataset.editorValue = editorValue;
+    }
 
-loadEntries();
+    const editorEl = editArea.querySelector("textarea, input");
+
+    // remove prior listeners by replacing the button node, then re-query the new node
+    //const newBtn = editBtn.cloneNode(true);
+    //editBtn.replaceWith(newBtn);
+    //editBtn = tr.querySelector(".editBtn");
+
+    // keyboard handling at row level (ESC to cancel)
+    tr.onkeydown = (ev) => {
+      if (ev.key === "Escape" && tr.classList.contains("row-editing")) {
+        exitEdit(true);
+      }
+    };
+
+    if (type == "boolean"){
+      editBtn.textContent = "⇄";
+      editBtn.title = "Toggle";
+      editBtn.addEventListener('click', async () => {
+        errorBox.style.display = "none";
+        try {
+          await setValue(key, tr.dataset.displayValue === "true" ? false : true);
+          tr.classList.add('row-editing');
+          setTimeout(() => tr.classList.remove('row-editing'), 300);
+        } catch (err) {
+          errorBox.textContent = "Toggle failed: " + err;
+          errorBox.style.display = "";
+        }
+      });
+      return;
+    }
+
+    // non-boolean: editing flow
+    editBtn.textContent = "✎";
+    editBtn.title = "Edit";
+
+    function enterEdit() {
+      tr.classList.add('row-editing');
+      // force last saved value into editor
+      editorEl.value = tr.dataset.editorValue;
+      displayArea.style.display = "none";
+      editArea.style.display = "";
+      errorBox.style.display = "none";
+      editBtn.textContent = "✓";
+      editorEl.focus();
+      //try { editorEl.select(); } catch(e) {}
+
+      // add keydown listener once
+      if (!editorEl._hasKeydown) {
+        editorEl.addEventListener('keydown', (ev) => {
+          if (ev.key === "Escape") {
+            ev.preventDefault();
+            exitEdit(true);
+          } else if (ev.key === "Enter") {
+            ev.preventDefault();
+            saveEdit();
+          }
+        });
+        editorEl._hasKeydown = true;
+      }
+    }
+
+    function exitEdit(cancel = false) {
+      tr.classList.remove('row-editing');
+      displayArea.style.display = "";
+      editArea.style.display = "none";
+      errorBox.style.display = "none";
+      editBtn.textContent = "✎";
+    }
+
+    async function saveEdit() {
+      try {
+        // if this is an object, parse the value first
+        let newVal = type == "object" ? JSON.parse(editorEl.value) : editorEl.value;
+        await setValue(key, newVal);
+        exitEdit();
+      } catch (err) {
+        errorBox.textContent = "Save failed: " + err;
+        errorBox.style.display = "";
+      }
+    }
+
+    editBtn.addEventListener('click', () => {
+      if (!tr.classList.contains('row-editing')) {
+        enterEdit();
+      } else {
+        saveEdit();
+      }
+    });
+  }
+
+  document.querySelector(".filter").addEventListener("input", (e) => {
+    currentFilter = e.target.value.trim();
+    loadEntries();
+  });
+
+  // auto-refresh when storage changes in the same area and affected keys match current filter
+  browser.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName !== "${storageArea}") return;
+    const changedKeys = Object.keys(changes || {});
+    // if filter is empty it matches all keys (includes('') === true)
+    if (changedKeys.some(k => k.includes(currentFilter))) {
+      loadEntries();
+    }
+  });
+
+   loadEntries();
 </script>
 </body>
 </html>
