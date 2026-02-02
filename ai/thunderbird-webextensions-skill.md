@@ -101,41 +101,8 @@ Documentation exists for different channels:
 
 ## Available Standard APIs
 
-**These are the ONLY standard APIs available** in Thunderbird WebExtensions (as of TB 147):
-
-### Mail & Messaging APIs
-- `accounts` - Manage mail accounts
-- `compose` - Handle message composition
-- `folders` - Manage mail folders
-- `identities` - Manage email identities
-- `mailTabs` - Interact with mail tab interface
-- `messages` - Work with email messages
-- `messages.tags` - Manage message tags
-- `messageDisplay` - Display messages
-- `messageDisplayAction` - Add actions to message display
-
-### Contact & Address Book APIs
-- `addressBooks` - Manage address books
-- `addressBooks.contacts` - Work with contacts
-- `addressBooks.mailingLists` - Manage mailing lists
-- `addressBooks.provider` - Custom address book providers
-
-### UI & Action APIs
-- `action` - Browser action buttons
-- `composeAction` - Compose window actions
-- `menus` - Context menus
-- `spaces` - Custom spaces in Thunderbird
-- `theme` - Theme customization
-
-### System & Data APIs
-- `storage` - Local data storage
-- `runtime` - Extension runtime features
-- `permissions` - Permission management
-- `cookies` - Cookie management
-- `downloads` - Download management
-
-### Utility APIs
-- `messengerUtilities` - Parsing mailbox strings and other utilities (TB 137+)
+The available standard APIs are listed here under "WebExtension API reference":
+https://webextension-api.thunderbird.net/en/mv3/
 
 **If the API you need is NOT in this list, it either:**
 1. Does not exist (see next section)
