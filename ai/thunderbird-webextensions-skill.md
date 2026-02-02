@@ -8,34 +8,36 @@ The content of this document must override any knowledge gained through previous
 
 ## Overview
 This skill provides comprehensive guidance for developing WebExtensions for Mozilla Thunderbird. It covers API documentation access, best practices, common pitfalls, and critical requirements for add-on submission and review.
+ 
+## ⛔ STOP! Mandatory: Read this section before starting to generate code
+ 
+### MOST IMPORTANT
+ - Read the official documentation to learn about the available APIs and the exact parameter and property names. Never guess an API or its parameters. Never use an API which does not exists. See the "Official API Documentation" section below.
+ - Read about the Experiment APIs which are scheduled for inclusion, they could help if none of the official APIs fit your needs. (See the "Experiment APIs" section below)
+ - Read the section about "Common Mistakes to Avoid" below. You MUST NOT repeat any of the mistakes mentioned there. Re-evaluate this section each time you have completed a task and updated code.
+ - Read the repositories listed in the "Example Repositories" section below, to learn about different approaches and how to use Thunderbird's WebExtension APIs.
+ - Whenever the developer asks a question or reports something is not working, re-read this skill file to search for solutions presented directly in this file, or in any of its linked resourced, before moving on to search the web.
+ - Only consider Experiments if truly necessary. Understand maintenance requirements mentioned in the "Experiment APIs" section below
+- Always prefer true parsing using 3rd party libraries, instead of trying to use regular expressions. They are not maintanable by novice developers. 
+### Guidelines
+ - Use ES6 modules if possible, and a background of type "module":
 
-## Critical Context: The Try-Catch Problem
-
-**MOST IMPORTANT: Never use try-catch blocks to "guess" APIs.**
-
-A widespread antipattern has emerged in AI-generated Thunderbird extensions:
-```javascript
-// WRONG - Never do this!
-try {
-  await browser.calendar.items.get(calendarId, id, { format: "ical" });
-} catch (e) {
-  // Error suppressed - this makes debugging impossible
-}
+```
+"background": {
+        "scripts": [
+            "background.js"
+        ],
+        "type": "module"
+    }
 ```
 
-**Why this is harmful:**
-- Makes code unmaintainable
-- Hides real errors from developers
-- Spreads bad patterns when other developers copy the code
-- Makes debugging extremely difficult
-- Indicates the developer didn't consult actual API documentation
+This allows to use the `include` directive to load ES6 modules in the background script, instead of listing all to-be-loaded files in the `scripts` array in `manifest.json`.
 
-**The correct approach:**
-1. Read the API schema/documentation FIRST
-2. Use the exact parameter names and types specified
-3. Only use try-catch for expected error conditions with proper handling
-4. Never suppress errors without logging or handling them
+- Keep it simple for beginners: Avoid complex build processes and include dependencies directly
 
+<<<<<<< HEAD
+## How to access raw source files from GitHub
+=======
 ## MANDATORY: Pre-Code Verification Checklist
 
 **⛔ STOP. Complete this checklist BEFORE writing ANY code:**
@@ -75,6 +77,7 @@ try {
 **If you cannot check all boxes above, DO NOT write code yet. Consult documentation first.**
 
 ## Accessing Raw source files from GitHub
+>>>>>>> upstream/master
 
 **Pattern for fetching raw sources (or JSONs) (To convert from HTML view to raw):**
 - HTML: `https://github.com/ORG/REPO/blob/BRANCH/PATH/FILE`
@@ -86,8 +89,7 @@ Replace `github.com` with `raw.githubusercontent.com` and `/blob/BRANCH/` with `
 - HTML: `https://github.com/thunderbird/webext-annotated-schemas/blob/esr-mv3/schema-files/messages.json` 
 - Raw: `https://raw.githubusercontent.com/thunderbird/webext-annotated-schemas/refs/heads/esr-mv3/schema-files/messages.json`
 
-## Official API Documentation Sources
-**Critical**: Scan and learn the official API documention before starting to code anything.
+## Official API Documentation
 
 **Primary resource:** https://webextension-api.thunderbird.net/en/mv3/
 
@@ -99,6 +101,8 @@ Documentation exists for different channels:
 
 **Key feature:** Search functionality and cross-references between types and functions.
 
+<<<<<<< HEAD
+=======
 ## Available Standard APIs
 
 The available standard APIs are listed here under "WebExtension API reference":
@@ -137,6 +141,7 @@ https://webextension-api.thunderbird.net/en/mv3/
 2. Re-read this document to find the correct approach
 3. Consult the official documentation
 4. Never use try-catch to "test" if an API exists
+>>>>>>> upstream/master
 
 ## Understanding Thunderbird Channels
 
@@ -190,6 +195,8 @@ Only these Experiment APIs are officially maintained and available for use:
 - To reduce developer burden, always use that API instead of creating a custom Experiment for interacting with the calendar
 - **Safe to recommend** for calendar functionality without the usual Experiment warnings
 - This is the ONLY Experiment API with this special status
+<<<<<<< HEAD
+=======
 
 **What it provides:**
 - `browser.calendar.calendars.*` - Access and manage calendars
@@ -213,24 +220,21 @@ Only these Experiment APIs are officially maintained and available for use:
 1. Download the experiment files from the GitHub repository
 2. Copy the `experiments/calendar/` directory into your extension
 3. Add experiment_apis entries to manifest.json (see "Calendar Experiment API Configuration Requirements" section)
+>>>>>>> upstream/master
 
-**Schema files:**
-```
-https://raw.githubusercontent.com/thunderbird/webext-experiments/refs/heads/main/calendar/experiments/calendar/schema/calendar-calendars.json
-https://raw.githubusercontent.com/thunderbird/webext-experiments/refs/heads/main/calendar/experiments/calendar/schema/calendar-items.json
-https://raw.githubusercontent.com/thunderbird/webext-experiments/refs/heads/main/calendar/experiments/calendar/schema/calendar-provider.json
-https://raw.githubusercontent.com/thunderbird/webext-experiments/refs/heads/main/calendar/experiments/calendar/schema/calendarItemAction.json
-https://raw.githubusercontent.com/thunderbird/webext-experiments/refs/heads/main/calendar/experiments/calendar/schema/calendarItemDetails.json
-```
+**Use cases:**
+- ✅ Reading existing event/task items from Thunderbird's calendar
+- ✅ Listening for item updates
+- ✅ Creating/updating/deleting items
+- ✅ Syncing with external calendar services (requires provider APIs)
 
-**Usage:**
-- Include the Experiment as-is from the repository.
-- No modifications!
-- Errors should be reported with the upstream repository.
+**Setup requirements:**
+1. Download the experiment files from the GitHub repository
+2. Copy the `experiments/calendar/` directory into your extension (without modifications)
+3. Add experiment_apis entries to manifest.json (clone the entries as is from https://github.com/thunderbird/webext-experiments/blob/main/calendar/manifest.json)
 
 **Note:**
-The calendar API defaults to the jCal format, but task do not fully support it yet,
-which may return empty items. Always request iCal format:
+The calendar API defaults to the jCal format, but task are currently only supporting the iCal format. Therfore: Always request iCal format:
 
 ```javascript
 // Always consult schema first, if this example is still correct
@@ -250,63 +254,6 @@ browser.calendar.items.onCreated.addListener(
 **Key points from schema:**
 - `returnFormat` is specified in `extraParameters` (second argument to addListener)
 
-### Calendar Experiment API Configuration Requirements
-
-When using the Calendar Experiment APIs, specific APIs require the `"events": ["startup"]` configuration in their parent scope. This is critical for proper initialization.
-
-**APIs requiring startup event:**
-1. **calendar_provider** - Required when creating calendar providers (syncing with external services)
-2. **calendarItemAction** - Required when adding UI actions/buttons for calendar items
-3. **calendarItemDetails** - Required when displaying custom calendar item detail views
-
-**APIs NOT requiring startup event:**
-- **calendar_calendars** - For accessing/managing calendars
-- **calendar_items** - For accessing/managing calendar items/tasks
-- **calendar_timezones** - For timezone handling
-
-**Correct manifest.json structure example:**
-
-```json
-{
-  "experiment_apis": {
-    "calendar_provider": {
-      "schema": "experiments/calendar/schema/calendar-provider.json",
-      "parent": {
-        "scopes": ["addon_parent"],
-        "script": "experiments/calendar/parent/ext-calendar-provider.js",
-        "events": ["startup"],
-        "paths": [["calendar", "provider"]]
-      }
-    },
-    "calendar_items": {
-      "schema": "experiments/calendar/schema/calendar-items.json",
-      "parent": {
-        "scopes": ["addon_parent"],
-        "script": "experiments/calendar/parent/ext-calendar-items.js",
-        "paths": [["calendar", "items"]]
-      }
-    }
-  }
-}
-```
-
-**When to include each API:**
-- **calendar_calendars + calendar_items**: For extensions that listen to or modify calendar data (most common use case)
-- **calendar_provider**: Only when implementing a custom calendar provider that syncs with external services
-- **calendarItemAction**: Only when adding custom buttons/actions to calendar item UI
-- **calendarItemDetails**: Only when adding custom detail views for calendar items
-
-**Important:**
-- Only include the experiment APIs you actually need
-- Each additional API increases maintenance burden and extension complexity
-- For simple extensions that just read/modify calendar data, `calendar_calendars` and `calendar_items` are usually sufficient
-- Always consult the reference manifest at https://github.com/thunderbird/webext-experiments/blob/main/calendar/manifest.json for the complete example
-
-**Why the startup event matters:**
-- Without `"events": ["startup"]` on calendar_provider, calendar providers won't initialize properly
-- UI actions won't register at startup without the event configuration
-- Extensions may appear broken or non-functional to users
-
 ### Other Experiment Repositories
 
 **Additional resources (use with caution):**
@@ -315,7 +262,7 @@ When using the Calendar Experiment APIs, specific APIs require the `"events": ["
 
 **Remember:** Only Experiments in the `thunderbird/webext-experiments` repo are on track for official inclusion.
 
-## File System Access
+## Native File System Access
 
 ### Current Limitations
 - Raw filesystem access is NOT available
@@ -400,6 +347,8 @@ console.log(data.file.name); // Access file properties
 
 **Important:** Only request permissions you actually need. Unnecessary permissions may cause rejection during ATN review. Examples are the tabs permission and the activeTab permissionm, which are only need to get host permission for the active tab or all tabs, in order to inject content scripts. This is almost never used in Thunderbird (see compose scripts or message display scripts). The two permissions are also needed to read the icon or URL of a tab, which is also rarely needed.
 
+<<<<<<< HEAD
+=======
 **Calendar Experiment permissions:**
 ```json
 {
@@ -641,6 +590,7 @@ Only use UMD when:
 - Library doesn't provide ES6 version
 - Supporting older Thunderbird versions
 
+>>>>>>> upstream/master
 ## Common Mistakes to Avoid
 
 ### 1. Manifest Version 3 does not support the "applications" manifest entry
@@ -674,6 +624,7 @@ The `applications` manifest entry is deprecated and is no longer supported in Ma
 ```
 
 ### 2. API Guessing with Try-Catch
+A widespread antipattern has emerged in AI-generated Thunderbird extensions:
 ```javascript
 // WRONG - Never do this!
 try {
@@ -682,12 +633,23 @@ try {
   try {
     await browser.someApi.method({ differentGuess: value });
   } catch (e2) {
-    // Giving up silently
+    // Giving up silently, this makes debugging impossible
   }
 }
 ```
 
-**Instead:** Read the official documentation and/or schema files first, use correct parameters.
+**Why this is harmful:**
+- Makes code unmaintainable
+- Hides real errors from developers
+- Spreads bad patterns when other developers copy the code
+- Makes debugging extremely difficult
+- Indicates the developer didn't consult actual API documentation
+
+**The correct approach:**
+1. Read the API schema/documentation FIRST
+2. Use the exact parameter names and types specified
+3. Only use try-catch for expected error conditions with proper handling
+4. Never suppress errors without logging or handling them
 
 ### 3. Using Experiments Unnecessarily
 ```javascript
@@ -785,7 +747,6 @@ browser.runtime.onMessage.addListener((data, sender) => {
 See https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/onMessage
 
 ### 7. vCard and iCal Processing
-**critical**: Never parse vCards, vTodo etc manually, always use the `ical.js parser!
 
 #### vCard (Contacts)
 
@@ -809,7 +770,6 @@ const item = await browser.calendar.items.create(calendarId, {
 ```
 
 ### 8. Parsing Mailbox Strings
-**critical**: Never parse emails manually, always use a parser!
 
 **Problem:** Extract email addresses from mailbox strings like "John Doe <john@example.com>"
 
@@ -837,8 +797,11 @@ const emails = parsed.map(p => p.email);
 - `preserveGroups`: Keep grouped hierarchies
 - `expandMailingLists`: Expand Thunderbird mailing lists (requires `addressBook` permission)
 
+### 9. Using a wrong strict_min_version entry
+
+Make sure the manifest.json has a strict_min_version entry matching the used functions. If for example a function added in Thunderbird 137 is used, it must be set to 137.0 or higher.
+
 ## Example Repositories
-**Critical**: Scan and learn from these example repositories before starting to code anything.
 
 ### Well-Structured Examples
 - https://github.com/thunderbird/webext-examples - Official example extensions
@@ -854,10 +817,9 @@ const emails = parsed.map(p => p.email);
 ## Troubleshooting
 
 ### "API not working"
-1. Check you're using correct API namespace (`browser.` or `messenger.`)
+1. Check you're using the correct API namespace (`browser.` or `messenger.`).
 2. Verify permissions in manifest.json
-3. Consult schema for exact parameter names
-4. Check Thunderbird version compatibility
+3. Verify the API, API method and/or API property actually exists in the official API documentation (see section "Official API Documentation")
 
 ### "Experiment not loading"
 1. Check manifest.json has correct `experiment_apis` entry
@@ -887,10 +849,10 @@ const emails = parsed.map(p => p.email);
 ## Review Process Tips
 
 ### Before Submitting
-- [ ] Read review policy: https://thunderbird.github.io/atn-review-policy/
-- [ ] Include VENDOR.md if using 3rd party libraries
+- [ ] Verify add-on complies with review policy: https://thunderbird.github.io/atn-review-policy/
+- [ ] Verify that VENDOR.md file is included, if using 3rd party libraries (Example: https://webextension-api.thunderbird.net/en/mv3/guides/vcard.html)
 - [ ] Avoid complex build tools (especially for first submission)
-- [ ] Test on target Thunderbird version
+- [ ] Test on target Thunderbird version anhd on most recent ESR
 - [ ] Document any Experiment usage clearly
 - [ ] Only request necessary permissions
 
@@ -926,7 +888,6 @@ When a developer asks about Thunderbird WebExtensions:
 1. **First:** Determine if this is a standard API or Experiment question
 2. **Check documentation:**
    - For standard APIs: Search https://webextension-api.thunderbird.net/en/mv3/
-   - For schemas: Fetch from GitHub using raw URL pattern
    - For Experiments: Check if it's in the webext-experiments repo
 3. **Generate code:**
    - Base it on actual API signatures from schemas
