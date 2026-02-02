@@ -393,6 +393,149 @@ This allows to use the `include` directive to load ES6 modules in the background
 - Verify on both Release and ESR if relevant
 - Handle edge cases
 
+### Third-Party Library Integration
+
+**CRITICAL:** When including third-party libraries, the loading method MUST match the module type. This is a common source of errors.
+
+#### Module Type Decision
+
+**Check your manifest.json background configuration:**
+```json
+"background": {
+  "scripts": ["background.js"],
+  "type": "module"  // ← This determines everything
+}
+```
+
+- **If `"type": "module"` is present:** Use ES6 modules (preferred)
+- **If `"type": "module"` is absent:** Use UMD/browser builds
+
+#### ES6 Module Pattern (Preferred)
+
+**When:** Background has `"type": "module"`
+
+**How to identify ES6 modules:**
+- File ends with `export { ... }` or `export default`
+- File may start with `import` statements
+- CDN path often includes `/esm/` or `.esm.js`
+
+**Correct setup:**
+
+*Manifest.json:*
+```json
+{
+  "background": {
+    "scripts": ["background.js"],  // Only background.js, NOT the library
+    "type": "module"
+  }
+}
+```
+
+*Background.js:*
+```javascript
+import ICAL from './lib/ical.js';  // Import at the top
+
+// Use normally
+const jcalData = ICAL.parse(icalString);
+```
+
+**IMPORTANT:** Do NOT include the ES6 module library in the manifest's `scripts` array. It must be imported in your JavaScript code.
+
+#### UMD/Browser Pattern
+
+**When:** Background does NOT have `"type": "module"`
+
+**How to identify UMD/browser builds:**
+- File contains `(function(global)` or `typeof define === 'function'`
+- Creates global variables: `window.LibraryName = ...`
+- CDN path includes `/umd/` or `.umd.js` or just `.js`
+
+**Correct setup:**
+
+*Manifest.json:*
+```json
+{
+  "background": {
+    "scripts": ["lib/ical.js", "background.js"]  // Library BEFORE background.js
+  }
+}
+```
+
+*Background.js:*
+```javascript
+// No import needed - use global variable directly
+const jcalData = ICAL.parse(icalString);
+```
+
+#### Verification Steps
+
+Before using a third-party library:
+
+1. **Check your manifest** - Does it have `"type": "module"`?
+2. **Download matching version:**
+   - With `"type": "module"`: Download ES6/ESM version
+   - Without: Download UMD/browser version
+3. **Verify the file type:**
+   ```bash
+   # Check for ES6 module
+   tail -5 lib/library.js  # Look for "export"
+
+   # Check for UMD/browser
+   grep -q "window\." lib/library.js && echo "UMD/Browser"
+   ```
+4. **Use correct loading method:**
+   - ES6: Import in code, not in manifest scripts
+   - UMD: Include in manifest scripts array
+5. **Document in VENDOR.md** which type you're using
+
+#### Common Mistakes
+
+❌ **WRONG:** ES6 module in scripts array
+```json
+// This will NOT work
+"background": {
+  "scripts": ["lib/ical.esm.js", "background.js"],
+  "type": "module"
+}
+```
+
+❌ **WRONG:** Trying to import UMD module
+```javascript
+// This will NOT work - UMD doesn't export
+import ICAL from './lib/ical.umd.js';
+```
+
+✅ **CORRECT:** ES6 module with import
+```json
+"background": {
+  "scripts": ["background.js"],
+  "type": "module"
+}
+```
+```javascript
+import ICAL from './lib/ical.esm.js';
+```
+
+✅ **CORRECT:** UMD in scripts array
+```json
+"background": {
+  "scripts": ["lib/ical.umd.js", "background.js"]
+}
+```
+
+#### Recommendation
+
+**Prefer ES6 modules** because:
+- Modern JavaScript standard
+- Explicit dependencies
+- Better for code review
+- Works with `"type": "module"` (recommended)
+- Aligns with Thunderbird best practices
+
+Only use UMD when:
+- Library doesn't provide ES6 version
+- Supporting older Thunderbird versions
+
 ## Common Mistakes to Avoid
 
 ### 1. Manifest Version 3 does not support the "applications" manifest entry
