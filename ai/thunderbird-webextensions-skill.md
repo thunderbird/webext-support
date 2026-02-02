@@ -36,6 +36,44 @@ try {
 3. Only use try-catch for expected error conditions with proper handling
 4. Never suppress errors without logging or handling them
 
+## MANDATORY: Pre-Code Verification Checklist
+
+**⛔ STOP. Complete this checklist BEFORE writing ANY code:**
+
+### Step 1: Verify API Existence
+- [ ] **Is the API in the Standard APIs list?** (See "Available Standard APIs" section below)
+  - ✅ If YES → Proceed to Step 2
+  - ❌ If NO → Check "Available Experiment APIs" section
+  - ❓ If UNSURE → **STOP and verify with documentation first**
+
+### Step 2: Consult Actual Documentation
+- [ ] **Have you read the schema or HTML documentation?**
+  - Standard APIs: `https://webextension-api.thunderbird.net/en/mv3/[api-name]`
+  - Experiment schemas: See "Calendar Experiment API" section
+  - Schema files (raw JSON): See "Accessing Raw source files from GitHub" section
+
+### Step 3: Verify Exact Signatures
+- [ ] **Do you know the EXACT event/method signatures?**
+  - Parameter names (e.g., `returnFormat` not `format`)
+  - Parameter types (string, object, array, etc.)
+  - Required vs optional parameters
+  - Return types and structures
+
+### Step 4: Plan Error Handling
+- [ ] **Have you planned proper error handling?**
+  - What errors are expected?
+  - How will you log them?
+  - How will you handle them (retry, show UI, etc.)?
+  - Are you avoiding error suppression?
+
+**⚠️ RED FLAGS** that indicate you're guessing:
+- Writing `if (browser.someApi)` checks without having verified `someApi` exists
+- Using try-catch around API calls you haven't looked up
+- Assuming event parameters without checking schemas
+- Using parameter names that "sound right" but aren't verified
+
+**If you cannot check all boxes above, DO NOT write code yet. Consult documentation first.**
+
 ## Accessing Raw source files from GitHub
 
 **Pattern for fetching raw sources (or JSONs) (To convert from HTML view to raw):**
@@ -60,6 +98,78 @@ Documentation exists for different channels:
 - **ESR (esr-mv2)**: https://webextension-api.thunderbird.net/en/esr-mv2/
 
 **Key feature:** Search functionality and cross-references between types and functions.
+
+## Available Standard APIs
+
+**These are the ONLY standard APIs available** in Thunderbird WebExtensions (as of TB 147):
+
+### Mail & Messaging APIs
+- `accounts` - Manage mail accounts
+- `compose` - Handle message composition
+- `folders` - Manage mail folders
+- `identities` - Manage email identities
+- `mailTabs` - Interact with mail tab interface
+- `messages` - Work with email messages
+- `messages.tags` - Manage message tags
+- `messageDisplay` - Display messages
+- `messageDisplayAction` - Add actions to message display
+
+### Contact & Address Book APIs
+- `addressBooks` - Manage address books
+- `addressBooks.contacts` - Work with contacts
+- `addressBooks.mailingLists` - Manage mailing lists
+- `addressBooks.provider` - Custom address book providers
+
+### UI & Action APIs
+- `action` - Browser action buttons
+- `composeAction` - Compose window actions
+- `menus` - Context menus
+- `spaces` - Custom spaces in Thunderbird
+- `theme` - Theme customization
+
+### System & Data APIs
+- `storage` - Local data storage
+- `runtime` - Extension runtime features
+- `permissions` - Permission management
+- `cookies` - Cookie management
+- `downloads` - Download management
+
+### Utility APIs
+- `messengerUtilities` - Parsing mailbox strings and other utilities (TB 137+)
+
+**If the API you need is NOT in this list, it either:**
+1. Does not exist (see next section)
+2. Requires an Experiment API (see "Experiment APIs" section)
+
+## APIs That DO NOT Exist (Common Mistakes)
+
+**⚠️ These APIs are frequently assumed to exist but DO NOT exist as standard APIs:**
+
+### Calendar/Tasks (Use Experiment API Instead)
+- ❌ `browser.calendar.*` - **Not a standard API**
+- ❌ `browser.tasks.*` - **Not a standard API**
+- ❌ `browser.events.*` - **Not a standard API (calendar events)**
+- ✅ **Solution:** Use the Calendar Experiment API (see "Calendar Experiment API" section)
+  - Location: https://github.com/thunderbird/webext-experiments/tree/main/calendar
+  - Provides: `browser.calendar.calendars.*`, `browser.calendar.items.*` for accessing calendar/task data
+  - Status: Safe to use, planned for official inclusion
+
+### File System Access
+- ❌ `browser.fileSystem.*` - **Not available**
+- ❌ Node.js `fs` module - **Not available**
+- ❌ Raw file system APIs - **Not available**
+- ✅ **Solution:** Use `browser.storage.local` for persistence and File objects for user input
+
+### Other Common Misconceptions
+- ❌ `browser.tabs.*` (full Chrome API) - **Limited in Thunderbird** (rarely needed, see Permission Requirements section)
+- ❌ `browser.activeTab` permission - **Rarely needed in Thunderbird**
+- ❌ Chrome-specific APIs - **May not work** (always verify in Thunderbird documentation)
+
+**IMPORTANT:** If you find yourself writing code that uses any API marked with ❌ above:
+1. **STOP immediately**
+2. Re-read this document to find the correct approach
+3. Consult the official documentation
+4. Never use try-catch to "test" if an API exists
 
 ## Understanding Thunderbird Channels
 
@@ -100,14 +210,42 @@ Experiment APIs allow add-ons to access Thunderbird's core internals directly, s
 - **Target ESR channel specifically**
 - Reference `esr-mv2` or `esr-mv3` documentation
 
-### Calendar Experiment API (Special Case)
+### Available Experiment APIs
+
+Only these Experiment APIs are officially maintained and available for use:
+
+#### Calendar Experiment API ⭐ (Special Case - Safe to Recommend)
 
 **Location:** https://github.com/thunderbird/webext-experiments/tree/main/calendar
 
-**Special status:** 
-- This Experiment API is **planned for inclusion**
-- To reduce developer burden, always use that API instead of creating a custom Experiment for interacting with the calendar.
-- Safe to recommend for calendar functionality
+**Special status:**
+- This Experiment API is **planned for inclusion in standard APIs**
+- To reduce developer burden, always use that API instead of creating a custom Experiment for interacting with the calendar
+- **Safe to recommend** for calendar functionality without the usual Experiment warnings
+- This is the ONLY Experiment API with this special status
+
+**What it provides:**
+- `browser.calendar.calendars.*` - Access and manage calendars
+  - `query()`, `get()`, `create()`, `update()`, `remove()`, `clear()`, `synchronize()`
+  - Events: `onCreated`, `onUpdated`, `onRemoved`
+- `browser.calendar.items.*` - Access and manage calendar items (events/tasks)
+  - `query()`, `get()`, `create()`, `update()`, `remove()`, `move()`
+  - Events: `onCreated`, `onUpdated`, `onRemoved`, `onAlarm`
+- `browser.calendar.provider.*` - Create custom calendar providers (for syncing with external services)
+- `browser.calendar.timezones.*` - Timezone handling
+- `calendarItemAction.*` - UI buttons for calendar items
+- `calendarItemDetails.*` - Custom calendar item detail views
+
+**Use cases:**
+- ✅ Reading existing calendar/task data from Thunderbird
+- ✅ Listening for task updates (e.g., percentage complete changes)
+- ✅ Creating/updating/deleting calendar items
+- ✅ Syncing with external calendar services (requires provider APIs)
+
+**Setup requirements:**
+1. Download the experiment files from the GitHub repository
+2. Copy the `experiments/calendar/` directory into your extension
+3. Add experiment_apis entries to manifest.json (see "Calendar Experiment API Configuration Requirements" section)
 
 **Schema files:**
 ```
