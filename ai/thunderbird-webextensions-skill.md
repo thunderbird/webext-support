@@ -145,6 +145,63 @@ browser.calendar.items.onCreated.addListener(
 **Key points from schema:**
 - `returnFormat` is specified in `extraParameters` (second argument to addListener)
 
+### Calendar Experiment API Configuration Requirements
+
+When using the Calendar Experiment APIs, specific APIs require the `"events": ["startup"]` configuration in their parent scope. This is critical for proper initialization.
+
+**APIs requiring startup event:**
+1. **calendar_provider** - Required when creating calendar providers (syncing with external services)
+2. **calendarItemAction** - Required when adding UI actions/buttons for calendar items
+3. **calendarItemDetails** - Required when displaying custom calendar item detail views
+
+**APIs NOT requiring startup event:**
+- **calendar_calendars** - For accessing/managing calendars
+- **calendar_items** - For accessing/managing calendar items/tasks
+- **calendar_timezones** - For timezone handling
+
+**Correct manifest.json structure example:**
+
+```json
+{
+  "experiment_apis": {
+    "calendar_provider": {
+      "schema": "experiments/calendar/schema/calendar-provider.json",
+      "parent": {
+        "scopes": ["addon_parent"],
+        "script": "experiments/calendar/parent/ext-calendar-provider.js",
+        "events": ["startup"],
+        "paths": [["calendar", "provider"]]
+      }
+    },
+    "calendar_items": {
+      "schema": "experiments/calendar/schema/calendar-items.json",
+      "parent": {
+        "scopes": ["addon_parent"],
+        "script": "experiments/calendar/parent/ext-calendar-items.js",
+        "paths": [["calendar", "items"]]
+      }
+    }
+  }
+}
+```
+
+**When to include each API:**
+- **calendar_calendars + calendar_items**: For extensions that listen to or modify calendar data (most common use case)
+- **calendar_provider**: Only when implementing a custom calendar provider that syncs with external services
+- **calendarItemAction**: Only when adding custom buttons/actions to calendar item UI
+- **calendarItemDetails**: Only when adding custom detail views for calendar items
+
+**Important:**
+- Only include the experiment APIs you actually need
+- Each additional API increases maintenance burden and extension complexity
+- For simple extensions that just read/modify calendar data, `calendar_calendars` and `calendar_items` are usually sufficient
+- Always consult the reference manifest at https://github.com/thunderbird/webext-experiments/blob/main/calendar/manifest.json for the complete example
+
+**Why the startup event matters:**
+- Without `"events": ["startup"]` on calendar_provider, calendar providers won't initialize properly
+- UI actions won't register at startup without the event configuration
+- Extensions may appear broken or non-functional to users
+
 ### Other Experiment Repositories
 
 **Additional resources (use with caution):**
