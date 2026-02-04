@@ -247,6 +247,53 @@ import { someFunction, someConstant } from "./lib/somemodule.js";
 
 **Important:** Never revert to non-module backgrounds just because a library seems difficult to import. Instead, find the ES6 module version of the library or load it via the `scripts` array in the manifest.
 
+### 11. Verify API return types - do not assume array access
+
+Many Thunderbird APIs return wrapped objects, not direct arrays. Always verify the return type in the documentation before accessing the data.
+
+**Common pitfall - MessageList:**
+```javascript
+// WRONG - getDisplayedMessages() returns MessageList, not an array
+const [message] = await browser.messageDisplay.getDisplayedMessages(tabId);
+
+// RIGHT - MessageList has a .messages array property
+const { messages: [message] } = await browser.messageDisplay.getDisplayedMessages(tabId);
+```
+
+**Common pitfall - HeadersDictionary:**
+```javascript
+// WRONG - headers might not exist or might not be an array
+let returnPath = headers["Return-Path"];
+
+// RIGHT - keys are lowercase, values are always arrays
+const returnPathArray = headers["return-path"];
+const returnPath = returnPathArray?.[0] ?? null;
+```
+
+**APIs that return wrapped objects (NOT direct arrays):**
+| API | Returns | Access Pattern |
+|-----|---------|----------------|
+| `messageDisplay.getDisplayedMessages()` | `MessageList` | `result.messages[0]` |
+| `messages.list()` | `MessageList` | `result.messages[0]` |
+| `messages.query()` | `MessageList` | `result.messages[0]` |
+| `messages.getHeaders()` | `HeadersDictionary` | `result["header-name"][0]` |
+| `messages.getFull()` | `MessagePart` | `result.headers["header-name"][0]` |
+
+**APIs that return direct arrays:**
+| API | Returns | Access Pattern |
+|-----|---------|----------------|
+| `tabs.query()` | `array of Tab` | `result[0]` |
+| `mailTabs.query()` | `array of MailTab` | `result[0]` |
+| `addressBooks.list()` | `array of AddressBookNode` | `result[0]` |
+| `contacts.list()` | `array of ContactNode` | `result[0]` |
+| `folders.query()` | `array of MailFolder` | `result[0]` |
+
+**Also note the MV2 → MV3 API changes:**
+| MV2 (old) | MV3 (new) | Return Type Change |
+|-----------|-----------|-------------------|
+| `getDisplayedMessage()` | `getDisplayedMessages()` | `MessageHeader` → `MessageList` |
+| `onMessageDisplayed` | `onMessagesDisplayed` | `(tab, message)` → `(tab, messageList)` |
+
 
 ## Understanding Thunderbird Release Channels
 
@@ -544,15 +591,27 @@ When a developer asks about Thunderbird WebExtensions:
           | ical.js | lib/ical.js | ES6 default | `import ICAL from "./lib/ical.js"` |
           | somelib | lib/somelib.mjs | ES6 named | `import { parse } from "./lib/somelib.mjs"` |
     - [ ] Update VENDOR.md with the correct file path and version URL.
-5. **Mandatory API Permission Audit (MUST be performed before finalizing the project)**
+5. **Mandatory API Audit (MUST be performed before finalizing the project)**
     - [ ] List all used API methods (including APIs like storage, i18n, runtime, accounts, messages).
     - [ ] For EACH API method, fetch its direct documentation page via `https://webextension-api.thunderbird.net/en/mv3/<api-name>.html` - or parse the [base page](https://webextension-api.thunderbird.net/en/mv3/) for the correct API link.
+    - [ ] For EACH API method, verify:
+          - **Parameters:** Correct parameter names and types
+          - **Return type:** The actual type returned by the Promise (not just "Promise")
+          - **Access pattern:** How to extract data from the return value (especially for wrapped types)
+          - **Required permission:** What permission is needed in manifest.json
     - [ ] Output an API audit table showing:
-          | API Method | Documentation URL | Required Permission |
-          |------------|-------------------|---------------------|
-          | browser.storage.session.get | .../storage.html | storage |
-          | browser.calendar.items.onUpdated | (Experiment API) | none |
-          | browser.i18n.getMessage | .../i18n.html | none |
+          | API Method | Returns | Access Pattern | Required Permission |
+          |------------|---------|----------------|---------------------|
+          | browser.messageDisplay.getDisplayedMessages() | MessageList | `result.messages[0]` | messagesRead |
+          | browser.messages.getHeaders() | HeadersDictionary | `result["header-name"][0]` | messagesRead |
+          | browser.messages.getFull() | MessagePart | `result.headers["header-name"][0]` | messagesRead |
+          | browser.mailTabs.query() | array of MailTab | `result[0]` | (none) |
+          | browser.tabs.query() | array of Tab | `result[0]` | (none) |
+          | browser.storage.session.get | object | `result.keyName` | storage |
+          | browser.i18n.getMessage | string | direct | (none) |
+    - [ ] Pay special attention to APIs that return **wrapped objects** vs **direct arrays**:
+          - `MessageList` has a `.messages` array property - do NOT destructure directly
+          - `HeadersDictionary` uses lowercase keys and array values - access via `headers["header-name"][0]`
     - [ ] Only after completing this table, update the permissions entry in manifest.json to include ALL required permissions.
 6. **Provide guidance:**
    - Inform developer about the next steps mentioned in the "Review Process Tips" section.
