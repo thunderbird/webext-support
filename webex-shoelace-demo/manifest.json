@@ -1,0 +1,22 @@
+{
+  "manifest_version": 2,
+  "name": "RemoveDupes",
+  "version": "1.0",
+  "description": "Logs duplicate message subjects in a folder.",
+  "applications": {
+    "gecko": {
+      "id": "removedupes@example.com"
+    }
+  },
+  "permissions": [
+    "menus",
+    "tabs",
+    "messagesRead",
+    "accountsRead",
+    "messagesMove",
+    "messagesDelete"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  }
+}

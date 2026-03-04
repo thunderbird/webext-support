@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Duplicate Scan Results</title>
+
+  <!--Shoelace theme-->
+<link rel="stylesheet" href="./vendor/shoelace/themes/light.css">
+
+<!-- Shoelace components-->
+<script type="module" src="./vendor/shoelace/components/dialog/dialog.js"></script>
+<script type="module" src="./vendor/shoelace/components/button/button.js"></script>
+
+  <style>
+    body { margin: 0; font: message-box; }
+    .meta { margin: 0 0 12px 0; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td {padding: 10px; border-bottom: 1px solid rgba(0,0,0,.20); border-right: 1px solid rgba(0,0,0,.20);vertical-align: top;}
+    th { text-align: left; white-space: nowrap; }
+    th:last-child,
+    td:last-child {border-right: none;}
+    .subject { word-break: break-word; }
+    .count { text-align: right; width: 120px; }
+    /* Make the table header stick when scrolling */
+    table thead th {position: sticky; top: 0; z-index: 2; background: #e9eef6; font-weight: 600; border-bottom: 2px solid rgba(0,0,0,.20);}
+    .table-wrap {max-height: 60vh; overflow: auto;}
+    tbody tr:hover {background: rgba(0,0,0,.04);}
+  </style>
+</head>
+
+<body>
+  <sl-dialog label="Duplicate Scan Results" class="dialog" style="--width: 820px;">
+    <p class="meta" id="meta"></p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+         <tr>
+            <th id="th-subject">
+              <sl-button variant="text" size="small" id="sort-subject">
+                Subject
+              </sl-button>
+            </th>
+            <th id="th-count" class="count" aria-sort="none">
+              <sl-button variant="text" size="small" id="sort-count">
+                Count
+              </sl-button>
+            </th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+
+    <sl-button slot="footer" variant="primary" id="close">Close</sl-button>
+  </sl-dialog>
+
+  <script type="module" src="dialog.js"></script>
+</body>
+</html>
