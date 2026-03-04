@@ -1,8 +1,8 @@
 {
   "manifest_version": 2,
-  "name": "RemoveDupes",
+  "name": "ShoelaceDemoExt",
   "version": "1.0",
-  "description": "Logs duplicate message subjects in a folder.",
+  "description": "Demonstrates Shoelace UI in TB WebExtension",
   "applications": {
     "gecko": {
       "id": "removedupes@example.com"
