@@ -16,7 +16,7 @@ function escapeHtml(s) {
 
 
 function renderRowsChunked(tbody, rows, chunkSize = 1, token) {
-  tbody.textContent = ""; // clear existing
+  tbody.textContent = ""; 
   let i = 0;
 
   function appendChunk() {
@@ -42,7 +42,6 @@ function renderRowsChunked(tbody, rows, chunkSize = 1, token) {
   console.log("rows.length =", rows.length);
   requestAnimationFrame(appendChunk);
 
-  //appendChunk();
 }
 
 function compareRows(a, b, key, dir) {
