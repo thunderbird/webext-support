@@ -1,0 +1,10 @@
+{
+  "name": "webawesome-table-example",
+  "version": "1.0.0",
+  "dependencies": {
+    "@awesome.me/webawesome": "^3.3.1"
+  },
+  "scripts": {
+    "build": "node build.js"
+  }  
+}

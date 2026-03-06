@@ -1,67 +1,147 @@
-# Supporting WebExtension Developers
+# Using Webawesome in a Thunderbird MailExtension
+This example shows how to integrate Webawesome Web Components specifically into a Thunderbird MailExtension to implement a dialog-based user interface.
+The example add-on adds a folder pane context menu item that scans a selected folder and opens a dialog displaying results in a tabular view.
+The purpose of this example is to show:
+ - How to vendor and load Webawesome components in a MailExtension
+ - How to build a dialog UI using ```html <sl-dialog>```
+ - How to render and style tabular results inside the dialog
 
-The goal of this repository is to provide additional tools, modules, custom elements, Experiment APIs and other resources, to simplify the development of WebExtensions for Thunderbird.
 
-## Introduction
+This project is intended as a UI integration example, not a full duplicate-removal add-on.
 
-To get started with WebExtensions for Thunderbird, we suggest to first read our [Thunderbird WebExtension Guide](https://developer.thunderbird.net/add-ons/mailextensions) and follow the ["Hello World" Example](https://developer.thunderbird.net/add-ons/hello-world-add-on).
 
-You will learn, how WebExtensions use a set of well-defined APIs (called WebExtension APIs), which will be mostly stable, even if the underlying Thunderbird code base is changed. In the past, these internal changes have led to heavy add-on breakages on each new Thunderbird release and the WebExtension API approach aims to minimize that.
+### Repository Structure
+The repository contains the following files:
+Core extension files
+### `background.js`
+ Handles the main extension logic.
+ Creates the folder pane menu item, scans the selected folder and opens the results dialog.
 
-You will also learn, that the current set of available WebExtension APIs for Thunderbird is far from being complete. Many aspects of Thunderbird which are of interest for add-ons, cannot be accessed by them. To overcome this limitation, add-on developers can write [Experiment APIs](https://developer.thunderbird.net/add-ons/mailextensions/experiments), which have direct access to internal Thunderbird functions and can make them available to WebExtensions. Their usage should be minimized. In this repository we provide Experiments, which are currently not planned to be merged into core, but are useful to overcome some of the current limitations. In the [webext-experiments](https://github.com/thunderbird/webext-experiments) repository you will find additional Experiment APIs, which *are* planned to be merged into core.
 
-## AI
+### `dialog.html`
+ Defines the UI for the dialog window and loads Shoelace components.
 
-The `ai` folder contains a skill file which can be used by various AI coding agents to learn how to code Thunderbird WebExtensions properly:
 
-|                    | Description |
-| ------------------ | ----------- |
-| [thunderbird-webextensions-skill.md](https://raw.githubusercontent.com/thunderbird/webext-support/refs/heads/master/ai/thunderbird-webextensions-skill.md)         | A skill file to teach AI agents how to code Thunderbird WebExtensions. |
+### `dialog.js`
+ Renders the table data and handles sorting and filtering behaviour.
 
-## Experiment APIs
 
-The `experiments` folder contains the following Experiment APIs, which may be useful while converting legacy extensions to modern WebExtensions:
+### `manifest.json`
+ Defines the extension configuration and permissions.
 
-|                | Description |
-| -------------- | ----------- |
-| [FileSystem](experiments/FileSystem/)   | Grant read/write access to a folder in the users profile folder (file system level). |
-| [ImapTools](experiments/ImapTools/)     | Extract the IMAP UID from a message. |
-| [LegacyHelper](experiments/LegacyHelper/) | Register legacy `chrome://*/content/` and `resource://*/` urls, and open legacy XUL dialogs. |
-| [LegacyCSS](experiments/LegacyCSS/)     | Add CSS files to Thunderbird windows. |
-| [LegacyPrefs](experiments/LegacyPrefs/) | Access Thunderbird's system preferences. |
 
-## Images
 
-The `images` folder contains the following resources:
+### UI library
+Webawesome for UI components
 
-|             | Description |
-| ----------- | ----------- |
-| ![get-the-addon](https://raw.githubusercontent.com/thunderbird/webext-support/refs/heads/master/images/get-the-addon.svg)     | A nice looking get-the-add-on badge to be used on websites to promote your Thunderbird Add-on. |
+### 1. Build step to implement Webawesome
 
-## JavasScript Modules
+This example uses a simple build script to prepare the extension directory.
 
-The `modules` folder contains the following helper modules:
+The build process performs the following steps:
 
-|             | Description |
-| ----------- | ----------- |
-| [i18n](modules/i18n/)                 | Replace `__MSG_*__` i18n placeholders in HTML files. |
-| [messageLists](modules/messageLists/) | Convenient wrapper functions for handling `MessageLists` and the pagination mechanism, simplifying the process of looping over messages |
-| [preferences](modules/preferences/)   | Convenient wrapper functions to manager add-on preferences. |
-| [webExtensionStorageEditor](modules/webExtensionStorageEditor) | Storage Editor for WebExtensions, inspired by the `about:config` UI |
+- Deletes the previous extension output directory
+- Copies the src directory into the extension output directory
+- Copies vendored UI library files from node_modules into the extension
+- Produces a clean folder ready to be loaded as a Thunderbird add-on
 
-## Tools
+Example commands:
 
-The `tools` folder contains the following tools:
+- npm ci
+- npm run build
 
-|                  | Description |
-| ---------------- | ----------- |
-| [locale converter](tools/locale-converter/) | A python script to convert legacy DTD and property files to i18n JSON files. |
+The build script ensures that only the required files are included in the extension directory, preventing unnecessary dependencies (such as the entire node_modules folder) from being packaged in the extension.
 
-## UI
 
-The `ui` folder contains the following elements:
+### 2. Import Webawesome in Your Dialog HTML
+In the HTML file used for the extension UI (for example dialog.html), load the Shoelace theme and components.
+```html 
+        <link rel="stylesheet" href="./vendor/webawesome/styles/webawesome.css">
+        <link rel="stylesheet" href="./vendor/webawesome/styles/native.css">
+        <link rel="stylesheet" href="./vendor/webawesome/styles/themes/shoelace.css">
 
-|                    | Description |
-| ------------------ | ----------- |
-| [data-tables](ui/data-tables/)         | Set of 3rd party libraries to present data in tables. | 
-| [mail-folder-picker](ui/mail-folder-picker/) | A custom element which allows to select one of the user's mail folders (IMAP, POP, Local, ...). |
+        <script type="module" src="./vendor/webawesome/components/dialog/dialog.js"></script>
+        <script type="module" src="./vendor/webawesome/components/button/button.js"></script>
+```
+Scripts must be loaded with ```html type="module". ```
+All files must be referenced locally within the extension.
+
+### 3. Use Webawesome Components
+
+Once imported, Webawesome components can be used directly in the HTML.
+Example dialog:
+```html
+ <wa-dialog label="Duplicate Scan Results" class="dialog" style="--width: 820px;">
+    <p class="meta" id="meta"></p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+         <tr>
+            <th id="th-subject">
+              <wa-button variant="text" size="small" id="sort-subject">
+                Subject
+              </wa-button>
+            </th>
+            <th id="th-count" class="count" aria-sort="none">
+              <wa-button variant="text" size="small" id="sort-count">
+                Count
+              </wa-button>
+            </th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+
+    <wa-button slot="footer" variant="primary" id="close">Close</wa-button>
+  </wa-dialog>
+```
+
+### 4. Style the Table
+The example table uses simple CSS for layout and readability.
+Example:
+```html 
+  <style>
+    body { margin: 0; font: message-box; }
+    .meta { margin: 0 0 12px 0; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td {padding: 10px; border-bottom: 1px solid rgba(0,0,0,.20); border-right: 1px solid rgba(0,0,0,.20);vertical-align: top;}
+    th { text-align: left; white-space: nowrap; }
+    th:last-child,
+    td:last-child {border-right: none;}
+    .subject { word-break: break-word; }
+    .count { text-align: right; width: 120px; }
+    table thead th {position: sticky; top: 0; z-index: 2; background: #e9eef6; font-weight: 600; border-bottom: 2px solid rgba(0,0,0,.20);}
+    .table-wrap {max-height: 60vh; overflow: auto;}
+    tbody tr:hover {background: rgba(0,0,0,.04);}
+    wa-button[variant="primary"]::part(base) {background: #0a84ff; border-color: #0a84ff; color: white;}
+    wa-button[variant="primary"]::part(base):hover {background: #006fe0; border-color: #006fe0; color: white;}
+    wa-button[variant="text"]::part(base) {color: #0a84ff; background: transparent; border: none;}
+    wa-button[variant="text"]::part(base):hover {color: #006fe0; background: transparent;}
+  </style>
+  ```
+
+### 5. Column Separators
+Column separators are created by the border-right rule.
+To remove them, delete or override the rule:
+```html 
+th, td {
+ border-right: none;
+}
+The following rule may also be removed:
+th:last-child,
+td:last-child {
+ border-right: none;
+}
+```
+This will render the table without vertical column lines.
+
+### Notes
+Shoelace must be bundled with the extension due to Thunderbird CSP restrictions.
+
+
+Components must be loaded with type="module".
+
+
+Only the components you use need to be imported.
+
