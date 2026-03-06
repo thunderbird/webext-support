@@ -1,0 +1,22 @@
+{
+  "manifest_version": 2,
+  "name": "WebAwesome-Table-Example",
+  "version": "1.0",
+  "description": "Demonstrates WebAwesome UI in TB WebExtension",
+  "applications": {
+    "gecko": {
+      "id": "web-awesome-table-example@example.thunderbird.net"
+    }
+  },
+  "permissions": [
+    "menus",
+    "tabs",
+    "messagesRead",
+    "accountsRead",
+    "messagesMove",
+    "messagesDelete"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  }
+}
