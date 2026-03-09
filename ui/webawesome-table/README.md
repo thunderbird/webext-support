@@ -8,7 +8,7 @@ displayed in a tabular view.
 
 The purpose of this example is to show:
  - How to vendor and load Web Awesome components in a MailExtension
- - How to build a dialog UI using ```html <sl-dialog>```
+ - How to build a dialog UI using `<sl-dialog>`
  - How to render and style tabular results inside the dialog
 
 This project is intended as a UI integration example, not a full duplicate-removal
@@ -160,7 +160,7 @@ Example:
     wa-button[variant="text"]::part(base) {color: #0a84ff; background: transparent; border: none;}
     wa-button[variant="text"]::part(base):hover {color: #006fe0; background: transparent;}
   </style>
-  ```
+```
 
 ### Column Separators
 
