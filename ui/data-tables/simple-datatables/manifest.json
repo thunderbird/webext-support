@@ -1,0 +1,15 @@
+{
+  "manifest_version": 2,
+  "version": "2",
+  "name": "Simple-Data-Table Example",
+  "applications": {
+    "gecko": {
+      "id": "simple-data-table@examples.thunderbird.net"
+    }
+  },
+  "background": {
+    "scripts": [
+      "background.js"
+    ]
+  }
+}

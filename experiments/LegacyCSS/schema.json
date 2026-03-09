@@ -1,0 +1,55 @@
+[
+  {
+    "namespace": "LegacyCSS",
+    "events": [
+      {
+        "name": "onWindowOpened",
+        "type": "function",
+        "description": "",
+        "parameters": [
+          {
+            "name": "url",
+            "type": "string"
+          }
+        ]
+      }
+    ],
+    "functions": [
+      {
+        "name": "inject",
+        "type": "function",
+        "async": true,
+        "description": "Injects the given CSS file into the window with the given url. Returns false if window was not open.",
+        "parameters": [
+          {
+            "name": "url",
+            "type": "string"
+          },
+          {
+            "name": "cssFile",
+            "type": "string"
+          }
+        ]
+      },
+      {
+        "name": "registerChromeUrl",
+        "type": "function",
+        "async": true,
+        "description": "Register folders which should be available as chrome:// urls (as defined in the legacy chrome.manifest). You probably only need this to load files which should manipulate the folder tree view.",
+        "parameters": [
+          {
+            "name": "data",
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "description": "Array of manifest url definitions (content, locale, resource)"
+          }
+        ]
+      }
+    ]
+  }
+]
