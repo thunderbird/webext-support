@@ -89,7 +89,7 @@ In the HTML file used for the extension UI (for example dialog.html), load the W
         <script type="module" src="./vendor/webawesome/components/button/button.js"></script>
 ```
 
-Scripts must be loaded with ```html type="module". ```
+Scripts must be loaded with `type="module"`.
 
 All files must be referenced locally within the extension.
 
@@ -182,5 +182,5 @@ This will render the table without vertical column lines.
 
 ### Notes
 
-Components must be loaded with type="module". Only the components you use need to
+Components must be loaded with `type="module". Only the components you use need to
 be imported.
