@@ -29,10 +29,10 @@ webawesome-table/
 │
 ├─ node_modules/          # Installed npm dependencies. Source of the vendored
 │                         # Web Awesome files copied during the build step. Not
-│                         # committed to the repository, created by executing
+│                         # committed to the repository, created by running
 │                         # "npm ci".
 │
-├─ src/                   # Main source code.
+├─ src/                   # The main source code folder.
 │  ├─ manifest.json       # Extension configuration and permissions.
 │  ├─ background.js       # Main extension logic. Creates the folder pane menu
 │  │                      # item, opens the dialog, and scans selected folders.
