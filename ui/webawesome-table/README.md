@@ -184,5 +184,5 @@ This will render the table without vertical column lines.
 
 ### Notes
 
-Components must be loaded with `type="module". Only the components you use need to
+Components must be loaded with `type="module"`. Only the components you use need to
 be imported.
