@@ -15,15 +15,35 @@ function crc32(buf) {
   return (crc ^ 0xFFFFFFFF) >>> 0;
 }
 
-function zip(sources, destFile) {
+/**
+ * Zip files/folders into destFile.
+ * @param {string|string[]} sources - Paths to zip
+ * @param {string} destFile - Output zip file
+ * @param {string[]} [exclude=[]] - Optional array of folder/file paths to exclude (relative paths)
+ */
+function zip(sources, destFile, exclude = []) {
   const files = [];
+  
+  // Ensure parent directory exists
+  const parentDir = path.dirname(destFile);
+  if (!fs.existsSync(parentDir)) {
+    fs.mkdirSync(parentDir, { recursive: true });
+  }
+    
   function collect(full, rel) {
-    if (fs.statSync(full).isDirectory()) {
-      for (const name of fs.readdirSync(full)) collect(path.join(full, name), rel + "/" + name);
+    // skip if rel matches any exclude pattern
+    if (exclude.some(e => rel === e || rel.startsWith(e + "/"))) return;
+
+    const stat = fs.statSync(full);
+    if (stat.isDirectory()) {
+      for (const name of fs.readdirSync(full)) {
+        collect(path.join(full, name), rel + "/" + name);
+      }
     } else {
       files.push({ full, rel });
     }
   }
+
   if (typeof sources === "string") {
     for (const name of fs.readdirSync(sources)) collect(path.join(sources, name), name);
   } else {
@@ -112,19 +132,24 @@ function cp(src, dest) {
   }
 }
 
-console.log("Cleaning dist ...");
+console.log("Cleaning output directory ...");
 rm("dist");
 
-console.log("Copying src ...");
-cp("src", "dist/extension");
+console.log("Cleaning vendored files ...");
+rm("src/vendor");
 
-console.log("Copying WebAwesome Library...");
-cp("node_modules/@awesome.me/webawesome/dist-cdn", "dist/extension/vendor/webawesome");
+console.log("Copying WebAwesome Library ...");
+cp("node_modules/@awesome.me/webawesome/dist-cdn", "src/vendor/webawesome");
 
-console.log("Creating extension file (extension.xpi) ...");
-zip("dist/extension", "dist/extension.xpi");
+console.log("Creating extension file (dist/extension.xpi) ...");
+zip("src", "dist/extension.xpi");
 
-console.log("Creating extension source package (source.zip) ...");
-zip(["LICENSE", "package-lock.json", "package.json", "README.md", "src", "build.js"], "dist/source.zip");
+// Exclude src/vendor from source.zip
+console.log("Creating extension source package (dist/source.zip) ...");
+zip(
+  ["LICENSE", "package-lock.json", "package.json", "README.md", "build.js", "src"],
+  "dist/source.zip",
+  ["src/vendor"]
+);
 
 console.log("Build finished. Output is in the 'dist' folder.");
