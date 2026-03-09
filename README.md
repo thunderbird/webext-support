@@ -19,7 +19,7 @@ Core extension files
 
 
 ### `dialog.html`
- Defines the UI for the dialog window and loads Shoelace components.
+ Defines the UI for the dialog window and loads Webawesome components.
 
 
 ### `dialog.js`
@@ -54,11 +54,10 @@ The build script ensures that only the required files are included in the extens
 
 
 ### 2. Import Webawesome in Your Dialog HTML
-In the HTML file used for the extension UI (for example dialog.html), load the Shoelace theme and components.
+In the HTML file used for the extension UI (for example dialog.html), load the Webawesome theme and components.
 ```html 
         <link rel="stylesheet" href="./vendor/webawesome/styles/webawesome.css">
         <link rel="stylesheet" href="./vendor/webawesome/styles/native.css">
-        <link rel="stylesheet" href="./vendor/webawesome/styles/themes/shoelace.css">
 
         <script type="module" src="./vendor/webawesome/components/dialog/dialog.js"></script>
         <script type="module" src="./vendor/webawesome/components/button/button.js"></script>
@@ -73,7 +72,12 @@ Example dialog:
 ```html
  <wa-dialog label="Duplicate Scan Results" class="dialog" style="--width: 820px;">
     <p class="meta" id="meta"></p>
-    <div class="table-wrap">
+    <div id="loading" class="loading">
+      <img id="spinner" class="spinner" src="spinner.gif" alt="Loading" />
+      <div id="loading-text">Scanning folder…</div>
+    </div>
+
+    <div class="table-wrap" id="results-wrap" hidden>
       <table>
         <thead>
          <tr>
@@ -114,6 +118,11 @@ Example:
     table thead th {position: sticky; top: 0; z-index: 2; background: #e9eef6; font-weight: 600; border-bottom: 2px solid rgba(0,0,0,.20);}
     .table-wrap {max-height: 60vh; overflow: auto;}
     tbody tr:hover {background: rgba(0,0,0,.04);}
+    .loading {display: flex; align-items: center; gap: 10px; padding: 16px 0 20px 0;}
+    .spinner {width: 20px; height: 20px; flex: 0 0 auto;}
+    #loading-text {color: #444;}
+    #loading[hidden] {display: none !important;}
+    #results-wrap[hidden] {display: none !important;}
     wa-button[variant="primary"]::part(base) {background: #0a84ff; border-color: #0a84ff; color: white;}
     wa-button[variant="primary"]::part(base):hover {background: #006fe0; border-color: #006fe0; color: white;}
     wa-button[variant="text"]::part(base) {color: #0a84ff; background: transparent; border: none;}
@@ -137,8 +146,6 @@ td:last-child {
 This will render the table without vertical column lines.
 
 ### Notes
-Shoelace must be bundled with the extension due to Thunderbird CSP restrictions.
-
 
 Components must be loaded with type="module".
 

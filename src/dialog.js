@@ -5,6 +5,24 @@ let sort = { key: "count", dir: "desc" };
 
 let renderToken = 0;
 
+function setLoading(isLoading, text = "Scanning folder…") {
+  const loading = document.getElementById("loading");
+  const loadingText = document.getElementById("loading-text");
+  const resultsWrap = document.getElementById("results-wrap");
+
+  if (loadingText) {
+    loadingText.textContent = isLoading ? text : "";
+  }
+
+  if (loading) {
+    loading.hidden = !isLoading;
+  }
+
+  if (resultsWrap) {
+    resultsWrap.hidden = isLoading;
+  }
+}
+
 function escapeHtml(s) {
   return String(s)
     .replaceAll("&", "&amp;")
@@ -91,14 +109,18 @@ function render() {
   if (!meta || !tbody) return;
 
   if (!data) {
-    meta.textContent = "Scanning folder…";
+    meta.textContent = "";
     tbody.innerHTML = "";
+    setLoading(true, "Scanning folder…");
     return;
   }
 
   meta.textContent = `Folder: ${data.folderName} • Scanned: ${data.scannedCount} • Duplicate groups: ${data.duplicateGroupCount}`;
+  setLoading(false);
 
-  const rows = [...(data.rows || [])].sort((a, b) => compareRows(a, b, sort.key, sort.dir));
+  const rows = [...(data.rows || [])].sort((a, b) =>
+    compareRows(a, b, sort.key, sort.dir)
+  );
 
   updateHeaderLabels();
 
@@ -113,6 +135,14 @@ async function waitForResults() {
 
     if (status.error) {
       throw new Error(status.error);
+    }
+
+    if (status.inProgress) {
+      const folderText = status.folderName
+        ? `Scanning folder: ${status.folderName}…`
+        : "Scanning folder…";
+
+      setLoading(true, folderText);
     }
 
     if (!status.inProgress && status.hasResults) {
@@ -154,6 +184,7 @@ async function init() {
 
 init().catch((err) => {
   console.error(err);
+  setLoading(false);
   const meta = document.getElementById("meta");
   if (meta) meta.textContent = `Error: ${err?.message || err}`;
 });

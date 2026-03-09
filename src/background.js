@@ -74,6 +74,7 @@ async function getNormalizedSubjectAsync(message) {
 let lastScanResults = null;
 let scanInProgress = false;
 let lastScanError = null;
+let currentScanFolderName = null;
 
 browser.runtime.onMessage.addListener((msg) => {
   if (msg && msg.type === "get-last-scan-results") {
@@ -81,12 +82,13 @@ browser.runtime.onMessage.addListener((msg) => {
   }
 
   if (msg && msg.type === "get-scan-status") {
-    return Promise.resolve({
-      inProgress: scanInProgress,
-      hasResults: !!lastScanResults,
-      error: lastScanError,
-    });
-  }
+  return Promise.resolve({
+    inProgress: scanInProgress,
+    hasResults: !!lastScanResults,
+    error: lastScanError,
+    folderName: currentScanFolderName,
+  });
+}
 
   return false;
 });
@@ -99,6 +101,7 @@ browser.menus.onClicked.addListener(async (info) => {
     (info.selectedFolders && info.selectedFolders[0]) || info.selectedFolder;
 
   if (!folder) return;
+  currentScanFolderName = folder.name; 
 
   // reset scan state
   scanInProgress = true;
@@ -157,5 +160,6 @@ browser.menus.onClicked.addListener(async (info) => {
     lastScanError = String(err);
   } finally {
     scanInProgress = false;
+    currentScanFolderName = null;
   }
 });
