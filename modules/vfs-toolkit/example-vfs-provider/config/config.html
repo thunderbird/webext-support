@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <script src="config.js" type="module"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, sans-serif;
+      margin: 0;
+      padding: 24px;
+      font-size: 13px;
+      min-width: 340px;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .header img {
+      width: 40px;
+      height: 40px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .section-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin: 0 0 10px;
+    }
+
+    .option-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+    }
+
+    .option-row input[type="checkbox"] {
+      margin: 2px 0 0;
+      accent-color: #2563eb;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .option-row label {
+      cursor: pointer;
+    }
+
+    .option-title {
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 2px;
+    }
+
+    .option-desc {
+      color: #64748b;
+      font-size: 12px;
+    }
+
+    #saved-notice {
+      margin-top: 14px;
+      font-size: 12px;
+      color: #16a34a;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    #saved-notice.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    <img src="../icon.png" alt="" />
+    <h2>Example Storage - Settings</h2>
+  </div>
+
+  <p class="section-title">Simulated behavior</p>
+  <div class="option-row">
+    <input type="checkbox" id="slow-data-transfer" />
+    <label for="slow-data-transfer">
+      <div class="option-title" >Slow data transfer</div>
+      <div class="option-desc">Simulate slow data transfer behavior, to debug progess feedback.</div>
+    </label>
+  </div>
+  <div id="saved-notice">Settings saved.</div>
+</body>
+
+</html>

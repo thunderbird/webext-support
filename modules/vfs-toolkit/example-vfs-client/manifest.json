@@ -1,0 +1,24 @@
+{
+  "manifest_version": 2,
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "vfs-example-client@thunderbird.net",
+      "strict_min_version": "128.0"
+    }
+  },
+  "name": "VFS-Toolkit: Simple example client",
+  "version": "1.0.1",
+  "author": "John Bieling",
+  "homepage_url": "https://github.com/thunderbird/webext-support/tree/master/modules/vfs-toolkit",
+  "description": "An example client using the VFS toolkit.",
+  "permissions": [
+    "storage",
+    "management"
+  ],
+  "background": {
+    "type": "module",
+    "scripts": [
+      "background.js"
+    ]
+  }
+}

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <script src="page.js" type="module"></script>
+  <style>
+    :root {
+      color-scheme: light dark;
+    }
+
+    body {
+      font-family: system-ui, sans-serif;
+      font-size: 13px;
+      padding: 16px;
+      margin: 0;
+    }
+
+    p {
+      margin: 0 0 14px;
+      line-height: 1.5;
+    }
+
+    .options-button {
+      padding: 8px 18px;
+      background: #2a7fd4;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .options-button:hover {
+      background: #1a6abf;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .options-button {
+        background: #1a6abf;
+      }
+
+      .options-button:hover {
+        background: #2a7fd4;
+      }
+    }
+
+    .vfs-section {
+      margin-top: 20px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 10px 14px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .vfs-section {
+        border-color: #444;
+      }
+    }
+
+    .vfs-heading {
+      font-size: 13px;
+      font-weight: 600;
+      margin: 0 0 8px;
+    }
+
+    .vfs-section p {
+      margin-top: 10px;
+    }
+
+    .vfs-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+  </style>
+</head>
+
+<body>
+  <div class="vfs-section">
+    <h3 class="vfs-heading">Testing the VFS Toolkit</h3>
+    <p>
+      The following buttons open the file pickers of the <a
+        href="https://github.com/thunderbird/webext-support/tree/master/modules/vfs-toolkit">VFS Toolkit</a> available
+      for WebExtensions. It is a wrapper for
+      <a href="https://developer.mozilla.org/en-US/docs/Web/API/File_System_API/Origin_private_file_system">OPFS</a>
+      implemented by Mozilla, which is a virtual file system, but sadly without file pickers.
+    </p>
+    <p>
+      This gap is closed by the VFS Toolkit. In addition, the VFS Toolkit provides support for arbitrary storage
+      backends, and is not limited to OPFS. Users can install additional providers.
+    </p>
+    <p>
+      The only already available storage backend is the <a
+        href="https://github.com/jobisoft/Local-Home-Folder-Access-Provider">Local Home Folder Access Provider</a>,
+      allowing access to your local home directory via Native Messaging (not via Experiments!).
+    </p>
+    <div class="vfs-buttons">
+      <button class="options-button" id="show-openFile-picker">Show OpenFile Picker</button>
+      <button class="options-button" id="show-saveFile-picker">Show SaveFile Picker</button>
+      <button class="options-button" id="show-directory-picker">Show Directory Picker</button>
+    </div>
+  </div>
+</body>
+
+</html>
