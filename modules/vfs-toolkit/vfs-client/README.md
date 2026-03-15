@@ -12,7 +12,7 @@ import * as vfs from '/vendor/vfs-toolkit/vfs-client/vfs-client.mjs';
 
 The same picker UI is shared by all three picker functions. Behaviour adapts to the mode:
 
-- **Open mode** (`showOpenFilePicker`): select one or more files, **Select File** / **Select Files** button
+- **Select mode** (`showSelectFilePicker`): select one or more files, **Select File** / **Select Files** button
 - **Save mode** (`showSaveFilePicker`): navigate to a folder and type a filename, **Save** button
 - **Directory mode** (`showDirectoryPicker`): click a folder to select it, **Select Folder** button enabled only when exactly one folder is selected
 
@@ -84,9 +84,9 @@ vfs.enableSupportExternalProviders({configStorageKey: "vfs-toolkit-config-data"}
 
 ---
 
-#### `vfs.showOpenFilePicker(options?)` → `Promise<Array<Entry>>`
+#### `vfs.showSelectFilePicker(options?)` → `Promise<Array<Entry>>`
 
-Opens a file picker popup. Always resolves with [`Array<Entry>`](#entry), empty if cancelled. When `multiple: false` (default), the array contains at most one entry.
+Opens a file picker popup to select one or more files. Always resolves with [`Array<Entry>`](#entry), empty if cancelled. When `multiple: false` (default), the array contains at most one entry.
 
 The picker always supports multi-selecting files for management (copy, move, delete). The `multiple` option only controls whether the **Select** button can confirm a multi-file result.
 
@@ -107,12 +107,12 @@ The picker always supports multi-selecting files for management (copy, move, del
 **Example:**
 
 ```js
-const [result] = await vfs.showOpenFilePicker();
+const [result] = await vfs.showSelectFilePicker();
 if (result) await vfs.readFile(result);
 
-const results = await vfs.showOpenFilePicker({ multiple: true });
+const results = await vfs.showSelectFilePicker({ multiple: true });
 
-const [result] = await vfs.showOpenFilePicker({
+const [result] = await vfs.showSelectFilePicker({
   storageRef: {
     providerId: 'my-addon@example.com',
     storageId: 'my-storage-id'
@@ -488,7 +488,7 @@ A `StorageRef` is obtained from:
 
 #### `PickerFileType`
 
-A single entry in the `types` array passed to `showOpenFilePicker`.
+A single entry in the `types` array passed to `showSelectFilePicker`.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|

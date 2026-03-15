@@ -601,8 +601,7 @@ export async function getStorageUsage(storageRef = null) {
  *
  * @param {object} [options]
  * @param {Array<{description?: string, accept: Object<string, string[]>}>} [options.types]
- *   File type filter entries, same shape as the `types` option of the native
- *   `showOpenFilePicker` API. Each entry has an optional `description` label and
+ *   File type filter entries. Each entry has an optional `description` label and
  *   an `accept` map of MIME type → array of extensions (e.g. `{ "image/*": [".png", ".jpg"] }`).
  * @param {boolean} [options.excludeAcceptAllOption=false]
  *   When `true`, the "All files (*)" option is omitted from the type dropdown and
@@ -612,7 +611,6 @@ export async function getStorageUsage(storageRef = null) {
  * @param {string} [options.id]
  *   An identifier for this picker context. The picker remembers the last-used
  *   directory and storageRef per `id` and restores both on the next open, ignoring `startIn`.
- *   Mirrors the `id` option of the native `showOpenFilePicker` API.
  * @param {string} [options.startIn]
  *   Absolute path to open the picker in initially (e.g. `"/documents"`).
  *   Ignored when `id` is set and has a saved state.
@@ -625,7 +623,7 @@ export async function getStorageUsage(storageRef = null) {
  *   (default), the returned array always contains exactly one entry.
  * @returns {Promise<Entry[]|null>} Array of `Entry` objects (each with `path` and `storageRef`), or null if cancelled.
  */
-export function showOpenFilePicker(options = {}) {
+export function showSelectFilePicker(options = {}) {
   // mode=open is the default, no extra param needed
   return new Promise((resolve, reject) => {
     const sessionId = crypto.randomUUID();
@@ -650,7 +648,7 @@ export function showOpenFilePicker(options = {}) {
 /**
  * Opens a save file picker UI.
  *
- * Same as `showOpenFilePicker` but the picker shows a filename input and a Save
+ * Same as `showSelectFilePicker` but the picker shows a filename input and a Save
  * button. The result path is the chosen directory joined with the entered filename.
  *
  * @param {object} [options]
