@@ -6,6 +6,11 @@ The core component of `vfs-toolkit` is its client API, an ES module wrapper arou
 
 These pickers fill an important gap: Firefox currently does not implement any native file picker UI for `OPFS`.
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/thunderbird/webext-support/refs/heads/master/modules/vfs-toolkit/vfs-toolkit-filepicker.png" alt="VFS Toolkit File Picker" width="600"><br>
+  <em>Example of a VFS Toolkit file picker using the "Local Home Folder Access" provider.</em>
+</p>
+
 ## Client API
 
 The client API offers multiple read/write methods to access files stored in the WebExtension’s `OPFS`. Since the storage is bound to the WebExtension origin, each add-on automatically receives its own isolated virtual file system.
