@@ -24,14 +24,3 @@ While `vfs-toolkit` includes built-in support for the `OPFS` storage backend, it
 Through its provider API, third-party extensions can implement storage providers that integrate with `vfs-toolkit` through a standardized communication mechanism.
 
 In practice, this allows WebExtensions using `vfs-toolkit` to access files stored outside the local `OPFS`, for example on cloud storage services such as Dropbox, Google Drive, or WebDAV-based systems.
-
-## Files
-
-| File | Purpose |
-|------|---------|
-| `vfs-client/vfs-client.mjs` | Client API - import use vfs.* APIs and the file picker |
-| `vfs-client/opfs-provider.mjs` | Built-in OPFS implementation (used internally) |
-| `vfs-client/picker.html` | File picker UI page (opened as a WebExtension popup) |
-| `vfs-client/picker.mjs` | Picker UI logic (loaded by `picker.html`) |
-| `vfs-client/picker.css` | Picker UI styles |
-| `vfs-client/locales/*.json` | locale files |
