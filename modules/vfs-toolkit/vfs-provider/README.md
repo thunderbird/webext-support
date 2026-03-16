@@ -34,13 +34,30 @@ Methods that read data must return a value (see the JSDoc on each method for the
 
 ### Error codes
 
-Throw a plain `Error` for general failures. For conflict situations, attach a `code` property so the consumer can react appropriately:
+Throw a plain `Error` for general failures. To signal a specific condition to the consumer, attach a `code` property:
 
 ```js
 throw Object.assign(new Error('File already exists'), { code: 'E:EXIST' });
 ```
 
-The only code currently used by the client is `E:EXIST`.
+| Code | When to throw | Consumer behaviour |
+|------|---------------|--------------------|
+| `E:EXIST` | A target file or folder already exists and the caller did not permit overwriting/merging. | The picker shows a conflict dialog instead of a generic error. API callers receive the error with the code attached. |
+| `E:AUTH` | The `storageId` presented by the consumer was not issued by this provider (e.g. it was revoked or came from a different provider instance). | The client replaces the error message with a generic "Unauthorized storage connection." message so implementation details are not leaked. |
+| `E:PROVIDER` | The provider itself is unavailable or misconfigured. Attach a `details` object to give the consumer actionable context. | If the picker is open it shows an error popup using the `title` and `description` from `details`. API callers can inspect `details.id` to identify the specific problem programmatically. |
+
+For `E:PROVIDER`, the `details` object should have the following shape:
+
+```js
+throw Object.assign(new Error('…'), {
+  code: 'E:PROVIDER',
+  details: {
+    id:          'some-machine-readable-id',  // stable identifier for this error condition
+    title:       'Localized error title',
+    description: 'Localized explanation and guidance for the user.',
+  },
+});
+```
 
 ### Reporting progress
 

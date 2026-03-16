@@ -4,7 +4,7 @@
 
 import * as opfsProvider from './opfs-provider.mjs';
 
-const API_VERSION = 1;
+const API_VERSION = "1.0.1";
 
 // ── Internal state ────────────────────────────────────────────────────────────
 
@@ -146,7 +146,7 @@ async function _probeExtension(id) {
     const response = await browser.runtime.sendMessage(id, { type: 'vfs-toolkit-discover' });
     if (response.API_VERSION) {
       if (response.API_VERSION != API_VERSION) {
-        console.log(`Ignoring vfs-toolkit provider <${id}> with incompatible API_VERSION <${response.API_VERSION}>, we need <${API_VERSION}>.`);
+        console.warn(`[vfs-toolkit] Provider <${id}> uses API_VERSION ${response.API_VERSION} but this client uses API_VERSION ${API_VERSION}. Make sure all extensions use the most recent version of the VFS Toolkit: https://github.com/thunderbird/webext-support/tree/master/modules/vfs-toolkit`);
       } else if (response?.name) {
         await _updateProvider(id, response.name, response.connections ?? [], response.icon ?? null, response.hasConfig ?? false);
       }
@@ -342,6 +342,7 @@ function _getProviderPort(providerId) {
           : msg.error
         );
         if (msg.errorCode) e.code = msg.errorCode;
+        if (msg.errorDetails) e.details = msg.errorDetails;
         reject(e);
       }
     } else if (msg.type === 'vfs-storage-changed') {

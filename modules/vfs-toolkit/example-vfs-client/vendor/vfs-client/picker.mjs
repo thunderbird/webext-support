@@ -521,7 +521,18 @@ async function loadDir({ silent = false } = {}) {
       _progressLabel = null; _progressShownAt = null;
     }
     state.entries = [];
-    if (!silent) showStatus(t('errorLoadDir', err.message), true);
+    if (!silent) {
+      if (_isProviderError(err)) {
+        await showDialog({
+          title: err.details?.title ?? t('error', err.message),
+          message: err.details?.description ?? err.message,
+          buttons: [{ id: 'ok', label: t('btnOK') }],
+          cancelButton: 'ok',
+        });
+      } else {
+        showStatus(t('errorLoadDir', err.message), true);
+      }
+    }
   }
   render();
   if (!silent) updateStorageInfo();
@@ -1045,6 +1056,13 @@ async function doWithStatus(msg, fn) {
     if (err.name === 'AbortError') {
       showStatus(t('cancelled'));
       setTimeout(() => showStatus(''), 2000);
+    } else if (_isProviderError(err)) {
+      await showDialog({
+        title: err.details?.title ?? t('error', err.message),
+        message: err.details?.description ?? err.message,
+        buttons: [{ id: 'ok', label: t('btnOK') }],
+        cancelButton: 'ok',
+      });
     } else {
       showStatus(t('error', err.message), true);
       console.error(err);
@@ -1389,6 +1407,10 @@ function showDialog({ title, message, checkbox = null, buttons, cancelButton }) 
 
 function _isConflictError(err) {
   return err.code === 'E:EXIST';
+}
+
+function _isProviderError(err) {
+  return err.code === 'E:PROVIDER';
 }
 
 async function _promptConflict(name, kind, isBatch) {

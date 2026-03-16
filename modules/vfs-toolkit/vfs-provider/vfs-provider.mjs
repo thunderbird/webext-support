@@ -2,7 +2,7 @@
  * vfs-provider.mjs - for documentation see README.md.
  */
 
-const API_VERSION = 1;
+const API_VERSION = "1.0.1";
 const CONNECTIONS_KEY = 'vfs-toolkit-connections';
 
 function _pickIconUrl(icons) {
@@ -307,7 +307,7 @@ export class VfsProviderImplementation {
           const result = await handleCommand(cmd, args, requestId);
           port.postMessage({ requestId, ok: true, result });
         } catch (err) {
-          port.postMessage({ requestId, ok: false, error: err.message, errorCode: err.code });
+          port.postMessage({ requestId, ok: false, error: err.message, errorCode: err.code, errorDetails: err.details });
         }
         this.#requestPorts.delete(requestId);
       });

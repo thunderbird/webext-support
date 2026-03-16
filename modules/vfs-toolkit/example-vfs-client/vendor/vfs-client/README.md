@@ -5,7 +5,7 @@
 ## Usage
 
 ```js
-import * as vfs from '/vendor/vfs-client/vfs-client.mjs';
+import * as vfs from '/vendor/vfs-toolkit/vfs-client/vfs-client.mjs';
 ```
 
 ## Picker UI features
@@ -78,7 +78,7 @@ your background script**, if you want to support external storage backend provid
 **Example (background script):**
 
 ```js
-import * as vfs from '/vendor/vfs-client/vfs-client.mjs';
+import * as vfs from '/vendor/vfs-toolkit/vfs-client/vfs-client.mjs';
 vfs.enableSupportExternalProviders({configStorageKey: "vfs-toolkit-config-data"});
 ```
 
