@@ -1,4 +1,4 @@
-import * as vfs from '../vendor/vfs-provider.mjs';
+import * as vfs from '../vendor/vfs-provider/vfs-provider.mjs';
 
 const CONNECTIONS_KEY = 'vfs-toolkit-connections';
 

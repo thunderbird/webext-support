@@ -1,0 +1,7 @@
+{
+  "name": "example-vfs-provider",
+  "version": "1.0.1",
+  "scripts": {
+    "build": "node build.js"
+  }
+}

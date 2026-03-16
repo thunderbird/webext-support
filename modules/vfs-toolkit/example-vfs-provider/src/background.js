@@ -8,7 +8,7 @@
  * Mutating operations simulate a slow delay with progress pushes for debug testing.
  */
 
-import { VfsProviderImplementation } from './vendor/vfs-provider.mjs';
+import { VfsProviderImplementation } from './vendor/vfs-provider/vfs-provider.mjs';
 
 const STORAGE_KEY = 'vfs-toolkit-local-slow-data-transfer';
 
