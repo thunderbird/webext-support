@@ -307,6 +307,8 @@ function _renameFolderPrefix(oldPath, newPath) {
 const provider = new ExampleVfsProvider({
   name: 'Example VFS Toolkit storage provider',
   setupPath: '/setup/setup.html',
+  setupWidth: 500,
+  setupHeight: 400,  
   configPath: '/config/config.html',
   configWidth: 500,
   configHeight: 400,
