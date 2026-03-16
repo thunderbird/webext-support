@@ -2,7 +2,7 @@
 
 The `vfs-toolkit` lets WebExtensions work with files without having to care *where* those files actually are. The user decides that, by choosing the storage backend that suits their needs.
 
-The core of `vfs-toolkit` is its client API, built around the [Origin Private File System](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API/Origin_private_file_system) (`OPFS`). On top of that, it adds two major capabilities the native Mozilla implementation does not provide:
+The core of `vfs-toolkit` is its client API, built around the [Origin Private File System](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API/Origin_private_file_system) (`OPFS`). On top of that, **it adds two major capabilities** the native Mozilla implementation does not provide:
 
 - **File picker UI** - Mozilla has no native file picker for `OPFS`, but `vfs-toolkit` ships one.
 - **Extensible storage backends** - through its provider API add-ons can supply support for alternative storage backends.
