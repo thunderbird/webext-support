@@ -145,7 +145,7 @@ console.log("Copying vfs-provider library ...");
 rm("src/vendor/vfs-provider");
 cp("../vfs-provider", "src/vendor/vfs-provider");
 
-console.log("Creating extension file (dist/extension.xpi) ...");
-zip("src", "dist/extension.xpi");
+console.log("Creating extension file (dist/example-vfs-toolkit-provider.xpi) ...");
+zip("src", "dist/example-vfs-toolkit-provider.xpi");
 
 console.log("Build finished. Output is in the 'dist' folder.");
