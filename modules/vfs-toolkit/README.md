@@ -1,10 +1,18 @@
 # VFS-Toolkit
 
-`vfs-toolkit` provides a virtual file system toolkit for WebExtensions.
+The `vfs-toolkit` lets WebExtensions work with files without having to care *where* those files actually are. The user decides that, by choosing the storage backend that suits their needs.
 
-The core component of `vfs-toolkit` is its client API, an ES module wrapper around the [Origin Private File System](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API/Origin_private_file_system) (`OPFS`). The API is designed for WebExtensions and provides easy-to-use file picker UI components.
+The core of `vfs-toolkit` is its client API, built around the [Origin Private File System](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API/Origin_private_file_system) (`OPFS`). On top of that, it adds two major capabilities the native Mozilla implementation does not provide:
 
-These pickers fill an important gap: Firefox currently does not implement any native file picker UI for `OPFS`.
+- **File picker UI** - Mozilla has no native file picker for `OPFS`, but `vfs-toolkit` ships one.
+- **Extensible storage backends** - through its provider API add-ons can supply alternative storage backends.
+
+The following storage backends are currently available:
+
+- **OPFS** (built-in) - virtual files stored within the browser profile
+- **Local Filesystem** - real files on disk, accessed via Native Messaging, no Experiments required ([Local Home Folder Access Provider](https://github.com/jobisoft/Local-Home-Folder-Access-Provider))
+
+We will see more storage backends being made available, soon, for example **Nextcloud** and **Seafile**.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/thunderbird/webext-support/refs/heads/master/modules/vfs-toolkit/vfs-toolkit-filepicker.png" alt="VFS Toolkit File Picker" width="600"><br>
