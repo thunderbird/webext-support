@@ -140,9 +140,22 @@ async function _addConnection(providerId, storageId, name, capabilities) {
   });
 }
 
-async function _probeExtension(id) {
+
+/**
+ * Probes a single extension to check if it is a vfs-toolkit provider.
+ *
+ * @param {string} id - The extension ID to probe.
+ * @param {object} [options={}] - Optional settings.
+ * @param {number} [options.delay=0] - Artificial delay in milliseconds before
+ *   sending the discovery message. Used to allow a newly started extension to
+ *   finish initializing, otherwise the message may be sent before the extension
+ *   is ready to respond.
+ */
+async function _probeExtension(id, options = {}) {
+  const delay = options?.delay ?? 0;
   if (id === browser.runtime.id) return;
   try {
+    if (delay > 0) await new Promise(resolve => setTimeout(resolve, delay));
     const response = await browser.runtime.sendMessage(id, { type: 'vfs-toolkit-discover' });
     if (response.API_VERSION) {
       if (response.API_VERSION != API_VERSION) {
@@ -189,8 +202,8 @@ export function enableSupportExternalProviders(options = {}) {
     }
   });
 
-  browser.management.onInstalled.addListener(ext => _probeExtension(ext.id));
-  browser.management.onEnabled.addListener(ext => _probeExtension(ext.id));
+  browser.management.onInstalled.addListener(ext => _probeExtension(ext.id, { delay: 1000 }));
+  browser.management.onEnabled.addListener(ext => _probeExtension(ext.id, { delay: 1000 }));
   browser.management.onDisabled.addListener(ext => _removeProvider(ext.id));
   browser.management.onUninstalled.addListener(ext => _removeProvider(ext.id));
 
