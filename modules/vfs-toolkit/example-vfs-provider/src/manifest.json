@@ -6,7 +6,7 @@
       "strict_min_version": "128.0"
     }
   },
-  "name": "VFS-Toolkit: In-memory storage example provider",
+  "name": "VFS-Provider: In-memory storage (example implementation)",
   "version": "1.0.1",
   "author": "John Bieling",
   "homepage_url": "https://github.com/thunderbird/webext-support/tree/master/modules/vfs-toolkit",
