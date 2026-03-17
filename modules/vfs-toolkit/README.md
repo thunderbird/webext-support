@@ -19,6 +19,13 @@ We will see more storage backends being made available, soon, for example **Next
   <em>Example of a VFS Toolkit file picker using the "Local Home Folder Access" provider.</em>
 </p>
 
+## Examples
+
+The repository includes example implementations:
+
+* Client: [vfs-toolkit-example-client.xpi](vfs-toolkit-example-client.xpi)
+* Provider: [vfs-toolkit-example-provider.xpi](vfs-toolkit-example-provider.xpi)
+
 ## Client API
 
 The client API offers multiple read/write methods to access files stored in the WebExtension’s `OPFS`. Since the storage is bound to the WebExtension origin, each add-on automatically receives its own isolated virtual file system.
