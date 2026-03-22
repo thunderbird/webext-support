@@ -413,7 +413,13 @@ function buildRow(entry) {
   row.addEventListener('dragstart', e => {
     state.dragging = entry.name;
     e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', entryPath);
+    // If dragging a selected item, carry all selected paths; otherwise just this one
+    const names = state.selected.has(entry.name) && state.selected.size > 1
+      ? [...state.selected]
+      : [entry.name];
+    const paths = names.map(n => pathJoin(state.cwd, n));
+    e.dataTransfer.setData('application/json', JSON.stringify(paths));
+    e.dataTransfer.setData('text/plain', paths[0]);
   });
 
   row.addEventListener('dragend', () => { state.dragging = null; });
@@ -431,10 +437,16 @@ function buildRow(entry) {
     row.addEventListener('drop', async e => {
       e.preventDefault();
       row.classList.remove('drag-over');
-      const srcPath = e.dataTransfer.getData('text/plain');
       const destDir = entryPath;
-      if (srcPath && !srcPath.startsWith(destDir)) {
-        await doWithStatus(t('moving'), async () => {
+
+      let srcPaths;
+      try { srcPaths = JSON.parse(e.dataTransfer.getData('application/json')); }
+      catch { srcPaths = [e.dataTransfer.getData('text/plain')]; }
+      srcPaths = srcPaths.filter(p => p && !p.startsWith(destDir));
+      if (!srcPaths.length) return;
+
+      await doWithStatus(t('moving'), async () => {
+        for (const srcPath of srcPaths) {
           try {
             await _moveEntry(srcPath, destDir, _opts(t('moving')));
           } catch (err) {
@@ -446,8 +458,8 @@ function buildRow(entry) {
             const retryExtra = srcKind === 'directory' ? { merge: true } : { overwrite: true };
             await _moveEntry(srcPath, destDir, { ..._opts(t('moving')), ...retryExtra });
           }
-        });
-      }
+        }
+      });
     });
   }
 
