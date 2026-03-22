@@ -83,8 +83,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   vfs.onStorageChanged.addListener(entries => {
     console.log(entries);
-    for (const { path, providerId } of entries) {
-      console.log('storage changed:', path, 'on provider:', providerId);
+    for (const { kind, action, target, source } of entries) {
+      const loc = target.storageRef ? `provider ${target.storageRef.providerId}` : 'OPFS';
+      const src = source ? ` (from ${source.path})` : '';
+      console.log(`storage changed: ${action} ${kind} ${target.path}${src} on ${loc}`);
     }
   });
 

@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//home/john/.claude/projects/-home-john-Documents-GitHub-webext-support/memory/**)"
+    ]
+  }
+}

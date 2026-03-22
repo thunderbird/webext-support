@@ -10,8 +10,8 @@ Extend `VfsProviderImplementation`, override the `on*` methods for the operation
 import { VfsProviderImplementation } from './vfs-provider.mjs';
 
 class MyProvider extends VfsProviderImplementation {
-  async onList(requestId, path) { /* ... */ }
-  async onReadFile(requestId, path) { /* ... */ }
+  async onList(requestId, storageId, path) { /* ... */ }
+  async onReadFile(requestId, storageId, path) { /* ... */ }
   // override further on* methods as needed
 }
 
@@ -22,6 +22,18 @@ const provider = new MyProvider({
 
 provider.init();
 ```
+
+## Constructor options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `name` | `string` | manifest `name` | Human-readable provider name shown in the picker's provider dropdown. |
+| `setupPath` | `string` | `null` | Extension-relative path to the setup page (e.g. `'/setup/setup.html'`). Required to allow consumers to establish connections. |
+| `setupWidth` | `number` | `480` | Width of the setup popup window in pixels. |
+| `setupHeight` | `number` | `300` | Height of the setup popup window in pixels. |
+| `configPath` | `string` | `null` | Extension-relative path to the config page (e.g. `'/config/config.html'`). The page receives `addonId` and `storageId` as query parameters so it can configure a specific connection. |
+| `configWidth` | `number` | `480` | Width of the config popup window in pixels. |
+| `configHeight` | `number` | `300` | Height of the config popup window in pixels. |
 
 ## Implementing operations
 
@@ -65,11 +77,49 @@ For long-running operations, call `this.reportProgress(requestId, percent)` peri
 
 ### Reporting out-of-band changes
 
-If your backend can change independently of client requests (e.g. a background sync), call `this.reportStorageChange(storageId, paths)` with the affected absolute paths. All connected clients will refresh their view.
+If your backend can change independently of client requests (e.g. a background sync), call `this.reportStorageChange(storageId, entries)` with an array of [`StorageChangeEntry`](../vfs-client/README.md#onstoragechange) objects describing what changed. All connected clients will be notified.
 
 ### Cancellation
 
-When the user cancels an operation, `onCancel` is called with the `requestId` of the in-progress request. Your implementation should record that ID and check it in the affected `on*` method and abort the operation. The client will no longer expect a response from you on the canceled request.
+When the user cancels an operation (e.g. by clicking ✕ in the picker), `onCancel` is called with the `requestId` of the in-progress request. Your implementation should record that ID and check it in the affected `on*` method to abort the operation. The client rejects the pending promise immediately — it will no longer wait for a response on the canceled request.
+
+#### Partial-completion notifications after abort
+
+Because the client rejects the promise immediately on abort, it cannot know what the provider managed to complete before stopping. For multi-file folder operations (`onCopyFolder`, `onMoveFolder`, `onDeleteFolder`) the client fires **no** storage-change notification when the operation is aborted or errors.
+
+Your provider is responsible for reporting what was actually completed:
+
+- **Aborted** — call `this.reportStorageChange(storageId, completedEntries)` with the entries processed so far, then return normally (the client has already moved on).
+- **Error** — call `this.reportStorageChange(storageId, completedEntries)` with the entries processed so far, then re-throw so the client sees the failure.
+
+In both cases, skip the call if nothing was completed yet.
+
+```js
+async onCopyFolder(requestId, storageId, oldPath, newPath, merge) {
+  const completed = [];
+  for (const file of await this.#listRecursive(oldPath)) {
+    if (this.#cancelledOps.delete(requestId)) {
+      // Aborted: report partial work and stop
+      if (completed.length > 0) this.reportStorageChange(storageId, completed);
+      return;
+    }
+    try {
+      await this.#copyOne(file.src, file.dest);
+    } catch (e) {
+      // Error mid-operation: report partial work and surface the error
+      if (completed.length > 0) this.reportStorageChange(storageId, completed);
+      throw e;
+    }
+    completed.push({
+      kind: 'file', action: 'copied',
+      target: { path: file.dest },
+      source: { path: file.src },
+    });
+  }
+}
+```
+
+Single-file operations (`onReadFile`, `onWriteFile`, `onMoveFile`, `onDeleteFile`, `onAddFolder`, `onCopyFile`) are atomic. If the operation completes before the cancel arrives, `reportStorageChange` is called as usual. If it is cancelled in time, nothing has changed and no notification is needed.
 
 ## Connections and the setup page
 

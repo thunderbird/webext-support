@@ -152,7 +152,16 @@ export async function copyDir(srcPath, destPath, onProgress, { merge = false } =
   const state = { current: 0, total };
   await mkdirp(destPath);
   const destHandle = await resolveHandle(destPath, 'dir');
-  await _copyDirHandles(srcHandle, destHandle, onProgress, state);
+  const completed = [];
+  try {
+    await _copyDirHandles(srcHandle, destHandle, onProgress, state,
+      srcPath.endsWith('/') ? srcPath : srcPath + '/',
+      destPath.endsWith('/') ? destPath : destPath + '/',
+      completed);
+  } catch (e) {
+    if (completed.length > 0) _notifyCompleted(completed);
+    throw e;
+  }
 }
 
 /** Writes a File/Blob to the given path, creating parents. */
@@ -198,10 +207,8 @@ export async function list(path = '/', onProgress) {
  */
 export async function readFile(path, onProgress) {
   const handle = await resolveHandle(path, 'file');
-  const file = await handle.getFile();
-  if (!onProgress) return file;
-  // Read in chunks to report progress, but still return a File
-  const reader = file.stream().getReader();
+  const opfsFile = await handle.getFile();
+  const reader = opfsFile.stream().getReader();
   const chunks = [];
   let loaded = 0;
   while (true) {
@@ -209,9 +216,9 @@ export async function readFile(path, onProgress) {
     if (done) break;
     chunks.push(value);
     loaded += value.byteLength;
-    onProgress({ percent: Math.round(loaded / (file.size || 1) * 100) });
+    onProgress?.({ percent: Math.round(loaded / (opfsFile.size || 1) * 100) });
   }
-  return new File(chunks, file.name, { type: file.type, lastModified: file.lastModified });
+  return new File(chunks, opfsFile.name, { type: opfsFile.type, lastModified: opfsFile.lastModified });
 }
 
 
@@ -236,8 +243,7 @@ export async function moveFile(oldPath, newPath, onProgress, { overwrite = false
       if (e.name !== 'NotFoundError') throw e;
     }
   }
-  // Read source, write to target, remove source
-  const srcFile = await (await resolveHandle(oldPath, 'file')).getFile();
+  const srcFile = await readFile(oldPath, onProgress);
   const destHandle = await newDirHandle.getFileHandle(newName, { create: true });
   await _writeBlob(await destHandle.createWritable(), srcFile, onProgress);
   await remove(oldPath);
@@ -284,8 +290,18 @@ export async function moveFolder(oldPath, newPath, onProgress, { merge = false }
   const state = { current: 0, total };
   // Recursively copy source to target then delete source
   const destHandle = await newParentHandle.getDirectoryHandle(newName, { create: true });
-  await _copyDirHandles(srcHandle, destHandle, onProgress, state);
-  await remove(oldPath);
+  const completed = [];
+  try {
+    await _copyDirHandles(srcHandle, destHandle, onProgress, state,
+      oldPath.endsWith('/') ? oldPath : oldPath + '/',
+      newPath.endsWith('/') ? newPath : newPath + '/',
+      completed);
+    await remove(oldPath);
+  } catch (e) {
+    // Files copied before the error are at dest but source not deleted — report as 'copied'
+    if (completed.length > 0) _notifyCompleted(completed);
+    throw e;
+  }
 }
 
 
@@ -339,14 +355,19 @@ async function _writeBlob(writable, blob, onProgress) {
  * @param {Function} [onProgress]
  * @param {{ current: number, total: number }} [state]
  */
-async function _copyDirHandles(srcDir, destDir, onProgress, state) {
+async function _copyDirHandles(srcDir, destDir, onProgress, state, srcDirPath, destDirPath, completed) {
   for await (const [name, handle] of srcDir) {
+    const childSrc = srcDirPath + name;
+    const childDest = destDirPath + name;
     if (handle.kind === 'file') {
       const file = await handle.getFile();
       const destFile = await destDir.getFileHandle(name, { create: true });
       const writable = await destFile.createWritable();
       await writable.write(file);
       await writable.close();
+      completed?.push({ kind: 'file', action: 'copied',
+        target: { path: childDest, storageRef: null },
+        source: { path: childSrc, storageRef: null } });
       if (state) {
         state.current++;
         const percent = state.total > 0
@@ -356,7 +377,15 @@ async function _copyDirHandles(srcDir, destDir, onProgress, state) {
       }
     } else {
       const destSub = await destDir.getDirectoryHandle(name, { create: true });
-      await _copyDirHandles(handle, destSub, onProgress, state);
+      await _copyDirHandles(handle, destSub, onProgress, state, childSrc + '/', childDest + '/', completed);
+      completed?.push({ kind: 'directory', action: 'copied',
+        target: { path: childDest + '/', storageRef: null },
+        source: { path: childSrc + '/', storageRef: null } });
     }
   }
+}
+
+/** Fires individual completed-entry events via the background relay. */
+function _notifyCompleted(entries) {
+  browser.runtime.sendMessage({ type: 'vfs-notify-background-storage-changed', entries }).catch(() => {});
 }

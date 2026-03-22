@@ -102,7 +102,7 @@ class ExampleVfsProvider extends VfsProviderImplementation {
 
   async reportStorageChangeToAll(paths) {
     const rv = await browser.storage.local.get({ 'vfs-toolkit-connections': [] });
-    const entries = paths.map(path => ({ path, kind: 'file', action: 'created' }));
+    const entries = paths.map(path => ({ targetPath: path, kind: 'file', action: 'created' }));
     for (const { storageId } of rv['vfs-toolkit-connections']) {
       this.reportStorageChange(storageId, entries);
     }
@@ -190,7 +190,10 @@ class ExampleVfsProvider extends VfsProviderImplementation {
     await this.#assertAuth(storageId);
     if (getFolders().has(path)) throw Object.assign(new Error(`Folder already exists: ${path}`), { code: 'E:EXIST' });
     await this.#simulateProgress(requestId);
-    MEMORY_FOLDERS.add(path);
+    const parts = path.split('/').filter(Boolean);
+    for (let i = 1; i <= parts.length; i++) {
+      MEMORY_FOLDERS.add('/' + parts.slice(0, i).join('/'));
+    }
   }
 
   async onMoveFile(requestId, storageId, oldPath, newPath, overwrite) {

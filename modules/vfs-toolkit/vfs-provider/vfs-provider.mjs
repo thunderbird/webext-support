@@ -2,7 +2,7 @@
  * vfs-provider.mjs - for documentation see README.md.
  */
 
-const API_VERSION = "1.0.2";
+const API_VERSION = "1.2";
 const CONNECTIONS_KEY = 'vfs-toolkit-connections';
 
 function _pickIconUrl(icons) {
@@ -37,10 +37,10 @@ async function _fetchOwnIconBlob() {
 
 /**
  * @typedef {object} StorageChangeEntry
- * @property {string} path - Absolute path of the affected item (destination for move/copy).
  * @property {'file'|'directory'} kind - Item type.
  * @property {'created'|'modified'|'deleted'|'moved'|'copied'} action - What happened to the item.
- * @property {string} [sourcePath] - Source path, present only for 'moved' and 'copied' actions.
+ * @property {{ path: string }} target - Destination location (or the affected location for non-move/copy actions).
+ * @property {{ path: string }} [source] - Source location (present only for 'moved' and 'copied' actions).
  */
 
 /**
@@ -345,49 +345,41 @@ export class VfsProviderImplementation {
 
         case 'writeFile': {
           await this.onWriteFile(requestId, args.storageId, args.path, args.file, args.overwrite);
-          this.reportStorageChange(args.storageId, [{ path: args.path, kind: 'file', action: 'modified' }]);
           return;
         }
 
         case 'addFolder': {
           await this.onAddFolder(requestId, args.storageId, args.path);
-          this.reportStorageChange(args.storageId, [{ path: args.path, kind: 'directory', action: 'created' }]);
           return;
         }
 
         case 'moveFile': {
           await this.onMoveFile(requestId, args.storageId, args.oldPath, args.newPath, args.overwrite);
-          this.reportStorageChange(args.storageId, [{ path: args.newPath, sourcePath: args.oldPath, kind: 'file', action: 'moved' }]);
           return;
         }
 
         case 'moveFolder': {
           await this.onMoveFolder(requestId, args.storageId, args.oldPath, args.newPath, args.merge);
-          this.reportStorageChange(args.storageId, [{ path: args.newPath, sourcePath: args.oldPath, kind: 'directory', action: 'moved' }]);
           return;
         }
 
         case 'copyFile': {
           await this.onCopyFile(requestId, args.storageId, args.oldPath, args.newPath, args.overwrite);
-          this.reportStorageChange(args.storageId, [{ path: args.newPath, sourcePath: args.oldPath, kind: 'file', action: 'copied' }]);
           return;
         }
 
         case 'copyFolder': {
           await this.onCopyFolder(requestId, args.storageId, args.oldPath, args.newPath, args.merge);
-          this.reportStorageChange(args.storageId, [{ path: args.newPath, sourcePath: args.oldPath, kind: 'directory', action: 'copied' }]);
           return;
         }
 
         case 'deleteFile': {
           await this.onDeleteFile(requestId, args.storageId, args.path);
-          this.reportStorageChange(args.storageId, [{ path: args.path, kind: 'file', action: 'deleted' }]);
           return;
         }
 
         case 'deleteFolder': {
           await this.onDeleteFolder(requestId, args.storageId, args.path);
-          this.reportStorageChange(args.storageId, [{ path: args.path, kind: 'directory', action: 'deleted' }]);
           return;
         }
 
@@ -414,6 +406,8 @@ export class VfsProviderImplementation {
         case 'openConfig': {
           if (!this.#configPath) throw new Error('Provider has no config page');
           const url = new URL(browser.runtime.getURL(this.#configPath));
+          if (args.addonId) url.searchParams.set('addonId', args.addonId);
+          if (args.storageId) url.searchParams.set('storageId', args.storageId);
           browser.windows.create({ url: url.toString(), type: 'popup', width: this.#configWidth, height: this.#configHeight });
           return null;
         }

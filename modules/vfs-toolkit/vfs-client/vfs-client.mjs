@@ -4,7 +4,7 @@
 
 import * as opfsProvider from './opfs-provider.mjs';
 
-const API_VERSION = "1.0.2";
+const API_VERSION = "1.2";
 
 /**
  * 1.0.2 - Fixed drag'n'drop, us all dragged elements instead of just the first
@@ -386,12 +386,14 @@ export async function openProviderSetup(providerId, addonName = '') {
 }
 
 /**
- * Asks the provider to open its config page as a popup window.
+ * Asks the provider to open its config page for a specific connection.
  *
- * @param {string} providerId
+ * @param {StorageRef} storageRef
  */
-export async function openProviderConfig(providerId) {
-  return _providerSend(providerId, 'openConfig', {});
+export async function openProviderConfig(storageRef) {
+  const { providerId, storageId } = storageRef;
+  const addonId = browser.runtime.id;
+  return _providerSend(providerId, 'openConfig', { addonId, storageId });
 }
 
 /**
@@ -449,9 +451,13 @@ function _getProviderPort(providerId) {
       }
     } else if (msg.type === 'vfs-storage-changed') {
       // We got a storage changed notification from a provider. Relay the message
-      // back to the background and have it beeing broadcasted to all active clients.
+      // back to the background and have it broadcasted to all active clients.
       const storageRef = { providerId, storageId: msg.storageId ?? null };
-      const entries = (msg.entries || []).map(e => ({ ...e, storageRef }));
+      const entries = (msg.entries || []).map(e => {
+        const entry = { kind: e.kind, action: e.action, target: { path: e.targetPath, storageRef } };
+        if (e.sourcePath != null) entry.source = { path: e.sourcePath, storageRef };
+        return entry;
+      });
       browser.runtime.sendMessage({ type: 'vfs-notify-background-storage-changed', entries }).catch(() => { });
     }
   });
@@ -516,6 +522,8 @@ export function abort(storageRef) {
  * Lists the contents of a directory.
  *
  * @param {Entry} [entry={path:'/'}]
+ * @param {object} [options={}]
+ * @param {Function} [options.onProgress]
  * @returns {Promise<Entry[]>} - Each item includes `name`, `kind`, `storageRef`, and (for files) `size` and `lastModified`.
  */
 export async function list(entry = {}, options = {}) {
@@ -558,35 +566,44 @@ export async function readFile(entry, options = {}) {
  * @returns {Promise<void>}
  */
 export async function writeFile(entry, fileOrBlob, options = {}) {
-  const { path, storageRef = null } = entry;
-  const { providerId, storageId } = storageRef ?? {};
   const { onProgress, overwrite = false } = options;
-  if (!storageRef) {
-    await opfsProvider.writeFile(path, fileOrBlob, onProgress, { overwrite });
-    _notifyStorageChanged({ path, storageRef, kind: 'file', action: 'modified' });
-  } else {
-    await _providerSend(providerId, 'writeFile', { path, file: fileOrBlob, overwrite, storageId }, onProgress);
+  try {
+    await _writeFile(entry, fileOrBlob, { onProgress, overwrite });
+  } finally {
+    _notifyStorageChanged({ kind: 'file', action: 'modified', target: { path: entry.path, storageRef: entry.storageRef ?? null } });
   }
 }
 
 /**
- * Moves (or renames) a file. Throws if the target already exists.
+ * Moves (or renames) a file. Supports cross-provider moves.
  *
  * @param {Entry} from - Source entry
- * @param {string} toPath - Absolute destination path (same provider as `from`)
+ * @param {Entry|string} to - Destination entry, or a plain path string (same provider as `from`)
  * @param {object} [options={}]
  * @param {Function} [options.onProgress]
+ * @param {boolean} [options.overwrite=false] - When `true`, silently overwrites an existing file.
  * @returns {Promise<void>}
  */
-export async function moveFile(from, toPath, options = {}) {
-  const { path: oldPath, storageRef = null } = from;
-  const { providerId, storageId } = storageRef ?? {};
+export async function moveFile(from, to, options = {}) {
+  to = _toEntry(to, from);
+  const { path: oldPath, storageRef: srcRef = null } = from;
+  const { path: newPath, storageRef: dstRef = null } = to;
   const { onProgress, overwrite = false } = options;
-  if (!storageRef) {
-    await opfsProvider.moveFile(oldPath, toPath, onProgress, { overwrite });
-    _notifyStorageChanged({ path: toPath, sourcePath: oldPath, storageRef, kind: 'file', action: 'moved' });
-  } else {
-    await _providerSend(providerId, 'moveFile', { oldPath, newPath: toPath, overwrite, storageId }, onProgress);
+  try {
+    if (_sameProvider(srcRef, dstRef)) {
+      if (!srcRef) {
+        await opfsProvider.moveFile(oldPath, newPath, onProgress, { overwrite });
+      } else {
+        const { providerId, storageId } = srcRef;
+        await _providerSend(providerId, 'moveFile', { oldPath, newPath, overwrite, storageId }, onProgress);
+      }
+    } else {
+      const file = await readFile(from, { onProgress });
+      await _writeFile(to, file, { overwrite, onProgress });
+      await _deleteFile(from, { onProgress });
+    }
+  } finally {
+    _notifyStorageChanged({ kind: 'file', action: 'moved', target: { path: newPath, storageRef: dstRef }, source: { path: oldPath, storageRef: srcRef } });
   }
 }
 
@@ -599,14 +616,11 @@ export async function moveFile(from, toPath, options = {}) {
  * @returns {Promise<void>}
  */
 export async function deleteFile(entry, options = {}) {
-  const { path, storageRef = null } = entry;
-  const { providerId, storageId } = storageRef ?? {};
   const { onProgress } = options;
-  if (!storageRef) {
-    await opfsProvider.deleteEntry(path, onProgress);
-    _notifyStorageChanged({ path, storageRef, kind: 'file', action: 'deleted' });
-  } else {
-    await _providerSend(providerId, 'deleteFile', { path, storageId }, onProgress);
+  try {
+    await _deleteFile(entry, { onProgress });
+  } finally {
+    _notifyStorageChanged({ kind: 'file', action: 'deleted', target: { path: entry.path, storageRef: entry.storageRef ?? null } });
   }
 }
 
@@ -615,40 +629,33 @@ export async function deleteFile(entry, options = {}) {
  * **Throws** an `E:EXIST` error if the folder already exists.
  *
  * @param {Entry} entry
- * @returns {Promise<void>}
- */
-export async function addFolder(entry, options = {}) {
-  const { path, storageRef = null } = entry;
-  const { providerId, storageId } = storageRef ?? {};
-  const { onProgress } = options;
-  if (!storageRef) {
-    await opfsProvider.addFolder(path, onProgress);
-    _notifyStorageChanged({ path, storageRef, kind: 'directory', action: 'created' });
-  } else {
-    await _providerSend(providerId, 'addFolder', { path, storageId }, onProgress);
-  }
-}
-
-/**
- * Moves (or renames) a folder to an exact new path.
- * Throws if the target already exists.
- *
- * @param {Entry} from - Source entry
- * @param {string} toPath - Absolute destination path (same provider as `from`)
  * @param {object} [options={}]
  * @param {Function} [options.onProgress]
  * @returns {Promise<void>}
  */
-export async function moveFolder(from, toPath, options = {}) {
-  const { path, storageRef = null } = from;
-  const { providerId, storageId } = storageRef ?? {};
-  const { onProgress, merge = false } = options;
-  if (!storageRef) {
-    await opfsProvider.moveFolder(path, toPath, onProgress, { merge });
-    _notifyStorageChanged({ path: toPath, sourcePath: path, storageRef, kind: 'directory', action: 'moved' });
-  } else {
-    await _providerSend(providerId, 'moveFolder', { oldPath: path, newPath: toPath, merge, storageId }, onProgress);
+export async function addFolder(entry, options = {}) {
+  const { onProgress } = options;
+  try {
+    await _addFolder(entry, { onProgress });
+  } finally {
+    _notifyStorageChanged({ kind: 'directory', action: 'created', target: { path: entry.path, storageRef: entry.storageRef ?? null } });
   }
+}
+
+/**
+ * Moves (or renames) a folder. Supports cross-provider moves.
+ *
+ * @param {Entry} from - Source entry
+ * @param {Entry|string} to - Destination entry, or a plain path string (same provider as `from`)
+ * @param {object} [options={}]
+ * @param {Function} [options.onProgress]
+ * @param {boolean} [options.merge=false] - When `true`, merges with an existing folder instead of throwing.
+ * @returns {Promise<void>}
+ */
+export async function moveFolder(from, to, options = {}) {
+  to = _toEntry(to, from);
+  await _moveFolder(from, to, options);
+  _notifyStorageChanged({ kind: 'directory', action: 'moved', target: { path: to.path, storageRef: to.storageRef ?? null }, source: { path: from.path, storageRef: from.storageRef ?? null } });
 }
 
 /**
@@ -660,57 +667,119 @@ export async function moveFolder(from, toPath, options = {}) {
  * @returns {Promise<void>}
  */
 export async function deleteFolder(entry, options = {}) {
-  const { path, storageRef = null } = entry;
-  const { providerId, storageId } = storageRef ?? {};
   const { onProgress } = options;
-  if (!storageRef) {
-    await opfsProvider.deleteEntry(path, onProgress);
-    _notifyStorageChanged({ path, storageRef, kind: 'directory', action: 'deleted' });
-  } else {
-    await _providerSend(providerId, 'deleteFolder', { path, storageId }, onProgress);
-  }
+  await _deleteFolder(entry, { onProgress });
+  _notifyStorageChanged({ kind: 'directory', action: 'deleted', target: { path: entry.path, storageRef: entry.storageRef ?? null } });
 }
 
 /**
- * Copies a file to an exact destination path. Throws if the destination already exists.
+ * Copies a file. Supports cross-provider copies.
  *
  * @param {Entry} from
- * @param {string} toPath - Absolute destination path (same provider as `from`)
+ * @param {Entry|string} to - Destination entry, or a plain path string (same provider as `from`)
  * @param {object} [options={}]
  * @param {Function} [options.onProgress]
+ * @param {boolean} [options.overwrite=false] - When `true`, silently overwrites an existing file.
  * @returns {Promise<void>}
  */
-export async function copyFile(from, toPath, options = {}) {
-  const { path, storageRef = null } = from;
-  const { providerId, storageId } = storageRef ?? {};
+export async function copyFile(from, to, options = {}) {
+  to = _toEntry(to, from);
+  const { path: oldPath, storageRef: srcRef = null } = from;
+  const { path: newPath, storageRef: dstRef = null } = to;
   const { onProgress, overwrite = false } = options;
-  if (!storageRef) {
-    await opfsProvider.copyFile(path, toPath, onProgress, { overwrite });
-    _notifyStorageChanged({ path: toPath, sourcePath: path, storageRef, kind: 'file', action: 'copied' });
-  } else {
-    await _providerSend(providerId, 'copyFile', { oldPath: path, newPath: toPath, overwrite, storageId }, onProgress);
+  try {
+    if (_sameProvider(srcRef, dstRef)) {
+      if (!srcRef) {
+        await opfsProvider.copyFile(oldPath, newPath, onProgress, { overwrite });
+      } else {
+        const { providerId, storageId } = srcRef;
+        await _providerSend(providerId, 'copyFile', { oldPath, newPath, overwrite, storageId }, onProgress);
+      }
+    } else {
+      const file = await readFile(from, { onProgress });
+      await _writeFile(to, file, { overwrite, onProgress });
+    }
+  } finally {
+    _notifyStorageChanged({ kind: 'file', action: 'copied', target: { path: newPath, storageRef: dstRef }, source: { path: oldPath, storageRef: srcRef } });
   }
 }
 
 /**
- * Recursively copies a folder to an exact destination path. Throws if the destination already exists.
+ * Recursively copies a folder. Supports cross-provider copies.
  *
  * @param {Entry} from
- * @param {string} toPath - Absolute destination path (same provider as `from`)
+ * @param {Entry|string} to - Destination entry, or a plain path string (same provider as `from`)
  * @param {object} [options={}]
  * @param {Function} [options.onProgress]
+ * @param {boolean} [options.merge=false] - When `true`, merges with an existing folder instead of throwing.
  * @returns {Promise<void>}
  */
-export async function copyFolder(from, toPath, options = {}) {
-  const { path, storageRef = null } = from;
-  const { providerId, storageId } = storageRef ?? {};
+export async function copyFolder(from, to, options = {}) {
+  to = _toEntry(to, from);
+  const { path: oldPath, storageRef: srcRef = null } = from;
+  const { path: newPath, storageRef: dstRef = null } = to;
   const { onProgress, merge = false } = options;
-  if (!storageRef) {
-    await opfsProvider.copyDir(path, toPath, onProgress, { merge });
-    _notifyStorageChanged({ path: toPath, sourcePath: path, storageRef, kind: 'directory', action: 'copied' });
+  if (_sameProvider(srcRef, dstRef)) {
+    if (!srcRef) {
+      await opfsProvider.copyDir(oldPath, newPath, onProgress, { merge });
+    } else {
+      const { providerId, storageId } = srcRef;
+      await _providerSend(providerId, 'copyFolder', { oldPath, newPath, merge, storageId }, onProgress);
+    }
   } else {
-    await _providerSend(providerId, 'copyFolder', { oldPath: path, newPath: toPath, merge, storageId }, onProgress);
+    const completed = [];
+    try {
+      await _crossProviderCopyFolder(from, to, merge, onProgress, completed);
+    } catch (e) {
+      if (completed.length > 0) _notifyStorageChanged(...completed);
+      throw e;
+    }
   }
+  _notifyStorageChanged({ kind: 'directory', action: 'copied', target: { path: newPath, storageRef: dstRef }, source: { path: oldPath, storageRef: srcRef } });
+}
+
+/**
+ * Recursively copies a folder by processing each entry (file or sub-folder) individually.
+ * Unlike `copyFolder`, this function reports progress after every single entry via
+ * `onProgress({ percent, currentFile, totalFiles })`, enabling an accurate 0→100% bar.
+ * `percent` is size-weighted (falls back to entry count when sizes are unknown). A second
+ * callback `onCollect(total)` is fired after each `list()` batch during the initial
+ * collection phase so callers can show a growing counter while the tree is being scanned.
+ * Fires a single `onStorageChanged` event when the whole operation is complete.
+ * Supports cross-provider copies.
+ *
+ * @param {Entry} from
+ * @param {Entry} to - Destination entry (may be on a different provider)
+ * @param {object} [options={}]
+ * @param {boolean} [options.merge=false] - When `true`, merges with an existing folder instead of throwing.
+ * @param {function({percent: number, currentFile: number, totalFiles: number})} [options.onProgress] - Called after each entry. `percent` is size-weighted; falls back to entry count when sizes are unknown.
+ * @param {function(number)} [options.onCollect] - Called as `onCollect(total)` after each `list()` batch during collection.
+ * @returns {Promise<void>}
+ */
+export async function copyFolderWithProgress(from, to, options = {}) {
+  await _folderOpIndividually(from, to, 'copy', options);
+}
+
+/**
+ * Recursively moves a folder by processing each entry (file or sub-folder) individually.
+ * Unlike `moveFolder`, this function reports progress after every single entry via
+ * `onProgress({ percent, currentFile, totalFiles })`, enabling an accurate 0→100% bar.
+ * `percent` is size-weighted (falls back to entry count when sizes are unknown). A second
+ * callback `onCollect(total)` is fired after each `list()` batch during the initial
+ * collection phase so callers can show a growing counter while the tree is being scanned.
+ * Fires a single `onStorageChanged` event when the whole operation is complete.
+ * Supports cross-provider moves.
+ *
+ * @param {Entry} from
+ * @param {Entry} to - Destination entry (may be on a different provider)
+ * @param {object} [options={}]
+ * @param {boolean} [options.merge=false] - When `true`, merges with an existing folder instead of throwing.
+ * @param {function({percent: number, currentFile: number, totalFiles: number})} [options.onProgress] - Called after each entry. `percent` is size-weighted; falls back to entry count when sizes are unknown.
+ * @param {function(number)} [options.onCollect] - Called as `onCollect(total)` after each `list()` batch during collection.
+ * @returns {Promise<void>}
+ */
+export async function moveFolderWithProgress(from, to, options = {}) {
+  await _folderOpIndividually(from, to, 'move', options);
 }
 
 /**
@@ -880,11 +949,257 @@ export function showDirectoryPicker(options = {}) {
 
 // ── Internal helpers ───────────────────────────────────────────────────────────
 
+/**
+ * Normalises the `to` argument of move/copy functions.
+ * Accepts either a full Entry object or a plain path string (legacy form).
+ * When a plain string is given, the storageRef is inherited from `from` so the
+ * operation stays on the same provider — preserving backward compatibility.
+ *
+ * @param {Entry|string} to
+ * @param {Entry} from
+ * @returns {Entry}
+ */
+function _toEntry(to, from) {
+  if (typeof to === 'string') return { path: to, storageRef: from.storageRef ?? null };
+  return to;
+}
+
+function _sameProvider(a, b) {
+  return (a?.providerId ?? null) === (b?.providerId ?? null) &&
+         (a?.storageId  ?? null) === (b?.storageId  ?? null);
+}
+
+async function _writeFile(entry, fileOrBlob, options = {}) {
+  const { path, storageRef = null } = entry;
+  const { onProgress, overwrite = false } = options;
+  if (!storageRef) {
+    await opfsProvider.writeFile(path, fileOrBlob, onProgress, { overwrite });
+  } else {
+    const { providerId, storageId } = storageRef;
+    await _providerSend(providerId, 'writeFile', { path, file: fileOrBlob, overwrite, storageId }, onProgress);
+  }
+}
+
+async function _deleteFile(entry, options = {}) {
+  const { path, storageRef = null } = entry;
+  const { onProgress } = options;
+  if (!storageRef) {
+    await opfsProvider.deleteEntry(path, onProgress);
+  } else {
+    const { providerId, storageId } = storageRef;
+    await _providerSend(providerId, 'deleteFile', { path, storageId }, onProgress);
+  }
+}
+
+async function _addFolder(entry, options = {}) {
+  const { path, storageRef = null } = entry;
+  const { onProgress } = options;
+  if (!storageRef) {
+    await opfsProvider.addFolder(path, onProgress);
+  } else {
+    const { providerId, storageId } = storageRef;
+    await _providerSend(providerId, 'addFolder', { path, storageId }, onProgress);
+  }
+}
+
+async function _deleteFolder(entry, options = {}) {
+  const { path, storageRef = null } = entry;
+  const { onProgress } = options;
+  if (!storageRef) {
+    await opfsProvider.deleteEntry(path, onProgress);
+  } else {
+    const { providerId, storageId } = storageRef;
+    await _providerSend(providerId, 'deleteFolder', { path, storageId }, onProgress);
+  }
+}
+
+async function _moveFolder(from, to, options = {}) {
+  const { path: oldPath, storageRef: srcRef = null } = from;
+  const { path: newPath, storageRef: dstRef = null } = to;
+  const { onProgress, merge = false } = options;
+  if (_sameProvider(srcRef, dstRef)) {
+    if (!srcRef) {
+      await opfsProvider.moveFolder(oldPath, newPath, onProgress, { merge });
+    } else {
+      const { providerId, storageId } = srcRef;
+      await _providerSend(providerId, 'moveFolder', { oldPath, newPath, merge, storageId }, onProgress);
+    }
+  } else {
+    const completed = [];
+    try {
+      await _crossProviderCopyFolder(from, to, merge, onProgress, completed);
+      await _deleteFolder(from, { onProgress });
+    } catch (e) {
+      if (completed.length > 0) _notifyStorageChanged(...completed);
+      throw e;
+    }
+  }
+}
+
+async function _crossProviderCopyFolder(from, to, merge, onProgress, completed) {
+  await _addFolder(to, { onProgress }).catch(e => {
+    if (e.code !== 'E:EXIST' || !merge) throw e;
+  });
+  const entries = await list(from);
+  for (const entry of entries) {
+    const srcChild = { path: entry.path, storageRef: from.storageRef ?? null };
+    const destChild = { path: `${to.path}/${entry.name}`, storageRef: to.storageRef ?? null };
+    if (entry.kind === 'directory') {
+      await _crossProviderCopyFolder(srcChild, destChild, merge, onProgress, completed);
+      completed?.push({ kind: 'directory', action: 'copied',
+        target: { path: destChild.path, storageRef: destChild.storageRef },
+        source: { path: srcChild.path, storageRef: srcChild.storageRef } });
+    } else {
+      const file = await readFile(srcChild, { onProgress });
+      await _writeFile(destChild, file, { overwrite: merge, onProgress });
+      completed?.push({ kind: 'file', action: 'copied',
+        target: { path: destChild.path, storageRef: destChild.storageRef },
+        source: { path: srcChild.path, storageRef: srcChild.storageRef } });
+    }
+  }
+}
+
+/** Strips a trailing '/' from a path while keeping the root '/' intact. */
+function _stripSlash(p) { return p.length > 1 ? p.replace(/\/$/, '') : p; }
+
+/**
+ * Recursively collects all entries (files and folders) under srcEntry into the
+ * `entries` array, then calls `onCollect(total)` after each directory is listed.
+ * Folder paths in the result end with '/' so that the descending sort in
+ * _folderOpIndividually places files before their parent directory.
+ */
+async function _collectEntries(srcEntry, destEntry, entries, onCollect) {
+  // list() is called without trailing slash for provider compatibility.
+  const items = await list({ path: _stripSlash(srcEntry.path), storageRef: srcEntry.storageRef });
+  for (const item of items) {
+    const isFile = item.kind === 'file';
+    // Ensure folder paths end with '/' so descending sort works correctly.
+    const srcPath = isFile ? item.path : (item.path.endsWith('/') ? item.path : item.path + '/');
+    const relativePath = srcPath.slice(srcEntry.path.length);
+    const destPath = destEntry.path + relativePath;
+    entries.push({ srcPath, destPath, isFile, size: item.size ?? 0 });
+    if (!isFile) {
+      await _collectEntries(
+        { path: srcPath, storageRef: srcEntry.storageRef },
+        { path: destPath, storageRef: destEntry.storageRef },
+        entries, onCollect
+      );
+    }
+  }
+  onCollect?.(entries.length);
+}
+
+/**
+ * Core implementation for copyFolderWithProgress / moveFolderWithProgress.
+ *
+ * Algorithm:
+ *  1. Collect – recursively list all files and folders, firing onCollect(total) per batch.
+ *  2. Sort    – descending lexicographic order; because folder paths end with '/' (ASCII 47,
+ *               less than any letter/digit), files always sort before their parent folder.
+ *  3. Process – for each entry: lazily create the destination directory, then copy/move the
+ *               file or (for move) call _moveFolder as a safety net for any files added after
+ *               the initial snapshot.
+ *  4. Notify  – fire one _notifyStorageChanged for the whole operation.
+ */
+async function _folderOpIndividually(from, to, mode, options = {}) {
+  const { merge = false, onProgress, onCollect } = options;
+  const srcRef = from.storageRef ?? null;
+  const dstRef = to.storageRef ?? null;
+
+  // Normalise root paths to end with '/' so relative-path slicing is correct.
+  const srcRoot = from.path.endsWith('/') ? from.path : from.path + '/';
+  const dstRoot = to.path.endsWith('/') ? to.path : to.path + '/';
+
+  // Step 1 – Collect.
+  const entries = [];
+  await _collectEntries({ path: srcRoot, storageRef: srcRef }, { path: dstRoot, storageRef: dstRef }, entries, onCollect);
+  // The source root itself is not returned by list(), so add it manually.
+  entries.push({ srcPath: srcRoot, destPath: dstRoot, isFile: false, size: 0 });
+
+  // Step 2 – Sort descending.
+  entries.sort((a, b) => b.srcPath < a.srcPath ? -1 : b.srcPath > a.srcPath ? 1 : 0);
+
+  // Step 3 – Process.
+  let lastCreatedTargetDir = '';
+  let done = 0;
+  const total = entries.length;
+  const totalBytes = entries.reduce((s, e) => s + e.size, 0);
+  let doneBytes = 0;
+  const completed = [];
+
+  try {
+    for (const entry of entries) {
+      const targetDir = entry.isFile
+        ? entry.destPath.slice(0, entry.destPath.lastIndexOf('/') + 1)
+        : entry.destPath; // already ends with '/'
+
+      // Lazily create the target directory once per unique path.
+      // If lastCreatedTargetDir is a descendant of targetDir, mkdirp already built it.
+      if (!lastCreatedTargetDir ||
+          !(targetDir === lastCreatedTargetDir || lastCreatedTargetDir.startsWith(targetDir))) {
+        await _addFolder({ path: _stripSlash(targetDir), storageRef: dstRef }, {}).catch(e => {
+          if (e.code !== 'E:EXIST' || !merge) throw e;
+        });
+        lastCreatedTargetDir = targetDir;
+      }
+
+      if (entry.isFile) {
+        const file = await readFile({ path: entry.srcPath, storageRef: srcRef });
+        await _writeFile({ path: entry.destPath, storageRef: dstRef }, file, { overwrite: merge });
+        if (mode === 'move') {
+          await _deleteFile({ path: entry.srcPath, storageRef: srcRef }, {});
+        }
+      } else {
+        if (mode === 'move') {
+          // Safety net: move any files that arrived in this folder after the initial list()
+          // snapshot, then delete the (now mostly-empty) source folder.
+          // Errors are silently ignored — the folder may already be gone.
+          await _moveFolder(
+            { path: _stripSlash(entry.srcPath), storageRef: srcRef },
+            { path: _stripSlash(entry.destPath), storageRef: dstRef },
+            { merge: true }
+          ).catch(() => {});
+        }
+      }
+
+      doneBytes += entry.size;
+      done++;
+      // Use size-weighted percent when total size is known; fall back to entry count.
+      const percent = totalBytes > 0
+        ? Math.round(doneBytes / totalBytes * 100)
+        : Math.round(done / total * 100);
+      completed.push(entry.isFile
+        ? { kind: 'file',
+            action: mode === 'move' ? 'moved' : 'copied',
+            target: { path: entry.destPath, storageRef: dstRef },
+            source: { path: entry.srcPath, storageRef: srcRef } }
+        : { kind: 'directory',
+            action: mode === 'move' ? 'moved' : 'created',
+            target: { path: _stripSlash(entry.destPath), storageRef: dstRef },
+            ...(mode === 'move' && { source: { path: _stripSlash(entry.srcPath), storageRef: srcRef } }) });
+      onProgress?.({ percent, currentFile: done, totalFiles: total });
+    }
+  } catch (e) {
+    // Step 4a – Partial abort: fire individual completed events, not the whole-folder event.
+    if (completed.length > 0) _notifyStorageChanged(...completed);
+    throw e;
+  }
+
+  // Step 4b – Full success: single folder-level event.
+  _notifyStorageChanged({
+    kind: 'directory',
+    action: mode === 'move' ? 'moved' : 'copied',
+    target: { path: _stripSlash(to.path), storageRef: dstRef },
+    source: { path: _stripSlash(from.path), storageRef: srcRef },
+  });
+}
+
 function _notifyStorageChanged(...entries) {
   // This client made a storage modification, relay this to the background and
   // have it broadcasted to all active client.
   browser.runtime.sendMessage({ type: 'vfs-notify-background-storage-changed', entries }).catch(() => { });
 }
+
 
 function _pickerBaseUrl() {
   // import.meta.url points to vfs-client.mjs itself, so picker.html resolves
