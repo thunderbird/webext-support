@@ -84,6 +84,59 @@ vfs.enableSupportExternalProviders({configStorageKey: "vfs-toolkit-config-data"}
 
 ---
 
+#### `vfs.parseManifest(manifest)`
+
+Parses a partial manifest, used to register a toolbar action button that appears in every picker popup opened by the extension. Call **once from your background script**.
+
+**Note:** While the VFS Toolkit is still a vendored module, the parsed manifest only affects pickers opened by the local extension, not *all* pickers. This will change when the VFS Toolkit is merged into Thunderbird as an
+official API.
+
+Accepts an object with a `vfs_action` key, modelled on the standard WebExtension `message_display_action`. Supported fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `default_label` | `string` | Button label shown in the toolbar. Takes precedence over `default_title`. |
+| `default_title` | `string` | Fallback label / tooltip text when `default_label` is not set. |
+| `default_icon` | `string` | URL of the button icon. Use `browser.runtime.getURL(...)` to reference a bundled asset. When provided the icon is shown instead of the label text, with the label used as `alt`/`title`. |
+
+When the button is clicked in the picker, `vfs.action.onClicked` listeners are fired with the currently active [`StorageRef`](#storageref) (or `null` for OPFS).
+
+**Example (background script):**
+
+```js
+vfs.parseManifest({
+  vfs_action: {
+    default_label: "Run Tests",
+    default_title: "Open the VFS test suite",
+    default_icon: browser.runtime.getURL("icons/run-tests.svg"),
+  }
+});
+```
+
+---
+
+#### `vfs.action.onClicked`
+
+Event fired when the action button registered via `parseManifest` is clicked in the picker toolbar. Follows the standard WebExtension event shape.
+
+| Method | Description |
+|--------|-------------|
+| `addListener(listener)` | Register a listener. `listener` receives the active [`StorageRef`](#storageref) (or `null` for OPFS). |
+| `hasListener(listener)` | Returns `true` if the listener is currently registered. |
+| `removeListener(listener)` | Unregisters the listener. |
+
+**Example:**
+
+```js
+vfs.action.onClicked.addListener((storageRef) => {
+  const url = '/test/test.html' +
+    (storageRef ? '?storageRef=' + encodeURIComponent(JSON.stringify(storageRef)) : '');
+  browser.tabs.create({ url });
+});
+```
+
+---
+
 #### `vfs.showSelectFilePicker(options?)` → `Promise<Array<Entry>>`
 
 Opens a file picker popup to select one or more files. Always resolves with [`Array<Entry>`](#entry), empty if cancelled. When `multiple: false` (default), the array contains at most one entry.

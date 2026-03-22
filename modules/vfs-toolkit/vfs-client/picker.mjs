@@ -96,6 +96,10 @@ const START_IN = params.get('startIn') ?? null;
 const VFS_PROVIDER_NAME = params.get('opfsStorageName') ?? null;
 const MODE = params.get('mode') ?? 'open'; // 'open' | 'save' | 'dir'
 const SUGGESTED_NAME = params.get('suggestedName') ?? null;
+// Array of { id, label } — rendered as extra toolbar buttons; clicks are sent to
+// the client extension background via browser.runtime.sendMessage so the background
+// can react (e.g. open a test tab) without any provider involvement.
+const BUTTONS = params.get('buttons') ? JSON.parse(params.get('buttons')) : [];
 
 // ── Id-state persistence (localStorage, keyed by id only - id enforces the provider) ──
 
@@ -1511,6 +1515,44 @@ function initToolbar() {
   });
 
   $('vfs-btn-paste').addEventListener('click', () => pasteClipboard());
+
+  // Custom buttons — rendered from the 'buttons' URL param, separated from built-in
+  // toolbar buttons. Each click sends { type: 'vfs-toolkit-button', buttonId } to the
+  // client extension background, which can then open a tab or take any other action.
+  if (BUTTONS.length) {
+    const container = $('vfs-custom-buttons');
+    const sep = document.createElement('div');
+    sep.className = 'toolbar-sep';
+    container.appendChild(sep);
+    for (const { id, label, icon } of BUTTONS) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.title = label;
+      btn.setAttribute('aria-label', label);
+      if (icon) {
+        // Fetch and inline the SVG so it inherits currentColor, matching built-in toolbar buttons.
+        fetch(icon).then(r => r.text()).then(svgText => {
+          const tmp = document.createElement('div');
+          tmp.innerHTML = svgText.trim();
+          const svg = tmp.querySelector('svg');
+          if (svg) {
+            svg.setAttribute('width', '14');
+            svg.setAttribute('height', '14');
+            svg.setAttribute('aria-hidden', 'true');
+            btn.appendChild(svg);
+          } else {
+            btn.textContent = label;
+          }
+        }).catch(() => { btn.textContent = label; });
+      } else {
+        btn.textContent = label;
+      }
+      btn.addEventListener('click', () => {
+        browser.runtime.sendMessage({ type: 'vfs-toolkit-button', buttonId: id, storageRef: state.storageRef }).catch(() => {});
+      });
+      container.appendChild(btn);
+    }
+  }
 
   // Type dropdown (only when types were provided by the caller)
   if (TYPES?.length) {

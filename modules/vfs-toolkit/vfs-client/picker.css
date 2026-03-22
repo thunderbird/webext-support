@@ -153,6 +153,10 @@ body {
   flex: 1;
 }
 
+#vfs-custom-buttons {
+  display: contents;
+}
+
 /* Filter input */
 #vfs-type-select {
   height: 26px;

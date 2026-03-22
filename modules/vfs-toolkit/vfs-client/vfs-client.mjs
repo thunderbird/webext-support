@@ -25,6 +25,22 @@ const _progressCallbacks = new Map();
 // Module-level storage-changed listeners (for same-page provider push notifications)
 const _storageChangedListeners = new Set();
 
+// ── Action button (set via parseManifest) ─────────────────────────────────────
+
+function _createEvent() {
+  const listeners = new Set();
+  return {
+    addListener(fn) { listeners.add(fn); },
+    hasListener(fn) { return listeners.has(fn); },
+    removeListener(fn) { listeners.delete(fn); },
+    _fire(...args) { for (const fn of listeners) fn(...args); },
+  };
+}
+
+let _actionButton = null;
+const _actionClickedEvent = _createEvent();
+let _actionListenerRegistered = false;
+
 // ── Async queue ───────────────────────────────────────────────────────────────
 
 /**
@@ -254,6 +270,60 @@ export function enableSupportExternalProviders(options = {}) {
     }
   });
 }
+
+/**
+ * Registers a toolbar action button that appears in every picker popup.
+ * Call once from the background script. Independent of enableSupportExternalProviders.
+ *
+ * Also sets up the internal runtime message listener that drives vfs.action.onClicked,
+ * so no additional wiring is required.
+ *
+ * @param {object} manifest - Partial manifest object.
+ * @param {object} manifest.vfs_action - Action button descriptor.
+ * @param {string} [manifest.vfs_action.default_label] - Button label (takes precedence over default_title).
+ * @param {string} [manifest.vfs_action.default_title] - Fallback label / tooltip.
+ * @param {string} [manifest.vfs_action.default_icon]  - Icon URL (use browser.runtime.getURL). When set,
+ *   the icon is rendered instead of the label text; the label becomes alt/title text.
+ */
+export function parseManifest(manifest) {
+  const entry = manifest?.vfs_action;
+  if (!entry) return;
+  const label = entry.default_label ?? entry.default_title ?? '';
+  const iconRaw = entry.default_icon ?? null;
+  const icon = iconRaw ? new URL(iconRaw, import.meta.url).href : null;
+  _actionButton = { id: 'vfs-action', label, ...(icon ? { icon } : {}) };
+
+  if (!_actionListenerRegistered) {
+    _actionListenerRegistered = true;
+    browser.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+      if (msg?.type === 'vfs-toolkit-button' && msg.buttonId === 'vfs-action') {
+        _actionClickedEvent._fire(msg.storageRef ?? null);
+      }
+      if (msg?.type === 'vfs-toolkit-get-action-button') {
+        sendResponse(_actionButton);
+        return true;
+      }
+    });
+  }
+}
+
+/**
+ * WebExtension-style namespace for the picker action button.
+ * Mirror of the standard `browser.action` / `messageDisplayAction` shape.
+ *
+ * @property {object} onClicked - Event fired when the action button is clicked in the picker.
+ *   Listeners receive the active StorageRef (or null for OPFS) as their first argument.
+ *   @property {function} onClicked.addListener(listener)    - Register a listener.
+ *   @property {function} onClicked.hasListener(listener)    - Returns true if listener is registered.
+ *   @property {function} onClicked.removeListener(listener) - Unregister a listener.
+ */
+export const action = {
+  onClicked: {
+    addListener(fn) { _actionClickedEvent.addListener(fn); },
+    hasListener(fn) { return _actionClickedEvent.hasListener(fn); },
+    removeListener(fn) { _actionClickedEvent.removeListener(fn); },
+  },
+};
 
 /**
  * Fetches all known providers and their established connections.
@@ -693,7 +763,7 @@ export function showSelectFilePicker(options = {}) {
   // mode=open is the default, no extra param needed
   return new Promise((resolve, reject) => {
     const sessionId = crypto.randomUUID();
-    const { types = null, excludeAcceptAllOption = false, width = 800, height = 600, storageRef = null, multiple = false, id = null, startIn = null, opfsStorageName = null } = options;
+    const { types = null, excludeAcceptAllOption = false, width = 800, height = 600, storageRef = null, multiple = false, id = null, startIn = null, opfsStorageName = null, buttons = null } = options;
 
     pendingPickers.set(sessionId, { resolve, reject, defaultValue: [] });
 
@@ -706,8 +776,9 @@ export function showSelectFilePicker(options = {}) {
     if (id) pickerParams.set('id', id);
     if (startIn) pickerParams.set('startIn', startIn);
     if (opfsStorageName) pickerParams.set('opfsStorageName', opfsStorageName);
+    if (buttons?.length) pickerParams.set('buttons', JSON.stringify(buttons));
 
-    _openPopupWindow(sessionId, pickerParams, width, height);
+    _openPopupWindow(sessionId, pickerParams, width, height).catch(reject);
   });
 }
 
@@ -733,7 +804,7 @@ export function showSaveFilePicker(options = {}) {
     const sessionId = crypto.randomUUID();
     const { types = null, excludeAcceptAllOption = false, width = 800, height = 600,
       storageRef = null, id = null, startIn = null, opfsStorageName = null,
-      suggestedName = null } = options;
+      suggestedName = null, buttons = null } = options;
 
     pendingPickers.set(sessionId, { resolve, reject, defaultValue: null });
 
@@ -747,8 +818,9 @@ export function showSaveFilePicker(options = {}) {
     if (startIn) pickerParams.set('startIn', startIn);
     if (opfsStorageName) pickerParams.set('opfsStorageName', opfsStorageName);
     if (suggestedName) pickerParams.set('suggestedName', suggestedName);
+    if (buttons?.length) pickerParams.set('buttons', JSON.stringify(buttons));
 
-    _openPopupWindow(sessionId, pickerParams, width, height);
+    _openPopupWindow(sessionId, pickerParams, width, height).catch(reject);
   });
 }
 
@@ -769,7 +841,7 @@ export function showDirectoryPicker(options = {}) {
   return new Promise((resolve, reject) => {
     const sessionId = crypto.randomUUID();
     const { width = 800, height = 600, storageRef = null, id = null,
-      startIn = null, opfsStorageName = null } = options;
+      startIn = null, opfsStorageName = null, buttons = null } = options;
 
     pendingPickers.set(sessionId, { resolve, reject, defaultValue: null });
 
@@ -780,8 +852,9 @@ export function showDirectoryPicker(options = {}) {
     if (id) pickerParams.set('id', id);
     if (startIn) pickerParams.set('startIn', startIn);
     if (opfsStorageName) pickerParams.set('opfsStorageName', opfsStorageName);
+    if (buttons?.length) pickerParams.set('buttons', JSON.stringify(buttons));
 
-    _openPopupWindow(sessionId, pickerParams, width, height);
+    _openPopupWindow(sessionId, pickerParams, width, height).catch(reject);
   });
 }
 
@@ -799,7 +872,19 @@ function _pickerBaseUrl() {
   return new URL('picker.html', import.meta.url).href;
 }
 
-function _openPopupWindow(sessionId, pickerParams, width, height) {
+async function _openPopupWindow(sessionId, pickerParams, width, height) {
+  // Auto-inject action button registered via parseManifest.
+  // When called from a page context (not background), _actionButton is null because
+  // parseManifest was called in a different module instance. Ask the background instead.
+  let actionBtn = _actionButton;
+  if (!actionBtn && !_isBackground) {
+    actionBtn = await browser.runtime.sendMessage({ type: 'vfs-toolkit-get-action-button' }).catch(() => null);
+  }
+  if (actionBtn) {
+    const existing = pickerParams.has('buttons') ? JSON.parse(pickerParams.get('buttons')) : [];
+    pickerParams.set('buttons', JSON.stringify([...existing, actionBtn]));
+  }
+
   const popupUrl = _pickerBaseUrl() + '?' + pickerParams.toString();
   const { resolve, reject, defaultValue } = pendingPickers.get(sessionId);
   let windowId = null;
