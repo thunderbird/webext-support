@@ -57,29 +57,34 @@ Examples: `"/"`, `"/documents"`, `"/documents/notes.txt"`
 ### Functions
 
 
-#### `vfs.enableSupportExternalProviders(options)`
+#### `vfs.init(options?)`
 
-Enables external storage backend provider support for `vfs-toolkit`. Call **once from
-your background script**, if you want to support external storage backend providers.
+Initialises vfs-toolkit. Call **once from your background script** before using any
+other vfs-toolkit API.
 
-- Probes all currently enabled extensions for `vfs-toolkit` provider, needs the `management` permission.
-- Keeps the list in sync as extensions are installed, uninstalled, enabled, or disabled.
-- Persists results in the addons session storage and local storage, using the provided
-  configStorageKey, needs the `storage` permission.
-- Manages communications between providers and clients.
+Always sets up the storage-change relay so that `vfs.onStorageChanged` listeners work
+in all extension pages (including the picker). Pass `enableExternalProviders: true` to
+additionally enable support for external storage backend providers.
 
 **Options:**
 
-| Option | Type | Description |
-|--------|------|-------------|
-| `configStorageKey` | string | The key which `vfs-toolkit` may use to store config data in the add-ons session storage and local storage |
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `enableExternalProviders` | `boolean` | `false` | Enable external provider support. Requires the `management` and `storage` permissions. |
+| `configStorageKey` | `string` | — | Storage key for persisting provider connection data. Required when `enableExternalProviders` is `true`. |
 
-
-**Example (background script):**
+**Example — OPFS only (background script):**
 
 ```js
 import * as vfs from '/vendor/vfs-toolkit/vfs-client/vfs-client.mjs';
-vfs.enableSupportExternalProviders({configStorageKey: "vfs-toolkit-config-data"});
+vfs.init();
+```
+
+**Example — with external providers (background script):**
+
+```js
+import * as vfs from '/vendor/vfs-toolkit/vfs-client/vfs-client.mjs';
+vfs.init({ enableExternalProviders: true, configStorageKey: "vfs-toolkit-config-data" });
 ```
 
 ---

@@ -2042,7 +2042,7 @@ async function init() {
   });
 
   // Listen for provider push notifications (same-page port - sendMessage excludes own frame)
-  vfs.onStorageChanged(entries => {
+  vfs.onStorageChanged.addListener(entries => {
     updateStorageInfo();
     if (_pathsAffectCwd(entries)) loadDir({ silent: true });
   });

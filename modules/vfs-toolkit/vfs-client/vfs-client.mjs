@@ -22,8 +22,7 @@ let _configStorageKey = null;
 // Module-level progress callback map: operationId → onProgress function
 const _progressCallbacks = new Map();
 
-// Module-level storage-changed listeners (for same-page provider push notifications)
-const _storageChangedListeners = new Set();
+const _storageChangedEvent = _createEvent();
 
 // ── Action button (set via parseManifest) ─────────────────────────────────────
 
@@ -87,8 +86,8 @@ const _storageActivityQueue = new StorageActivityQueue();
 
 // Fire local listeners when background broadcasts a storage-changed notification.
 browser.runtime.onMessage.addListener(msg => {
-  if (msg?.type === 'vfs-storage-changed' && _storageChangedListeners.size > 0) {
-    for (const fn of _storageChangedListeners) fn(msg.entries || []);
+  if (msg?.type === 'vfs-storage-changed') {
+    _storageChangedEvent._fire(msg.entries || []);
   }
 });
 
@@ -176,7 +175,8 @@ async function _probeExtension(id, options = {}) {
     if (response.API_VERSION) {
       if (response.API_VERSION != API_VERSION) {
         console.warn(`[vfs-toolkit] Provider <${id}> uses API_VERSION ${response.API_VERSION} but this client uses API_VERSION ${API_VERSION}. Make sure all extensions use the most recent version of the VFS Toolkit: https://github.com/thunderbird/webext-support/tree/master/modules/vfs-toolkit`);
-      } else if (response?.name) {
+      }
+      if (response?.name) {
         await _updateProvider(id, response.name, response.connections ?? [], response.icon ?? null, response.hasConfig ?? false);
       }
     }
@@ -186,32 +186,44 @@ async function _probeExtension(id, options = {}) {
 }
 
 /**
- * Enables external storage backend provider support for vfs-toolkit. Call once from
- * your background script.
+ * Initialises vfs-toolkit in the background script. Must be called once from the
+ * background script before any other vfs-toolkit API is used.
  *
- * - Probes all currently enabled extensions for `vfs-toolkit` provider, needs the
- *   `management` permission.
- * - Keeps the list in sync as extensions are installed, uninstalled, enabled,
- *   or disabled.
- * - Persists results in session storage, using the provided configStorageKey,
- *   needs the `storage` permission.
- * - Manages communications between providers and clients.
+ * Sets up the storage-change relay so that `vfs.onStorageChanged` listeners work
+ * in all extension pages (including the picker).
  *
+ * @param {object} [options={}]
+ * @param {boolean} [options.enableExternalProviders=false] - Enable support for
+ *   external storage backend providers. Requires the `management` and `storage`
+ *   permissions. When true, `configStorageKey` is required.
+ * @param {string} [options.configStorageKey] - Storage key used to persist provider
+ *   connection data. Required when `enableExternalProviders` is true.
  */
-export function enableSupportExternalProviders(options = {}) {
+export function init(options = {}) {
   const bg = browser.extension.getBackgroundPage();
   if (!bg || bg !== window) {
-    throw new Error('[vfs-toolkit] enableSupportExternalProviders() must be called from the background script');
+    throw new Error('[vfs-toolkit] init() must be called from the background script');
   }
   _isBackground = true;
 
+  // Always relay storage-change notifications to all extension pages so that
+  // vfs.onStorageChanged.addListener listeners work regardless of which page triggered the change.
+  browser.runtime.onMessage.addListener(msg => {
+    if (msg?.type === 'vfs-notify-background-storage-changed') {
+      browser.runtime.sendMessage({ type: 'vfs-storage-changed', entries: msg.entries }).catch(() => { });
+    }
+  });
+
+  if (!options.enableExternalProviders) return;
+
   _configStorageKey = options?.configStorageKey ?? null;
   if (!_configStorageKey) {
-    throw new Error("[vfs-toolkit] The client API must be initialized with a configStorageKey.");
+    throw new Error('[vfs-toolkit] configStorageKey is required when enableExternalProviders is true.');
   }
   if (typeof browser.management === 'undefined') {
-    throw new Error("[vfs-toolkit] The client API needs the management permission to support external providers.");
-  };
+    throw new Error('[vfs-toolkit] The management permission is required when enableExternalProviders is true.');
+  }
+
   browser.management.getAll().then(extensions => {
     for (const ext of extensions) {
       if (ext.enabled) _probeExtension(ext.id);
@@ -239,10 +251,6 @@ export function enableSupportExternalProviders(options = {}) {
         })))
       );
       return true;
-    }
-    // Relay vfs-storage-changed notifications to all clients.
-    if (msg?.type === 'vfs-notify-background-storage-changed') {
-      browser.runtime.sendMessage({ type: 'vfs-storage-changed', entries: msg.entries }).catch(() => { });
     }
   });
 
@@ -389,17 +397,18 @@ export async function deleteProviderConnection(storageRef) {
 }
 
 /**
- * Subscribe to storage-changed notifications pushed by an external provider.
- * Called in the same execution context as the port, so `browser.runtime.sendMessage`
- * would not loop back to the same page - this callback is the reliable alternative.
+ * Event fired when storage contents change. Requires vfs.init() to have been called
+ * in the background script. Listeners receive the array of affected path entries.
  *
- * @param {function(string[]): void} fn - Receives the array of affected paths.
- * @returns {function} Unsubscribe function.
+ * @property {function} addListener(listener)    - Register a listener.
+ * @property {function} hasListener(listener)    - Returns true if listener is registered.
+ * @property {function} removeListener(listener) - Unregister a listener.
  */
-export function onStorageChanged(fn) {
-  _storageChangedListeners.add(fn);
-  return () => _storageChangedListeners.delete(fn);
-}
+export const onStorageChanged = {
+  addListener(fn) { _storageChangedEvent.addListener(fn); },
+  hasListener(fn) { return _storageChangedEvent.hasListener(fn); },
+  removeListener(fn) { _storageChangedEvent.removeListener(fn); },
+};
 
 function _getProviderPort(providerId) {
   if (_providerPorts.has(providerId)) return _providerPorts.get(providerId);
