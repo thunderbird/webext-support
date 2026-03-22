@@ -102,8 +102,9 @@ class ExampleVfsProvider extends VfsProviderImplementation {
 
   async reportStorageChangeToAll(paths) {
     const rv = await browser.storage.local.get({ 'vfs-toolkit-connections': [] });
+    const entries = paths.map(path => ({ path, kind: 'file', action: 'created' }));
     for (const { storageId } of rv['vfs-toolkit-connections']) {
-      this.reportStorageChange(storageId, paths);
+      this.reportStorageChange(storageId, entries);
     }
   }
 
@@ -127,6 +128,9 @@ class ExampleVfsProvider extends VfsProviderImplementation {
     await this.#assertAuth(storageId);
     const allFiles = getAllFiles();
     const folders = getFolders();
+    if (!folders.has(path === '/' ? '/' : path.replace(/\/$/, ''))) {
+      throw new Error(`Directory not found: ${path}`);
+    }
     const dir = path === '/' ? '' : path.replace(/\/$/, '');
     const entries = [];
     const seen = new Set();
