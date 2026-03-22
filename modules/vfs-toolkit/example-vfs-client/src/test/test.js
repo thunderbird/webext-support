@@ -44,6 +44,13 @@ async function runTests(storageRef) {
 
   const base = '/vfs-test-' + Date.now();
 
+  // Collect all storage-change notifications across the entire test run.
+  const notifiedPaths = [];
+  function storageListener(entries) {
+    for (const e of entries) notifiedPaths.push(e.path);
+  }
+  vfs.onStorageChanged.addListener(storageListener);
+
   // 1. addFolder
   await run('addFolder creates a directory', async () => {
     await vfs.addFolder({ storageRef, path: base });
@@ -184,6 +191,30 @@ async function runTests(storageRef) {
     await vfs.deleteFolder({ storageRef, path: base });
     const entries = await list(storageRef, '/');
     assert(!entries.some(e => e.name === base.slice(1)), 'Folder still present after delete');
+  });
+
+  // Final: verify onStorageChanged received notifications for all mutating operations.
+  await run('onStorageChanged received notifications for all operations', async () => {
+    // Allow any in-flight relay messages to settle.
+    await new Promise(r => setTimeout(r, 200));
+    vfs.onStorageChanged.removeListener(storageListener);
+
+    // Every path touched by a mutating operation in the test suite above.
+    const expectedPaths = [
+      base,                        // addFolder
+      `${base}/sub`,               // addFolder nested, moveFolder (old)
+      `${base}/hello.txt`,         // writeFile, writeFile overwrite, moveFile (old)
+      `${base}/renamed.txt`,       // moveFile (new), copyFile (old still present)
+      `${base}/copy.txt`,          // copyFile (toPath), moveFile overwrite (old)
+      `${base}/target.txt`,        // writeFile in overwrite test, copyFile overwrite (toPath), deleteFile
+      `${base}/dest.txt`,          // writeFile in moveFile overwrite test, moveFile overwrite (toPath)
+      `${base}/sub-renamed`,       // moveFolder (new), copyFolder (source)
+      `${base}/sub-copy`,          // copyFolder (toPath)
+    ];
+
+    for (const p of expectedPaths) {
+      assert(notifiedPaths.includes(p), `No notification received for path: ${p}`);
+    }
   });
 
   const total = passed + failed;

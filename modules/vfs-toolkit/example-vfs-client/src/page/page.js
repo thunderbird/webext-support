@@ -81,7 +81,7 @@ document.addEventListener("DOMContentLoaded", () => {
     await logEntries([entry]);
   });
 
-  const unsubscribe = vfs.onStorageChanged(entries => {
+  vfs.onStorageChanged.addListener(entries => {
     console.log(entries);
     for (const { path, providerId } of entries) {
       console.log('storage changed:', path, 'on provider:', providerId);

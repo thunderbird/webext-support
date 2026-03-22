@@ -1,6 +1,7 @@
 import * as vfs from "./vendor/vfs-client/vfs-client.mjs";
 
-vfs.enableSupportExternalProviders({
+vfs.init({
+  enableExternalProviders: true,
   configStorageKey: "vfs-toolkit-config-data"
 });
 
