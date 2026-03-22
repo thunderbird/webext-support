@@ -2058,7 +2058,10 @@ function _pathsAffectCwd(entries) {
   const cwd = state.cwd;
   const paths = entries
     .filter(e => (e.storageRef?.providerId ?? null) === (state.storageRef?.providerId ?? null) && (e.storageRef?.storageId ?? null) === (state.storageRef?.storageId ?? null))
-    .map(e => e.path);
+    .flatMap(e => {
+      if (e.action === 'moved' || e.action === 'copied') return [e.path, e.sourcePath];
+      return [e.path];
+    });
   if (paths.length === 0) return false; // all from a different provider
   return paths.some(p => {
     const parent = p.replace(/\/[^/]+$/, '') || '/';

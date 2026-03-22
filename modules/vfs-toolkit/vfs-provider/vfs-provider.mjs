@@ -2,7 +2,7 @@
  * vfs-provider.mjs - for documentation see README.md.
  */
 
-const API_VERSION = "1.0.1";
+const API_VERSION = "1.0.2";
 const CONNECTIONS_KEY = 'vfs-toolkit-connections';
 
 function _pickIconUrl(icons) {
@@ -33,6 +33,14 @@ async function _fetchOwnIconBlob() {
  * @property {'file'|'directory'} kind - Item type.
  * @property {number} [size] - File size in bytes (files only).
  * @property {number} [lastModified] - Last-modified timestamp in ms since epoch (files only).
+ */
+
+/**
+ * @typedef {object} StorageChangeEntry
+ * @property {string} path - Absolute path of the affected item (destination for move/copy).
+ * @property {'file'|'directory'} kind - Item type.
+ * @property {'created'|'modified'|'deleted'|'moved'|'copied'} action - What happened to the item.
+ * @property {string} [sourcePath] - Source path, present only for 'moved' and 'copied' actions.
  */
 
 /**
@@ -259,11 +267,11 @@ export class VfsProviderImplementation {
    * sync) that was not triggered by a client request.
    *
    * @param {string} storageId - The storage ID of the affected connection.
-   * @param {string[]} paths - Absolute paths of the affected files or folders.
+   * @param {StorageChangeEntry[]} entries - Entries describing what changed.
    */
-  reportStorageChange(storageId, paths) {
+  reportStorageChange(storageId, entries) {
     for (const port of this.#activePorts) {
-      port.postMessage({ type: 'vfs-storage-changed', storageId, paths });
+      port.postMessage({ type: 'vfs-storage-changed', storageId, entries });
     }
   }
 
@@ -337,41 +345,49 @@ export class VfsProviderImplementation {
 
         case 'writeFile': {
           await this.onWriteFile(requestId, args.storageId, args.path, args.file, args.overwrite);
+          this.reportStorageChange(args.storageId, [{ path: args.path, kind: 'file', action: 'modified' }]);
           return;
         }
 
         case 'addFolder': {
           await this.onAddFolder(requestId, args.storageId, args.path);
+          this.reportStorageChange(args.storageId, [{ path: args.path, kind: 'directory', action: 'created' }]);
           return;
         }
 
         case 'moveFile': {
           await this.onMoveFile(requestId, args.storageId, args.oldPath, args.newPath, args.overwrite);
+          this.reportStorageChange(args.storageId, [{ path: args.newPath, sourcePath: args.oldPath, kind: 'file', action: 'moved' }]);
           return;
         }
 
         case 'moveFolder': {
           await this.onMoveFolder(requestId, args.storageId, args.oldPath, args.newPath, args.merge);
+          this.reportStorageChange(args.storageId, [{ path: args.newPath, sourcePath: args.oldPath, kind: 'directory', action: 'moved' }]);
           return;
         }
 
         case 'copyFile': {
           await this.onCopyFile(requestId, args.storageId, args.oldPath, args.newPath, args.overwrite);
+          this.reportStorageChange(args.storageId, [{ path: args.newPath, sourcePath: args.oldPath, kind: 'file', action: 'copied' }]);
           return;
         }
 
         case 'copyFolder': {
           await this.onCopyFolder(requestId, args.storageId, args.oldPath, args.newPath, args.merge);
+          this.reportStorageChange(args.storageId, [{ path: args.newPath, sourcePath: args.oldPath, kind: 'directory', action: 'copied' }]);
           return;
         }
 
         case 'deleteFile': {
           await this.onDeleteFile(requestId, args.storageId, args.path);
+          this.reportStorageChange(args.storageId, [{ path: args.path, kind: 'file', action: 'deleted' }]);
           return;
         }
 
         case 'deleteFolder': {
           await this.onDeleteFolder(requestId, args.storageId, args.path);
+          this.reportStorageChange(args.storageId, [{ path: args.path, kind: 'directory', action: 'deleted' }]);
           return;
         }
 

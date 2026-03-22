@@ -450,7 +450,8 @@ function _getProviderPort(providerId) {
     } else if (msg.type === 'vfs-storage-changed') {
       // We got a storage changed notification from a provider. Relay the message
       // back to the background and have it beeing broadcasted to all active clients.
-      const entries = (msg.paths || []).map(path => ({ path, storageRef: { providerId, storageId: msg.storageId ?? null } }));
+      const storageRef = { providerId, storageId: msg.storageId ?? null };
+      const entries = (msg.entries || []).map(e => ({ ...e, storageRef }));
       browser.runtime.sendMessage({ type: 'vfs-notify-background-storage-changed', entries }).catch(() => { });
     }
   });
@@ -562,10 +563,10 @@ export async function writeFile(entry, fileOrBlob, options = {}) {
   const { onProgress, overwrite = false } = options;
   if (!storageRef) {
     await opfsProvider.writeFile(path, fileOrBlob, onProgress, { overwrite });
+    _notifyStorageChanged({ path, storageRef, kind: 'file', action: 'modified' });
   } else {
     await _providerSend(providerId, 'writeFile', { path, file: fileOrBlob, overwrite, storageId }, onProgress);
   }
-  _notifyStorageChanged({ path, storageRef });
 }
 
 /**
@@ -583,10 +584,10 @@ export async function moveFile(from, toPath, options = {}) {
   const { onProgress, overwrite = false } = options;
   if (!storageRef) {
     await opfsProvider.moveFile(oldPath, toPath, onProgress, { overwrite });
+    _notifyStorageChanged({ path: toPath, sourcePath: oldPath, storageRef, kind: 'file', action: 'moved' });
   } else {
     await _providerSend(providerId, 'moveFile', { oldPath, newPath: toPath, overwrite, storageId }, onProgress);
   }
-  _notifyStorageChanged({ path: oldPath, storageRef }, { path: toPath, storageRef });
 }
 
 /**
@@ -603,10 +604,10 @@ export async function deleteFile(entry, options = {}) {
   const { onProgress } = options;
   if (!storageRef) {
     await opfsProvider.deleteEntry(path, onProgress);
+    _notifyStorageChanged({ path, storageRef, kind: 'file', action: 'deleted' });
   } else {
     await _providerSend(providerId, 'deleteFile', { path, storageId }, onProgress);
   }
-  _notifyStorageChanged({ path, storageRef });
 }
 
 /**
@@ -622,10 +623,10 @@ export async function addFolder(entry, options = {}) {
   const { onProgress } = options;
   if (!storageRef) {
     await opfsProvider.addFolder(path, onProgress);
+    _notifyStorageChanged({ path, storageRef, kind: 'directory', action: 'created' });
   } else {
     await _providerSend(providerId, 'addFolder', { path, storageId }, onProgress);
   }
-  _notifyStorageChanged({ path, storageRef });
 }
 
 /**
@@ -644,10 +645,10 @@ export async function moveFolder(from, toPath, options = {}) {
   const { onProgress, merge = false } = options;
   if (!storageRef) {
     await opfsProvider.moveFolder(path, toPath, onProgress, { merge });
+    _notifyStorageChanged({ path: toPath, sourcePath: path, storageRef, kind: 'directory', action: 'moved' });
   } else {
     await _providerSend(providerId, 'moveFolder', { oldPath: path, newPath: toPath, merge, storageId }, onProgress);
   }
-  _notifyStorageChanged({ path, storageRef }, { path: toPath, storageRef });
 }
 
 /**
@@ -664,10 +665,10 @@ export async function deleteFolder(entry, options = {}) {
   const { onProgress } = options;
   if (!storageRef) {
     await opfsProvider.deleteEntry(path, onProgress);
+    _notifyStorageChanged({ path, storageRef, kind: 'directory', action: 'deleted' });
   } else {
     await _providerSend(providerId, 'deleteFolder', { path, storageId }, onProgress);
   }
-  _notifyStorageChanged({ path, storageRef });
 }
 
 /**
@@ -685,10 +686,10 @@ export async function copyFile(from, toPath, options = {}) {
   const { onProgress, overwrite = false } = options;
   if (!storageRef) {
     await opfsProvider.copyFile(path, toPath, onProgress, { overwrite });
+    _notifyStorageChanged({ path: toPath, sourcePath: path, storageRef, kind: 'file', action: 'copied' });
   } else {
     await _providerSend(providerId, 'copyFile', { oldPath: path, newPath: toPath, overwrite, storageId }, onProgress);
   }
-  _notifyStorageChanged({ path: toPath, storageRef });
 }
 
 /**
@@ -706,10 +707,10 @@ export async function copyFolder(from, toPath, options = {}) {
   const { onProgress, merge = false } = options;
   if (!storageRef) {
     await opfsProvider.copyDir(path, toPath, onProgress, { merge });
+    _notifyStorageChanged({ path: toPath, sourcePath: path, storageRef, kind: 'directory', action: 'copied' });
   } else {
     await _providerSend(providerId, 'copyFolder', { oldPath: path, newPath: toPath, merge, storageId }, onProgress);
   }
-  _notifyStorageChanged({ path: toPath, storageRef });
 }
 
 /**
