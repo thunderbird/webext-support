@@ -4,7 +4,17 @@
 
 import * as opfsProvider from './opfs-provider.mjs';
 
-const API_VERSION = "1.0.1";
+const API_VERSION = "1.0.2";
+
+/**
+ * 1.0.2 - Fixed drag'n'drop, us all dragged elements instead of just the first
+ *         selected element.
+ *       - Added support for an action button in the picker toolbar, incluing an
+ *         onClicked event, following the WebExtension event listener pattern.
+ *       - Modified the onStorageChanged event to follow the WebExtension event
+ *         listener pattern.
+ */
+
 
 // ── Internal state ────────────────────────────────────────────────────────────
 
