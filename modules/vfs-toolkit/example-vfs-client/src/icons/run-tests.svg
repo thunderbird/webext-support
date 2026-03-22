@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+  <!-- Erlenmeyer flask outline (evenodd creates hollow interior) -->
+  <path fill-rule="evenodd" d="M6 1h4v4l4 9H2L6 5V1zm1 1v3.5L4 13h8L9 5.5V2H7z"/>
+</svg>

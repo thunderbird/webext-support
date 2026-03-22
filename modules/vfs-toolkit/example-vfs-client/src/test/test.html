@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>VFS Provider Tests</title>
+  <style>
+    body { font-family: monospace; padding: 1rem; background: #1e1e1e; color: #d4d4d4; }
+    h1 { font-size: 1rem; color: #9cdcfe; margin-bottom: 1rem; }
+    #controls { margin-bottom: 1rem; display: flex; gap: .5rem; align-items: center; }
+    button { padding: .3rem .8rem; cursor: pointer; }
+    #log { list-style: none; padding: 0; margin: 0; }
+    #log li { padding: .2rem 0; border-bottom: 1px solid #333; font-size: .85rem; }
+    .pass { color: #4ec9b0; }
+    .fail { color: #f44747; }
+    .info { color: #9cdcfe; }
+    .summary { margin-top: 1rem; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>VFS Provider Tests</h1>
+  <div id="controls">
+    <button id="btn-run">Run Tests</button>
+    <span id="summary"></span>
+  </div>
+  <ul id="log"></ul>
+  <script type="module" src="test.js"></script>
+</body>
+</html>
