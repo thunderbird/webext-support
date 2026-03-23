@@ -26,6 +26,10 @@ The repository includes example implementations:
 * Client: [vfs-toolkit-example-client.xpi](vfs-toolkit-example-client.xpi)
 * Provider: [vfs-toolkit-example-provider.xpi](vfs-toolkit-example-provider.xpi)
 
+## Tests
+
+The example client includes an additional toolbar button (flask icon) to run an I/O test on the active connection, helping verify that custom providers fully support the `vfs-toolkit` API.
+
 ## Client API
 
 The client API offers multiple read/write methods to access files stored in the WebExtension’s `OPFS`. Since the storage is bound to the WebExtension origin, each add-on automatically receives its own isolated virtual file system.
