@@ -454,8 +454,8 @@ function _getProviderPort(providerId) {
       // back to the background and have it broadcasted to all active clients.
       const storageRef = { providerId, storageId: msg.storageId ?? null };
       const entries = (msg.entries || []).map(e => {
-        const entry = { kind: e.kind, action: e.action, target: { path: e.targetPath, storageRef } };
-        if (e.sourcePath != null) entry.source = { path: e.sourcePath, storageRef };
+        const entry = { kind: e.kind, action: e.action, target: { path: e.target.path, storageRef } };
+        if (e.source != null) entry.source = { path: e.source.path, storageRef };
         return entry;
       });
       browser.runtime.sendMessage({ type: 'vfs-notify-background-storage-changed', entries }).catch(() => { });
