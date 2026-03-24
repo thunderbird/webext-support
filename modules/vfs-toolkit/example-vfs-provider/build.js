@@ -138,14 +138,28 @@ manifest.version = version;
 fs.writeFileSync("src/manifest.json", JSON.stringify(manifest, null, 2) + "\n");
 console.log(`Set manifest version to ${version}`);
 
+const versionTag = version.replace(/\./g, "_");
+const xpiName = `vfs-toolkit-example-provider_${versionTag}.xpi`;
+
 console.log("Cleaning output directory ...");
 rm("dist");
+
+// Delete old versioned XPIs from the parent folder
+for (const f of fs.readdirSync("..")) {
+  if (f.startsWith("vfs-toolkit-example-provider_") && f.endsWith(".xpi")) {
+    fs.rmSync(path.join("..", f));
+    console.log(`Removed old XPI: ../${f}`);
+  }
+}
 
 console.log("Copying vfs-provider library ...");
 rm("src/vendor/vfs-provider");
 cp("../vfs-provider", "src/vendor/vfs-provider");
 
-console.log("Creating extension file (dist/vfs-toolkit-example-provider.xpi) ...");
-zip("src", "dist/vfs-toolkit-example-provider.xpi");
+console.log(`Creating extension file (dist/${xpiName}) ...`);
+zip("src", `dist/${xpiName}`);
+
+console.log(`Copying to parent folder (../${xpiName}) ...`);
+fs.copyFileSync(`dist/${xpiName}`, path.join("..", xpiName));
 
 console.log("Build finished. Output is in the 'dist' folder.");

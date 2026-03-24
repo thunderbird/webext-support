@@ -127,7 +127,6 @@ async function resolveTargetLabel(storageRef) {
 async function runTests(storageRef) {
   passed = 0; failed = 0;
   log.innerHTML = '';
-  summary.textContent = '';
 
   const base = '/vfs-test-' + Date.now();
   const opfsBase = base + '-xp';
@@ -943,4 +942,16 @@ resolveTargetLabel(_storageRef).then(label => {
   document.getElementById('target-info').textContent = `Target: ${label}`;
 });
 
-document.getElementById('btn-run').addEventListener('click', () => runTests(_storageRef));
+document.getElementById('btn-run').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-run');
+  btn.disabled = true;
+  const spinner = document.createElement('span');
+  spinner.className = 'spinner';
+  summary.replaceChildren(spinner);
+  summary.className = '';
+  try {
+    await runTests(_storageRef);
+  } finally {
+    btn.disabled = false;
+  }
+});

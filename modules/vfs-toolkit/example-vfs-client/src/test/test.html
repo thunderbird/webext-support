@@ -13,7 +13,9 @@
     .pass { color: #4ec9b0; }
     .fail { color: #f44747; }
     .info { color: #9cdcfe; }
-    .summary { margin-top: 1rem; font-weight: bold; }
+    .summary { font-weight: bold; }
+    .spinner { display: inline-block; width: .85rem; height: .85rem; border: 2px solid #555; border-top-color: #9cdcfe; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; }
+    @keyframes spin { to { transform: rotate(360deg); } }
     #target-info { margin-bottom: .75rem; font-size: .85rem; color: #ce9178; }
     .detail { margin: .3rem 0 .1rem 1.2rem; padding: .3rem .5rem; font-size: .78rem; color: #d7ba7d; white-space: pre-wrap; border-left: 2px solid #555; background: #252526; }
   </style>

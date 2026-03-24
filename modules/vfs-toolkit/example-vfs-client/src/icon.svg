@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+  <!-- Folder body -->
+  <rect x="4" y="17" width="40" height="26" rx="3" fill="#3b82f6"/>
+  <!-- Folder tab -->
+  <path d="M4 17 L4 13 Q4 11 6 11 L18 11 L23 17 Z" fill="#2563eb"/>
+  <!-- Plug prongs -->
+  <rect x="20" y="21" width="3" height="10" rx="1.5" fill="white"/>
+  <rect x="25" y="21" width="3" height="10" rx="1.5" fill="white"/>
+  <!-- Plug body -->
+  <rect x="18" y="29" width="12" height="9" rx="2.5" fill="white"/>
+  <!-- Socket slot -->
+  <rect x="22" y="33" width="4" height="2" rx="1" fill="#3b82f6"/>
+</svg>

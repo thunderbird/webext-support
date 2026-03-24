@@ -1561,9 +1561,7 @@ function initToolbar() {
       if (icon) {
         // Fetch and inline the SVG so it inherits currentColor, matching built-in toolbar buttons.
         fetch(icon).then(r => r.text()).then(svgText => {
-          const tmp = document.createElement('div');
-          tmp.innerHTML = svgText.trim();
-          const svg = tmp.querySelector('svg');
+          const svg = new DOMParser().parseFromString(svgText.trim(), 'image/svg+xml').querySelector('svg');
           if (svg) {
             svg.setAttribute('width', '14');
             svg.setAttribute('height', '14');

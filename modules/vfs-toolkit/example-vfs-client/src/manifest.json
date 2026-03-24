@@ -7,7 +7,7 @@
     }
   },
   "name": "VFS-Toolkit: Simple example client",
-  "version": "1.0.1",
+  "version": "1.3.1",
   "author": "John Bieling",
   "homepage_url": "https://github.com/thunderbird/webext-support/tree/master/modules/vfs-toolkit",
   "description": "An example client using the VFS toolkit.",
@@ -15,6 +15,10 @@
     "storage",
     "management"
   ],
+  "icons": {
+    "48": "icon.svg",
+    "96": "icon.svg"
+  },
   "background": {
     "type": "module",
     "scripts": [
