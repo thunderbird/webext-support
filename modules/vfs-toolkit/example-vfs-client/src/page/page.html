@@ -72,7 +72,59 @@
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      margin-top: 4px;
+      margin-top: 14px;
+    }
+
+    .vfs-providers {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin: 10px 0 4px;
+    }
+
+    .vfs-provider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      background: #f9f9f9;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .vfs-provider {
+        border-color: #555;
+        background: #2a2a2a;
+      }
+    }
+
+    .vfs-provider img,
+    .vfs-provider-icon {
+      width: 32px;
+      height: 32px;
+      flex-shrink: 0;
+      border-radius: 4px;
+    }
+
+    .vfs-provider-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .vfs-provider-name {
+      font-weight: 600;
+    }
+
+    .vfs-provider-desc {
+      color: #555;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .vfs-provider-desc {
+        color: #aaa;
+      }
     }
 
   </style>
@@ -82,25 +134,59 @@
   <div class="vfs-section">
     <h3 class="vfs-heading">Testing the VFS Toolkit</h3>
     <p>
-      The following buttons open the file pickers of the <a
-        href="https://github.com/thunderbird/webext-support/tree/master/modules/vfs-toolkit">VFS Toolkit</a> available
-      for WebExtensions. It is a wrapper for
-      <a href="https://developer.mozilla.org/en-US/docs/Web/API/File_System_API/Origin_private_file_system">OPFS</a>
-      implemented by Mozilla, which is a virtual file system, but sadly without file pickers.
+      The following buttons test the file pickers of the <a
+        href="https://github.com/thunderbird/webext-support/tree/master/modules/vfs-toolkit">VFS Toolkit</a>, a
+      WebExtension framework for file access across multiple storage backends. Users can pick whatever storage backend they
+      prefer by installing additional provider add-ons.
     </p>
     <p>
-      This gap is closed by the VFS Toolkit. In addition, the VFS Toolkit provides support for arbitrary storage
-      backends, and is not limited to OPFS. Users can install additional providers.
-    </p>
-    <p>
-      The only already available storage backend is the <a
-        href="https://github.com/jobisoft/Local-Home-Folder-Access-Provider">Local Home Folder Access Provider</a>,
-      allowing access to your local home directory via Native Messaging (not via Experiments!).
+      The picker of this example client implementation provides a test framework for add-on developers to
+      test their provider add-ons against the VFS Toolkit API. The test can be triggered for the currently
+      selected connection by clicking on the flask icon in the picker's toolbar.
     </p>
     <div class="vfs-buttons">
       <button class="options-button" id="show-openFile-picker">Show OpenFile Picker</button>
       <button class="options-button" id="show-saveFile-picker">Show SaveFile Picker</button>
       <button class="options-button" id="show-directory-picker">Show Directory Picker</button>
+    </div>
+    <p>The following providers are available:</p>
+    <div class="vfs-providers">
+      <div class="vfs-provider">
+        <svg class="vfs-provider-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <ellipse cx="12" cy="5" rx="9" ry="3" />
+          <path d="M3 8c0 1.66 4.03 3 9 3s9-1.34 9-3v4c0 1.66-4.03 3-9 3S3 13.66 3 12V8z" />
+          <path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3v4c0 1.66-4.03 3-9 3S3 17.66 3 16v-4z" />
+        </svg>
+        <div class="vfs-provider-info">
+          <span class="vfs-provider-name">OPFS (built-in default)</span>
+          <span class="vfs-provider-desc">Origin Private File System — a virtual file system provided by Mozilla, used
+            as the default storage inside the WebExtension. All stored files are cleared when the add-on is
+            uninstalled.</span>
+        </div>
+      </div>
+      <div class="vfs-provider">
+        <img src="https://addons.thunderbird.net/user-media/addon_icons/989/989523-64.png?modified=bad9b4f7"
+          alt="WebDAV provider icon" />
+        <div class="vfs-provider-info">
+          <span class="vfs-provider-name"><a
+              href="https://addons.thunderbird.net/en-US/thunderbird/addon/vfs-provider-webdav/">VFS-Provider:
+              WebDAV</a></span>
+          <span class="vfs-provider-desc">A shared WebDAV account manager. Other add-ons that need access to a WebDAV
+            file storage can ask this provider to set up and manage the connection on their behalf. Works with ownCloud,
+            Nextcloud and many other WebDAV-based cloud services.</span>
+        </div>
+      </div>
+      <div class="vfs-provider">
+        <img src="https://addons.thunderbird.net/user-media/addon_icons/989/989501-64.png?modified=81caf8dd"
+          alt="Local Home Folder Access provider icon" />
+        <div class="vfs-provider-info">
+          <span class="vfs-provider-name"><a
+              href="https://addons.thunderbird.net/en-US/thunderbird/addon/vfs-home-folder-access/">VFS-Provider: Local
+              Home Folder Access</a></span>
+          <span class="vfs-provider-desc">Enables access to the user's local home folder through a native messaging
+            helper application (Python 3 required). Not via Experiments!</span>
+        </div>
+      </div>
     </div>
   </div>
 </body>

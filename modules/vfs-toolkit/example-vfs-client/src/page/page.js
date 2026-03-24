@@ -36,6 +36,14 @@ const savefile = new File(
 
 document.addEventListener("DOMContentLoaded", () => {
 
+  document.addEventListener("click", (e) => {
+    const link = e.target.closest("a[href]");
+    if (link?.href.startsWith("https://addons.thunderbird.net/")) {
+      e.preventDefault();
+      browser.tabs.create({ url: link.href });
+    }
+  });
+
   document.getElementById("show-openFile-picker").addEventListener("click", async () => {
     const entries = await vfs.showSelectFilePicker({
       multiple: true,
