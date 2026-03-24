@@ -2,7 +2,7 @@
  * vfs-provider.mjs - for documentation see README.md.
  */
 
-const API_VERSION = "1.2";
+const API_VERSION = "1.3";
 const CONNECTIONS_KEY = 'vfs-toolkit-connections';
 
 function _pickIconUrl(icons) {
@@ -425,15 +425,16 @@ export class VfsProviderImplementation {
  * it can be included in future `vfs-toolkit-discover` handshake responses.
  *
  * @param {string} addonId
+ * @param {string} addonName
  * @param {string} storageId
  * @param {string} name
  * @param {object} [capabilities]
  */
-export async function reportNewConnection(addonId, storageId, name, capabilities) {
+export async function reportNewConnection(addonId, addonName, storageId, name, capabilities) {
   const rv = await browser.storage.local.get({ [CONNECTIONS_KEY]: [] });
   const list = rv[CONNECTIONS_KEY];
   const idx = list.findIndex(c => c.addonId === addonId && c.storageId === storageId);
-  const entry = { addonId, storageId, name, capabilities };
+  const entry = { addonId, addonName, storageId, name, capabilities };
   if (idx >= 0) list[idx] = entry;
   else list.push(entry);
   await browser.storage.local.set({ [CONNECTIONS_KEY]: list });

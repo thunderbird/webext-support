@@ -28,7 +28,7 @@ if (alreadyConnected) {
   document.getElementById('grant-btn').addEventListener('click', async () => {
     const storageId = crypto.randomUUID();
     const name = 'Example External Storage';
-    await vfs.reportNewConnection(addonId, storageId, name, capabilities);
+    await vfs.reportNewConnection(addonId, addonName, storageId, name, capabilities);
     window.close();
   });
 }

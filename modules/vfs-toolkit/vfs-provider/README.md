@@ -136,6 +136,7 @@ import { reportNewConnection } from '../vfs-provider.mjs';
 
 const params = new URLSearchParams(location.search);
 const addonId = params.get('addonId');
+const addonName = params.get('addonName');
 
 const capabilities = {
   file:   { read: true, add: true, modify: true, delete: true },
@@ -144,7 +145,7 @@ const capabilities = {
 
 document.getElementById('grant-btn').addEventListener('click', async () => {
   const storageId = crypto.randomUUID();
-  await reportNewConnection(addonId, storageId, 'My Provider', capabilities);
+  await reportNewConnection(addonId, addonName, storageId, 'My Provider', capabilities);
   window.close();
 });
 ```

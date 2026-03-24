@@ -4,7 +4,7 @@
 
 import * as opfsProvider from './opfs-provider.mjs';
 
-const API_VERSION = "1.2";
+const API_VERSION = "1.3";
 
 /**
  * 1.0.2 - Fixed drag'n'drop, us all dragged elements instead of just the first
