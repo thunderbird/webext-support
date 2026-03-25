@@ -9,9 +9,9 @@ The core of `vfs-toolkit` is its client API, built around the [Origin Private Fi
 
 The following storage backends are currently available:
 
-- **OPFS** (built-in) - virtual files stored within the browser profile
-- **[WebDAV](https://addons.thunderbird.net/addon/vfs-provider-webdav/)** - allow users to access/save files directly on a WebDAV server (for example Nextcloud or ownCloud)
-- **[Local Home Folder](https://addons.thunderbird.net/addon/vfs-home-folder-access/)** - allow users to access/save files in their local home folder (via Native Messaging)
+- **[OPFS](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API/Origin_private_file_system)** - access/save files in a virtual file system stored within the user's profile
+- **[WebDAV](https://addons.thunderbird.net/addon/vfs-provider-webdav/)** - access/save files directly on a WebDAV server (for example Nextcloud or ownCloud)
+- **[Local Home Folder](https://addons.thunderbird.net/addon/vfs-home-folder-access/)** - access/save files in the user's local home folder (via Native Messaging)
 
 We will see more storage backends being made available, soon, for example **Nextcloud** and **Seafile**.
 
