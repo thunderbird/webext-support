@@ -1214,14 +1214,12 @@ async function _openPopupWindow(sessionId, pickerParams, width, height) {
   const { resolve, reject, defaultValue } = pendingPickers.get(sessionId);
   let windowId = null;
 
-  // Listen for result via runtime messaging
+  // Listen for result via runtime messaging.
   function messageHandler(msg) {
     if (msg && msg.type === 'vfs-picker-result' && msg.session === sessionId) {
       browser.runtime.onMessage.removeListener(messageHandler);
       pendingPickers.delete(sessionId);
-      if (windowId !== null) {
-        browser.windows.remove(windowId).catch(() => { });
-      }
+      // The picker window should be closed by the caller.
       resolve(msg.result ?? defaultValue);
     }
   }
