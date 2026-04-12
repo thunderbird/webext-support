@@ -25,7 +25,7 @@
   "btnSelectFile": "Выбрать файл",
   "btnSelectFiles": "Выбрать файлы",
   "btnSave": "Сохранить",
-  "btnSelectFolder": "Выбрать папку",
+  "btnSelectFolder": "Выбрать текущую папку",
   "saveNameLabel": "Имя файла",
   "colName": "Имя",
   "colSize": "Размер",

@@ -484,8 +484,8 @@ function getFileIcon(name) {
 
 function renderFooter() {
   if (MODE === 'dir') {
-    const sel = state.selected.size === 1 ? [...state.selected][0] : null;
-    openBtn.disabled = !sel || state.entries.find(e => e.name === sel)?.kind !== 'directory';
+    // Always enabled — selects the currently open folder.
+    openBtn.disabled = false;
   } else if (MODE === 'save') {
     openBtn.disabled = !saveNameInput.value.trim();
   } else if (state.selected.size === 0) {
@@ -758,10 +758,8 @@ async function _renderPreviewContent(body, file, name, ext) {
 
 async function confirmSelection() {
   if (MODE === 'dir') {
-    const sel = state.selected.size === 1 ? [...state.selected][0] : null;
-    const entry = sel ? state.entries.find(e => e.name === sel) : null;
-    if (!entry || entry.kind !== 'directory') return;
-    sendResult({ ...entry, storageRef: state.storageRef });
+    // Select the currently open folder.
+    sendResult({ path: state.cwd, name: state.cwd.split('/').filter(Boolean).pop() || '', kind: 'directory', storageRef: state.storageRef });
   } else if (MODE === 'save') {
     const name = saveNameInput.value.trim();
     if (!name) return;

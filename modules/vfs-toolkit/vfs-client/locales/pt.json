@@ -25,7 +25,7 @@
   "btnSelectFile": "Selecionar arquivo",
   "btnSelectFiles": "Selecionar arquivos",
   "btnSave": "Salvar",
-  "btnSelectFolder": "Selecionar pasta",
+  "btnSelectFolder": "Selecionar pasta atual",
   "saveNameLabel": "Nome do arquivo",
   "colName": "Nome",
   "colSize": "Tamanho",

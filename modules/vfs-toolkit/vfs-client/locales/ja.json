@@ -25,7 +25,7 @@
   "btnSelectFile": "ファイルを選択",
   "btnSelectFiles": "ファイルを選択",
   "btnSave": "保存",
-  "btnSelectFolder": "フォルダを選択",
+  "btnSelectFolder": "現在のフォルダを選択",
   "saveNameLabel": "ファイル名",
   "colName": "名前",
   "colSize": "サイズ",
