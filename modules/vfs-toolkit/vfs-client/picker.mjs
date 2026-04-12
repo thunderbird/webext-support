@@ -1723,18 +1723,19 @@ async function _buildDropdown() {
     p.icon ? URL.createObjectURL(p.icon) : _FALLBACK_ICON,
   ]));
   const valid = providers.flatMap(p =>
-    p.connections.map(conn => ({ conn, icon: providerIconUrls.get(p.providerId), hasConfig: p.hasConfig ?? false }))
+    p.connections.map(conn => ({ conn, providerName: p.name, icon: providerIconUrls.get(p.providerId), hasConfig: p.hasConfig ?? false }))
   );
 
   if (valid.length > 0) {
     _providerUl.appendChild(_makeSep());
-    for (const { conn, icon, hasConfig } of valid) {
+    for (const { conn, providerName, icon, hasConfig } of valid) {
+      const label = `${providerName}: ${conn.name}`;
       const li = document.createElement('li');
       li.dataset.providerId = conn.storageRef.providerId;
       li.dataset.storageId = conn.storageRef.storageId ?? '';
-      li.dataset.label = conn.name;
+      li.dataset.label = label;
       if (icon) li.dataset.icon = icon;
-      _setProviderContent(li, conn.name, icon);
+      _setProviderContent(li, label, icon);
       li.addEventListener('click', async () => {
         _providerUl.hidden = true;
         if (state.storageRef?.providerId === conn.storageRef.providerId && state.storageRef?.storageId === (conn.storageRef.storageId ?? null)) return;
@@ -1903,7 +1904,7 @@ async function init() {
       const ac = ap?.connections.find(c => (c.storageRef.storageId ?? null) === state.storageRef.storageId);
       if (ac) {
         const icon = ap.icon ? URL.createObjectURL(ap.icon) : _FALLBACK_ICON;
-        _setProviderContent(_providerBtn, ac.name, icon);
+        _setProviderContent(_providerBtn, `${ap.name}: ${ac.name}`, icon);
       } else {
         _setProviderContent(_providerBtn, VFS_PROVIDER_NAME ?? t('providerOpfs'), _opfsIcon);
       }
