@@ -23,6 +23,7 @@ let _configStorageKey = null;
 const _progressCallbacks = new Map();
 
 const _storageChangedEvent = _createEvent();
+const _connectionsChangedEvent = _createEvent();
 
 // ── Action button (set via parseManifest) ─────────────────────────────────────
 
@@ -89,6 +90,11 @@ browser.runtime.onMessage.addListener(msg => {
   if (msg?.type === 'vfs-storage-changed') {
     _storageChangedEvent._fire(msg.entries || []);
   }
+  if (msg?.type === 'vfs-provider-updated' ||
+      msg?.type === 'vfs-provider-removed' ||
+      msg?.type === 'vfs-remove-connection') {
+    _connectionsChangedEvent._fire();
+  }
 });
 
 // ── Provider discovery ────────────────────────────────────────────────────────
@@ -120,6 +126,7 @@ async function _updateProvider(providerId, name, connections = [], icon = null, 
     else list.push({ providerId, name, connections, icon, hasConfig });
     await _saveProviderList(list);
     browser.runtime.sendMessage({ type: 'vfs-provider-updated', providerId, name }).catch(() => { });
+    _connectionsChangedEvent._fire();
   });
 }
 
@@ -128,6 +135,7 @@ async function _removeProvider(id) {
     const list = await _readProviderList();
     await _saveProviderList(list.filter(p => p.providerId !== id));
     browser.runtime.sendMessage({ type: 'vfs-provider-removed', providerId: id }).catch(() => { });
+    _connectionsChangedEvent._fire();
   });
 }
 
@@ -139,6 +147,7 @@ async function _removeConnection(providerId, storageId) {
     provider.connections = provider.connections.filter(c => c.storageId !== storageId);
     await _saveProviderList(list);
     browser.runtime.sendMessage({ type: 'vfs-provider-updated', providerId, name: provider.name }).catch(() => { });
+    _connectionsChangedEvent._fire();
   });
 }
 
@@ -152,6 +161,8 @@ async function _addConnection(providerId, storageId, name, capabilities) {
     if (idx >= 0) provider.connections[idx] = conn;
     else provider.connections.push(conn);
     await _saveProviderList(list);
+    browser.runtime.sendMessage({ type: 'vfs-provider-updated', providerId, name: provider.name }).catch(() => { });
+    _connectionsChangedEvent._fire();
   });
 }
 
@@ -410,6 +421,17 @@ export const onStorageChanged = {
   addListener(fn) { _storageChangedEvent.addListener(fn); },
   hasListener(fn) { return _storageChangedEvent.hasListener(fn); },
   removeListener(fn) { _storageChangedEvent.removeListener(fn); },
+};
+
+/**
+ * Fires when the set of installed VFS provider connections changes
+ * (connection added, removed, or provider removed). Listeners receive
+ * no arguments — call `fetchProviderConnections()` to get the current state.
+ */
+export const onConnectionsChanged = {
+  addListener(fn) { _connectionsChangedEvent.addListener(fn); },
+  hasListener(fn) { return _connectionsChangedEvent.hasListener(fn); },
+  removeListener(fn) { _connectionsChangedEvent.removeListener(fn); },
 };
 
 function _getProviderPort(providerId) {
