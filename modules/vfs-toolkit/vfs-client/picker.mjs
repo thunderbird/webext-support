@@ -94,7 +94,7 @@ const EXCLUDE_ACCEPT_ALL = params.get('excludeAcceptAll') === '1';
 const PICKER_ID = params.get('id') ?? null;
 const START_IN = params.get('startIn') ?? null;
 const VFS_PROVIDER_NAME = params.get('opfsStorageName') ?? null;
-const MODE = params.get('mode') ?? 'open'; // 'open' | 'save' | 'dir'
+const MODE = params.get('mode') ?? 'open'; // 'open' | 'save' | 'dir' | 'browse'
 const SUGGESTED_NAME = params.get('suggestedName') ?? null;
 // Array of { id, label } — rendered as extra toolbar buttons; clicks are sent to
 // the client extension background via browser.runtime.sendMessage so the background
@@ -757,6 +757,7 @@ async function _renderPreviewContent(body, file, name, ext) {
 }
 
 async function confirmSelection() {
+  if (MODE === 'browse') return; // no selection in browse mode
   if (MODE === 'dir') {
     // Select the currently open folder.
     sendResult({ path: state.cwd, name: state.cwd.split('/').filter(Boolean).pop() || '', kind: 'directory', storageRef: state.storageRef });
@@ -798,7 +799,7 @@ function showContextMenu(x, y, entry) {
   const items = [];
 
   if (!isDir) {
-    if (MODE !== 'dir') items.push({ label: '✅ ' + t('ctxSelect'), action: () => confirmSelection(), disabled: !MULTIPLE && state.selected.size > 1 });
+    if (MODE !== 'dir' && MODE !== 'browse') items.push({ label: '✅ ' + t('ctxSelect'), action: () => confirmSelection(), disabled: !MULTIPLE && state.selected.size > 1 });
     items.push({ label: '💾 ' + t('ctxSaveAs'), action: () => saveAsLocal(entryPath, entry.name) });
     items.push(null); // separator
   } else {
@@ -1927,6 +1928,9 @@ async function init() {
   } else if (MODE === 'dir') {
     document.title = t('pageTitleDir');
     openBtn.querySelector('span').textContent = t('btnSelectFolder');
+  } else if (MODE === 'browse') {
+    document.title = t('pageTitleBrowse');
+    openBtn.hidden = true;
   } else if (MULTIPLE) {
     document.title = t('pageTitleMultiple');
     openBtn.querySelector('span').textContent = t('btnSelectFiles');

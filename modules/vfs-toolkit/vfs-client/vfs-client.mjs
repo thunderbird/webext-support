@@ -884,6 +884,50 @@ export function showSelectFilePicker(options = {}) {
 }
 
 /**
+ * Opens a file picker UI in "browse" mode.
+ *
+ * Same as `showSelectFilePicker` but without the Select/Open footer button.
+ * The user can navigate the storage, inspect files in the preview pane, and
+ * perform file operations via the context menu (rename, copy, move, delete,
+ * create folder, upload). There's no selection result — the promise resolves
+ * to `null` when the user closes the picker.
+ *
+ * @param {object} [options]
+ * @param {number} [options.width=800]
+ * @param {number} [options.height=600]
+ * @param {string} [options.id]
+ *   An identifier for this picker context. The picker remembers the last-used
+ *   directory and storageRef per `id` and restores both on the next open, ignoring `startIn`.
+ * @param {string} [options.startIn]
+ *   Absolute path to open the picker in initially (e.g. `"/documents"`).
+ *   Ignored when `id` is set and has a saved state.
+ * @param {StorageRef} [options.storageRef]
+ *   Open the picker pre-set to this connection. Ignored when `id` has saved state.
+ * @param {string} [options.opfsStorageName]
+ *   Display name for the built-in OPFS (local storage) option in the provider dropdown.
+ * @returns {Promise<null>} Always resolves to `null`.
+ */
+export function showBrowseFilePicker(options = {}) {
+  return new Promise((resolve, reject) => {
+    const sessionId = crypto.randomUUID();
+    const { width = 800, height = 600, storageRef = null, id = null, startIn = null, opfsStorageName = null, buttons = null } = options;
+
+    pendingPickers.set(sessionId, { resolve, reject, defaultValue: null });
+
+    const pickerParams = new URLSearchParams();
+    pickerParams.set('session', sessionId);
+    pickerParams.set('mode', 'browse');
+    if (storageRef) pickerParams.set('storageRef', JSON.stringify(storageRef));
+    if (id) pickerParams.set('id', id);
+    if (startIn) pickerParams.set('startIn', startIn);
+    if (opfsStorageName) pickerParams.set('opfsStorageName', opfsStorageName);
+    if (buttons?.length) pickerParams.set('buttons', JSON.stringify(buttons));
+
+    _openPopupWindow(sessionId, pickerParams, width, height).catch(reject);
+  });
+}
+
+/**
  * Opens a save file picker UI.
  *
  * Same as `showSelectFilePicker` but the picker shows a filename input and a Save
