@@ -93,5 +93,6 @@
   "connectionLockedSoftStatus": "La selezione \u00e8 limitata a \u00ab$1\u00bb. Torna a quella connessione per selezionare un file.",
   "connectionLockedSoftHint": "Torna alla connessione richiesta per abilitare questo pulsante.",
   "connectionLockedUnavailable": "La memoria richiesta \u00ab$1\u00bb non \u00e8 disponibile.",
-  "connectionLockedUnavailableShort": "Memoria non disponibile"
+  "connectionLockedUnavailableShort": "Memoria non disponibile",
+  "findProviderAddons": "Trova componenti aggiuntivi provider VFS\u2026"
 }

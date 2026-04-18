@@ -231,7 +231,6 @@ const breadcrumbEl = $('vfs-breadcrumb');
 let _providerWrap = null;
 let _providerUl = null;
 let _providerBtn = null;
-const _knownProviderIds = new Set();
 const listArea = $('vfs-list-area');
 const dropOverlay = $('vfs-drop-overlay');
 const filterInput = $('vfs-filter');
@@ -1755,24 +1754,31 @@ function _updateProviderDisplay() {
   _providerUl.querySelectorAll('li').forEach(l => l.classList.toggle('active', l === activeLi));
 }
 
-function _addProviderOption(providerId) {
-  _knownProviderIds.add(providerId);
-  if (_providerWrap) _providerWrap.hidden = false;
-}
-
-function _removeProviderOption(providerId) {
-  _knownProviderIds.delete(providerId);
-  if (_providerWrap) _providerWrap.hidden = _knownProviderIds.size === 0;
-}
-
 async function _buildDropdown() {
   _providerUl.innerHTML = '';
+
+  const providers = await vfs.fetchProviderConnections();
+
+  // No provider add-ons installed → show a single discovery entry.
+  if (providers.length === 0) {
+    const li = document.createElement('li');
+    li.textContent = t('findProviderAddons');
+    li.addEventListener('click', async e => {
+      e.stopPropagation();
+      _providerUl.hidden = true;
+      const tab = await browser.tabs.create({ url: 'https://addons.thunderbird.net/search/?q=VFS' });
+      if (tab?.windowId != null) {
+        await browser.windows.update(tab.windowId, { focused: true });
+      }
+    });
+    _providerUl.appendChild(li);
+    return;
+  }
 
   // 1. OPFS entry (always first)
   _providerUl.appendChild(_makeProviderLi('', VFS_PROVIDER_NAME ?? t('providerOpfs'), _opfsIcon));
 
   // 2. Established connections
-  const providers = await vfs.fetchProviderConnections();
   const providerIconUrls = new Map(providers.map(p => [
     p.providerId,
     p.icon ? URL.createObjectURL(p.icon) : _FALLBACK_ICON,
@@ -1873,28 +1879,26 @@ async function _buildDropdown() {
   // 3. Separator + "Add new connection" submenu
   _providerUl.appendChild(_makeSep());
 
-  if (providers.length > 0) {
-    const addLi = document.createElement('li');
-    addLi.className = 'vfs-provider-submenu-item';
-    addLi.textContent = 'Add new connection';
+  const addLi = document.createElement('li');
+  addLi.className = 'vfs-provider-submenu-item';
+  addLi.textContent = 'Add new connection';
 
-    const subUl = document.createElement('ul');
-    subUl.className = 'vfs-provider-submenu';
+  const subUl = document.createElement('ul');
+  subUl.className = 'vfs-provider-submenu';
 
-    for (const p of providers) {
-      const subLi = document.createElement('li');
-      _setProviderContent(subLi, p.name || p.providerId, providerIconUrls.get(p.providerId));
-      subLi.addEventListener('click', async e => {
-        e.stopPropagation();
-        _providerUl.hidden = true;
-        const addonName = browser.runtime.getManifest().name;
-        try { await vfs.openProviderSetup(p.providerId, addonName); } catch { /* no setup page */ }
-      });
-      subUl.appendChild(subLi);
-    }
-    addLi.appendChild(subUl);
-    _providerUl.appendChild(addLi);
+  for (const p of providers) {
+    const subLi = document.createElement('li');
+    _setProviderContent(subLi, p.name || p.providerId, providerIconUrls.get(p.providerId));
+    subLi.addEventListener('click', async e => {
+      e.stopPropagation();
+      _providerUl.hidden = true;
+      const addonName = browser.runtime.getManifest().name;
+      try { await vfs.openProviderSetup(p.providerId, addonName); } catch { /* no setup page */ }
+    });
+    subUl.appendChild(subLi);
   }
+  addLi.appendChild(subUl);
+  _providerUl.appendChild(addLi);
 
   _updateProviderDisplay();
 }
@@ -1941,11 +1945,10 @@ async function init() {
 
   initToolbar();
   applyCapabilities();
-  // Provider selector - always created, shown as static label when no providers are installed
+  // Provider selector - always shown, even when no providers are installed
   {
     _providerWrap = document.createElement('div');
     _providerWrap.id = 'vfs-provider-select';
-    _providerWrap.hidden = _providers.length === 0;
 
     _providerBtn = document.createElement('button');
     _providerBtn.className = 'vfs-provider-btn';
@@ -1954,8 +1957,6 @@ async function init() {
     _providerUl = document.createElement('ul');
     _providerUl.className = 'vfs-provider-dropdown';
     _providerUl.hidden = true;
-
-    for (const p of _providers) _knownProviderIds.add(p.providerId);
 
     _opfsIcon = _getOwnIconUrl() ?? _FALLBACK_ICON;
 
@@ -1995,8 +1996,6 @@ async function init() {
     _providerWrap.append(_providerBtn);
     // The dropdown is only attached in non-strict mode.
     if (LOCK_STORAGE !== 'strict') _providerWrap.appendChild(_providerUl);
-    // When locked, always show the provider widget even if no other providers exist.
-    if (LOCKED_REF) _providerWrap.hidden = false;
     locationBarEl.insertBefore(_providerWrap, breadcrumbEl);
   }
 
@@ -2151,12 +2150,7 @@ async function init() {
           reloadUrl.searchParams.delete('storageRef');
           location.href = reloadUrl.toString();
         }
-      } else {
-        _removeProviderOption(msg.providerId);
       }
-    }
-    if (msg.type === 'vfs-provider-updated') {
-      _addProviderOption(msg.providerId);
     }
     // Switch to OPFS if the active connection was removed by any picker instance.
     if (msg.type === 'vfs-remove-connection') {

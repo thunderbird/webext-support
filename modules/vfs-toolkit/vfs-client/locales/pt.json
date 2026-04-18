@@ -93,5 +93,6 @@
   "connectionLockedSoftStatus": "A sele\u00e7\u00e3o est\u00e1 restrita a \u00ab$1\u00bb. Volte para essa conex\u00e3o para selecionar um arquivo.",
   "connectionLockedSoftHint": "Volte ao armazenamento requerido para habilitar este bot\u00e3o.",
   "connectionLockedUnavailable": "O armazenamento requerido \u00ab$1\u00bb n\u00e3o est\u00e1 dispon\u00edvel.",
-  "connectionLockedUnavailableShort": "Armazenamento indispon\u00edvel"
+  "connectionLockedUnavailableShort": "Armazenamento indispon\u00edvel",
+  "findProviderAddons": "Encontrar extens\u00f5es de provedor VFS\u2026"
 }

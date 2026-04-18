@@ -93,5 +93,6 @@
   "connectionLockedSoftStatus": "Selection is locked to \u201c$1\u201d. Switch back to that connection to select a file.",
   "connectionLockedSoftHint": "Switch back to the required storage to enable this button.",
   "connectionLockedUnavailable": "The required storage \u201c$1\u201d is not available.",
-  "connectionLockedUnavailableShort": "Storage unavailable"
+  "connectionLockedUnavailableShort": "Storage unavailable",
+  "findProviderAddons": "\u041d\u0430\u0439\u0442\u0438 \u0434\u043e\u043f\u043e\u043b\u043d\u0435\u043d\u0438\u044f \u043f\u043e\u0441\u0442\u0430\u0432\u0449\u0438\u043a\u043e\u0432 VFS\u2026"
 }
