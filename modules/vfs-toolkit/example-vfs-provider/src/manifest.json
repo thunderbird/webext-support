@@ -7,7 +7,7 @@
     }
   },
   "name": "VFS-Provider: In-memory storage (example implementation)",
-  "version": "1.3.1",
+  "version": "1.3.2",
   "author": "John Bieling",
   "homepage_url": "https://github.com/thunderbird/webext-support/tree/master/modules/vfs-toolkit",
   "description": "An example provider add-on for WebExtensions using the VFS toolkit, that exposes a in-memory only storage.",
