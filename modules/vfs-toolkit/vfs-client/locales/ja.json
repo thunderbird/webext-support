@@ -89,5 +89,9 @@
   "conflictMessage": "「$1」は既に存在します。",
   "btnSkip": "スキップ",
   "btnMerge": "結合",
-  "applyToAll": "残りすべてに適用"
+  "applyToAll": "残りすべてに適用",
+  "connectionLockedSoftStatus": "Selection is locked to \u201c$1\u201d. Switch back to that connection to select a file.",
+  "connectionLockedSoftHint": "Switch back to the required storage to enable this button.",
+  "connectionLockedUnavailable": "The required storage \u201c$1\u201d is not available.",
+  "connectionLockedUnavailableShort": "Storage unavailable"
 }

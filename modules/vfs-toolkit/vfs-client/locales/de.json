@@ -89,5 +89,9 @@
   "conflictMessage": "\u201e$1\u201c ist bereits vorhanden.",
   "btnSkip": "\u00dcberspringen",
   "btnMerge": "Zusammenf\u00fchren",
-  "applyToAll": "Auf alle verbleibenden anwenden"
+  "applyToAll": "Auf alle verbleibenden anwenden",
+  "connectionLockedSoftStatus": "Die Auswahl ist auf \u201e$1\u201c beschr\u00e4nkt. Zur\u00fcck zu dieser Verbindung wechseln, um eine Datei auszuw\u00e4hlen.",
+  "connectionLockedSoftHint": "Zur erforderlichen Verbindung zur\u00fcckkehren, um diese Schaltfl\u00e4che zu aktivieren.",
+  "connectionLockedUnavailable": "Der erforderliche Speicher \u201e$1\u201c ist nicht verf\u00fcgbar.",
+  "connectionLockedUnavailableShort": "Speicher nicht verf\u00fcgbar"
 }

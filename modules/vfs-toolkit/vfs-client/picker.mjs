@@ -100,6 +100,19 @@ const SUGGESTED_NAME = params.get('suggestedName') ?? null;
 // the client extension background via browser.runtime.sendMessage so the background
 // can react (e.g. open a test tab) without any provider involvement.
 const BUTTONS = params.get('buttons') ? JSON.parse(params.get('buttons')) : [];
+// 'strict' | 'soft' | null. When set, the picker is locked to LOCKED_REF:
+// 'strict' hides the provider selector entirely; 'soft' disables the confirm
+// button while the user browses a different connection.
+const LOCK_STORAGE = params.get('lockStorage') ?? null;
+const LOCKED_REF = LOCK_STORAGE && params.has('storageRef')
+  ? JSON.parse(params.get('storageRef'))
+  : null;
+
+function _isLockedConnection(ref) {
+  if (!LOCKED_REF) return true;
+  return (ref?.providerId ?? null) === (LOCKED_REF.providerId ?? null) &&
+         (ref?.storageId  ?? null) === (LOCKED_REF.storageId  ?? null);
+}
 
 // ── Id-state persistence (localStorage, keyed by id only - id enforces the provider) ──
 
@@ -192,11 +205,13 @@ function basename(path) {
 // ── State ─────────────────────────────────────────────────────────────────────
 
 const state = {
-  storageRef: _idState?.storageRef ?? (params.has('storageRef') ? JSON.parse(params.get('storageRef')) : null),
-  cwd: _idState?.cwd ?? START_IN ?? '/',
+  storageRef: LOCKED_REF ?? _idState?.storageRef ?? (params.has('storageRef') ? JSON.parse(params.get('storageRef')) : null),
+  cwd: (LOCKED_REF ? null : _idState?.cwd) ?? START_IN ?? '/',
   entries: [],
   selected: new Set(), // Set of selected entry names
   _anchor: null, // last clicked/navigated entry, for shift-range and preview
+  lockedUnavailable: false, // true when LOCKED_REF is not present in the providers list
+  lockedLabel: null, // resolved "<provider>: <connection>" for LOCKED_REF, set in init()
   filter: '',
   typeIndex: EXCLUDE_ACCEPT_ALL ? 0 : null,
   clipboard: null, // { entries: Entry[], op: 'cut' | 'copy' }
@@ -483,6 +498,16 @@ function getFileIcon(name) {
 }
 
 function renderFooter() {
+  openBtn.title = '';
+  if (state.lockedUnavailable) {
+    openBtn.disabled = true;
+    return;
+  }
+  if (LOCK_STORAGE === 'soft' && !_isLockedConnection(state.storageRef)) {
+    openBtn.disabled = true;
+    openBtn.title = t('connectionLockedSoftHint');
+    return;
+  }
   if (MODE === 'dir') {
     // Always enabled — selects the currently open folder.
     openBtn.disabled = false;
@@ -758,6 +783,8 @@ async function _renderPreviewContent(body, file, name, ext) {
 
 async function confirmSelection() {
   if (MODE === 'browse') return; // no selection in browse mode
+  if (state.lockedUnavailable) return;
+  if (LOCK_STORAGE === 'soft' && !_isLockedConnection(state.storageRef)) return;
   if (MODE === 'dir') {
     // Select the currently open folder.
     sendResult({ path: state.cwd, name: state.cwd.split('/').filter(Boolean).pop() || '', kind: 'directory', storageRef: state.storageRef });
@@ -920,11 +947,24 @@ function _clearStatusAfter(ms) {
   _cancelPendingClear();
   const run = () => {
     _pendingStatusClear = null;
-    showStatus('');
+    _showIdleStatus();
     const cb = _unlockCallback; _unlockCallback = null; cb?.();
   };
   if (ms <= 0) { run(); return; }
   _pendingStatusClear = setTimeout(run, ms);
+}
+
+// When no progress or transient message is active, either clear the status bar
+// or — when the picker is locked to a different/unavailable connection — show
+// the lock banner so the user always knows why actions are restricted.
+function _showIdleStatus() {
+  if (state.lockedUnavailable) {
+    showStatus(t('connectionLockedUnavailable', state.lockedLabel ?? LOCKED_REF?.providerId ?? ''), true);
+  } else if (LOCK_STORAGE === 'soft' && !_isLockedConnection(state.storageRef)) {
+    showStatus(t('connectionLockedSoftStatus', state.lockedLabel ?? LOCKED_REF?.providerId ?? ''), true);
+  } else {
+    showStatus('');
+  }
 }
 
 function _doShow() {
@@ -959,7 +999,7 @@ function _clear() {
   _progressPercent = null;
   _progressFileInfo = null;
   if (_progressShownAt == null) {
-    showStatus('');
+    _showIdleStatus();
     const cb = _unlockCallback; _unlockCallback = null; cb?.();
     return;
   }
@@ -1066,7 +1106,7 @@ async function doWithStatus(msg, fn) {
     const cb = _unlockCallback; _unlockCallback = null; cb?.();
     if (err.name === 'AbortError') {
       showStatus(t('cancelled'));
-      setTimeout(() => showStatus(''), 2000);
+      setTimeout(_showIdleStatus, 2000);
     } else if (_isProviderError(err)) {
       await showDialog({
         title: err.details?.title ?? t('error', err.message),
@@ -1671,6 +1711,20 @@ async function _switchToOpfs() {
   await loadDir();
 }
 
+// Transition the picker into the "locked connection is unavailable" state.
+// Used when the locked provider/connection disappears at runtime.
+function _enterLockedUnavailable() {
+  state.lockedUnavailable = true;
+  state.entries = [];
+  state.selected = new Set();
+  state._anchor = null;
+  state.capabilities = { file: {}, folder: {} };
+  updatePreview(null);
+  applyCapabilities();
+  render();
+  _showIdleStatus();
+}
+
 function _makeProviderLi(value, label, icon = null) {
   const li = document.createElement('li');
   li.dataset.value = value;
@@ -1857,17 +1911,33 @@ async function init() {
 
   // Validate state.storageRef against known providers - clears id-state if provider or connection is gone
   const _providers = await vfs.fetchProviderConnections();
-  if (state.storageRef && !_providers.some(p =>
+  const _refExists = state.storageRef && _providers.some(p =>
     p.providerId === state.storageRef.providerId &&
     p.connections.some(c => c.storageRef.storageId === state.storageRef.storageId)
-  )) {
-    if (PICKER_ID) localStorage.removeItem(_idStateKey());
-    state.storageRef = null;
-    state.cwd = '/';
+  );
+  if (state.storageRef && !_refExists) {
+    if (LOCKED_REF) {
+      // Locked to an unavailable connection. Keep the ref so the lock is visible
+      // in the UI, but skip the directory load and disable all actions.
+      state.lockedUnavailable = true;
+    } else {
+      if (PICKER_ID) localStorage.removeItem(_idStateKey());
+      state.storageRef = null;
+      state.cwd = '/';
+    }
   }
 
-  // Fetch and apply capabilities
-  state.capabilities = await vfs.getCapabilities(state.storageRef);
+  // Resolve a human-readable label for LOCKED_REF so it can be shown in status messages.
+  if (LOCKED_REF) {
+    const _lp = _providers.find(p => p.providerId === LOCKED_REF.providerId);
+    const _lc = _lp?.connections.find(c => (c.storageRef.storageId ?? null) === (LOCKED_REF.storageId ?? null));
+    if (_lp && _lc) state.lockedLabel = `${_lp.name}: ${_lc.name}`;
+  }
+
+  // Fetch and apply capabilities — no-op capabilities when the locked connection is unavailable.
+  state.capabilities = state.lockedUnavailable
+    ? { file: {}, folder: {} }
+    : await vfs.getCapabilities(state.storageRef);
 
   initToolbar();
   applyCapabilities();
@@ -1889,16 +1959,23 @@ async function init() {
 
     _opfsIcon = _getOwnIconUrl() ?? _FALLBACK_ICON;
 
-    _providerBtn.addEventListener('click', async e => {
-      e.stopPropagation();
-      if (_providerUl.hidden) {
-        await _buildDropdown();
-        _providerUl.hidden = false;
-      } else {
-        _providerUl.hidden = true;
-      }
-    });
-    document.addEventListener('click', e => { if (_providerUl && !_providerWrap?.contains(e.target)) _providerUl.hidden = true; }, { capture: true });
+    if (LOCK_STORAGE === 'strict') {
+      // Strict lock: show the button as a non-interactive label. No dropdown.
+      _providerBtn.classList.add('vfs-provider-btn-locked');
+      _providerBtn.disabled = true;
+      _providerBtn.setAttribute('aria-disabled', 'true');
+    } else {
+      _providerBtn.addEventListener('click', async e => {
+        e.stopPropagation();
+        if (_providerUl.hidden) {
+          await _buildDropdown();
+          _providerUl.hidden = false;
+        } else {
+          _providerUl.hidden = true;
+        }
+      });
+      document.addEventListener('click', e => { if (_providerUl && !_providerWrap?.contains(e.target)) _providerUl.hidden = true; }, { capture: true });
+    }
 
     if (state.storageRef) {
       const ap = _providers.find(p => p.providerId === state.storageRef.providerId);
@@ -1906,13 +1983,20 @@ async function init() {
       if (ac) {
         const icon = ap.icon ? URL.createObjectURL(ap.icon) : _FALLBACK_ICON;
         _setProviderContent(_providerBtn, `${ap.name}: ${ac.name}`, icon);
+      } else if (state.lockedUnavailable) {
+        // Locked connection is not present — show the unavailable label on the button.
+        _setProviderContent(_providerBtn, t('connectionLockedUnavailableShort'), _FALLBACK_ICON);
       } else {
         _setProviderContent(_providerBtn, VFS_PROVIDER_NAME ?? t('providerOpfs'), _opfsIcon);
       }
     } else {
       _setProviderContent(_providerBtn, VFS_PROVIDER_NAME ?? t('providerOpfs'), _opfsIcon);
     }
-    _providerWrap.append(_providerBtn, _providerUl);
+    _providerWrap.append(_providerBtn);
+    // The dropdown is only attached in non-strict mode.
+    if (LOCK_STORAGE !== 'strict') _providerWrap.appendChild(_providerUl);
+    // When locked, always show the provider widget even if no other providers exist.
+    if (LOCKED_REF) _providerWrap.hidden = false;
     locationBarEl.insertBefore(_providerWrap, breadcrumbEl);
   }
 
@@ -2046,15 +2130,27 @@ async function init() {
     }
   });
 
-  await loadDir();
+  if (state.lockedUnavailable) {
+    // Don't attempt to list — the connection is gone. Just render empty state and banner.
+    state.entries = [];
+    render();
+    _showIdleStatus();
+  } else {
+    await loadDir();
+  }
 
   browser.runtime.onMessage.addListener(msg => {
     if (!msg) return;
     if (msg.type === 'vfs-provider-removed') {
       if (msg.providerId === state.storageRef?.providerId) {
-        const reloadUrl = new URL(location.href);
-        reloadUrl.searchParams.delete('storageRef');
-        location.href = reloadUrl.toString();
+        if (LOCKED_REF) {
+          // Lock is in effect — transition to unavailable state instead of dropping it.
+          _enterLockedUnavailable();
+        } else {
+          const reloadUrl = new URL(location.href);
+          reloadUrl.searchParams.delete('storageRef');
+          location.href = reloadUrl.toString();
+        }
       } else {
         _removeProviderOption(msg.providerId);
       }
@@ -2066,7 +2162,11 @@ async function init() {
     if (msg.type === 'vfs-remove-connection') {
       if (state.storageRef?.providerId === msg.providerId &&
           state.storageRef?.storageId === msg.storageId) {
-        _switchToOpfs();
+        if (LOCKED_REF && _isLockedConnection({ providerId: msg.providerId, storageId: msg.storageId })) {
+          _enterLockedUnavailable();
+        } else {
+          _switchToOpfs();
+        }
       }
     }
   });

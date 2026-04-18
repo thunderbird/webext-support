@@ -298,6 +298,19 @@ body {
   background: var(--vfs-surface-hover);
 }
 
+.vfs-provider-btn-locked {
+  cursor: default;
+  color: var(--vfs-text);
+}
+
+.vfs-provider-btn-locked::after {
+  content: none;
+}
+
+.vfs-provider-btn-locked:hover {
+  background: none;
+}
+
 .vfs-provider-dropdown {
   position: absolute;
   top: calc(100% + 4px);

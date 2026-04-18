@@ -89,5 +89,9 @@
   "conflictMessage": "\u201c$1\u201d already exists.",
   "btnSkip": "Skip",
   "btnMerge": "Merge",
-  "applyToAll": "Apply to all remaining"
+  "applyToAll": "Apply to all remaining",
+  "connectionLockedSoftStatus": "Selection is locked to \u201c$1\u201d. Switch back to that connection to select a file.",
+  "connectionLockedSoftHint": "Switch back to the required storage to enable this button.",
+  "connectionLockedUnavailable": "The required storage \u201c$1\u201d is not available.",
+  "connectionLockedUnavailableShort": "Storage unavailable"
 }

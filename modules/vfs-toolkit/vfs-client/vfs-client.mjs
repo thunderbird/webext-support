@@ -853,6 +853,16 @@ export async function getStorageUsage(storageRef = null) {
  *   Ignored when `id` is set and has a saved state.
  * @param {StorageRef} [options.storageRef]
  *   Open the picker pre-set to this connection. Ignored when `id` has saved state.
+ *   When combined with `lockStorage`, the picker is restricted to this connection
+ *   and the saved id-state is ignored.
+ * @param {'strict'|'soft'} [options.lockStorage]
+ *   Restrict the picker to the connection given by `storageRef`. Ignored when
+ *   `storageRef` is not provided.
+ *   - 'strict': the provider selector is rendered non-interactive; the user
+ *     cannot switch connections.
+ *   - 'soft':   the selector remains interactive so the user can copy files
+ *     between connections, but the confirm button stays disabled while the
+ *     active connection does not match `storageRef`.
  * @param {string} [options.opfsStorageName]
  *   Display name for the built-in OPFS (local storage) option in the provider dropdown.
  *   Has no effect on external providers, which use their own reported name.
@@ -864,7 +874,7 @@ export function showSelectFilePicker(options = {}) {
   // mode=open is the default, no extra param needed
   return new Promise((resolve, reject) => {
     const sessionId = crypto.randomUUID();
-    const { types = null, excludeAcceptAllOption = false, width = 800, height = 600, storageRef = null, multiple = false, id = null, startIn = null, opfsStorageName = null, buttons = null } = options;
+    const { types = null, excludeAcceptAllOption = false, width = 800, height = 600, storageRef = null, lockStorage = null, multiple = false, id = null, startIn = null, opfsStorageName = null, buttons = null } = options;
 
     pendingPickers.set(sessionId, { resolve, reject, defaultValue: [] });
 
@@ -873,6 +883,8 @@ export function showSelectFilePicker(options = {}) {
     if (types?.length) pickerParams.set('types', JSON.stringify(types));
     if (excludeAcceptAllOption) pickerParams.set('excludeAcceptAll', '1');
     if (storageRef) pickerParams.set('storageRef', JSON.stringify(storageRef));
+    if (lockStorage && storageRef) pickerParams.set('lockStorage', lockStorage);
+    else if (lockStorage) console.warn('showSelectFilePicker: lockStorage ignored without storageRef');
     if (multiple) pickerParams.set('multiple', '1');
     if (id) pickerParams.set('id', id);
     if (startIn) pickerParams.set('startIn', startIn);
@@ -903,6 +915,13 @@ export function showSelectFilePicker(options = {}) {
  *   Ignored when `id` is set and has a saved state.
  * @param {StorageRef} [options.storageRef]
  *   Open the picker pre-set to this connection. Ignored when `id` has saved state.
+ *   When combined with `lockStorage`, the picker is restricted to this connection
+ *   and the saved id-state is ignored.
+ * @param {'strict'|'soft'} [options.lockStorage]
+ *   Restrict the picker to the connection given by `storageRef`. Ignored when
+ *   `storageRef` is not provided. 'strict' hides the provider selector; 'soft'
+ *   keeps it interactive (useful for copying between connections) but has no
+ *   confirm-button effect in browse mode since browse has no confirm button.
  * @param {string} [options.opfsStorageName]
  *   Display name for the built-in OPFS (local storage) option in the provider dropdown.
  * @returns {Promise<null>} Always resolves to `null`.
@@ -910,7 +929,7 @@ export function showSelectFilePicker(options = {}) {
 export function showBrowseFilePicker(options = {}) {
   return new Promise((resolve, reject) => {
     const sessionId = crypto.randomUUID();
-    const { width = 800, height = 600, storageRef = null, id = null, startIn = null, opfsStorageName = null, buttons = null } = options;
+    const { width = 800, height = 600, storageRef = null, lockStorage = null, id = null, startIn = null, opfsStorageName = null, buttons = null } = options;
 
     pendingPickers.set(sessionId, { resolve, reject, defaultValue: null });
 
@@ -918,6 +937,8 @@ export function showBrowseFilePicker(options = {}) {
     pickerParams.set('session', sessionId);
     pickerParams.set('mode', 'browse');
     if (storageRef) pickerParams.set('storageRef', JSON.stringify(storageRef));
+    if (lockStorage && storageRef) pickerParams.set('lockStorage', lockStorage);
+    else if (lockStorage) console.warn('showBrowseFilePicker: lockStorage ignored without storageRef');
     if (id) pickerParams.set('id', id);
     if (startIn) pickerParams.set('startIn', startIn);
     if (opfsStorageName) pickerParams.set('opfsStorageName', opfsStorageName);
@@ -939,6 +960,10 @@ export function showBrowseFilePicker(options = {}) {
  * @param {boolean} [options.excludeAcceptAllOption=false]
  * @param {string} [options.id]
  * @param {string} [options.startIn]
+ * @param {StorageRef} [options.storageRef]
+ * @param {'strict'|'soft'} [options.lockStorage]
+ *   Restrict the picker to the connection given by `storageRef`. See
+ *   `showSelectFilePicker` for semantics.
  * @param {string} [options.opfsStorageName]
  * @param {number} [options.width=800]
  * @param {number} [options.height=600]
@@ -948,7 +973,7 @@ export function showSaveFilePicker(options = {}) {
   return new Promise((resolve, reject) => {
     const sessionId = crypto.randomUUID();
     const { types = null, excludeAcceptAllOption = false, width = 800, height = 600,
-      storageRef = null, id = null, startIn = null, opfsStorageName = null,
+      storageRef = null, lockStorage = null, id = null, startIn = null, opfsStorageName = null,
       suggestedName = null, buttons = null } = options;
 
     pendingPickers.set(sessionId, { resolve, reject, defaultValue: null });
@@ -959,6 +984,8 @@ export function showSaveFilePicker(options = {}) {
     if (types?.length) pickerParams.set('types', JSON.stringify(types));
     if (excludeAcceptAllOption) pickerParams.set('excludeAcceptAll', '1');
     if (storageRef) pickerParams.set('storageRef', JSON.stringify(storageRef));
+    if (lockStorage && storageRef) pickerParams.set('lockStorage', lockStorage);
+    else if (lockStorage) console.warn('showSaveFilePicker: lockStorage ignored without storageRef');
     if (id) pickerParams.set('id', id);
     if (startIn) pickerParams.set('startIn', startIn);
     if (opfsStorageName) pickerParams.set('opfsStorageName', opfsStorageName);
@@ -977,6 +1004,10 @@ export function showSaveFilePicker(options = {}) {
  * @param {object} [options]
  * @param {string} [options.id]
  * @param {string} [options.startIn]
+ * @param {StorageRef} [options.storageRef]
+ * @param {'strict'|'soft'} [options.lockStorage]
+ *   Restrict the picker to the connection given by `storageRef`. See
+ *   `showSelectFilePicker` for semantics.
  * @param {string} [options.opfsStorageName]
  * @param {number} [options.width=800]
  * @param {number} [options.height=600]
@@ -985,7 +1016,7 @@ export function showSaveFilePicker(options = {}) {
 export function showDirectoryPicker(options = {}) {
   return new Promise((resolve, reject) => {
     const sessionId = crypto.randomUUID();
-    const { width = 800, height = 600, storageRef = null, id = null,
+    const { width = 800, height = 600, storageRef = null, lockStorage = null, id = null,
       startIn = null, opfsStorageName = null, buttons = null } = options;
 
     pendingPickers.set(sessionId, { resolve, reject, defaultValue: null });
@@ -994,6 +1025,8 @@ export function showDirectoryPicker(options = {}) {
     pickerParams.set('session', sessionId);
     pickerParams.set('mode', 'dir');
     if (storageRef) pickerParams.set('storageRef', JSON.stringify(storageRef));
+    if (lockStorage && storageRef) pickerParams.set('lockStorage', lockStorage);
+    else if (lockStorage) console.warn('showDirectoryPicker: lockStorage ignored without storageRef');
     if (id) pickerParams.set('id', id);
     if (startIn) pickerParams.set('startIn', startIn);
     if (opfsStorageName) pickerParams.set('opfsStorageName', opfsStorageName);

@@ -89,5 +89,9 @@
   "conflictMessage": "« $1 » existe déjà.",
   "btnSkip": "Ignorer",
   "btnMerge": "Fusionner",
-  "applyToAll": "Appliquer à tous les suivants"
+  "applyToAll": "Appliquer à tous les suivants",
+  "connectionLockedSoftStatus": "La s\u00e9lection est limit\u00e9e \u00e0 \u00ab\u00a0$1\u00a0\u00bb. Revenez \u00e0 cette connexion pour s\u00e9lectionner un fichier.",
+  "connectionLockedSoftHint": "Revenir au stockage requis pour activer ce bouton.",
+  "connectionLockedUnavailable": "Le stockage requis \u00ab\u00a0$1\u00a0\u00bb n\u2019est pas disponible.",
+  "connectionLockedUnavailableShort": "Stockage indisponible"
 }

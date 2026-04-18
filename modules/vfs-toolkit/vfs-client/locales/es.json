@@ -89,5 +89,9 @@
   "conflictMessage": "«$1» ya existe.",
   "btnSkip": "Omitir",
   "btnMerge": "Combinar",
-  "applyToAll": "Aplicar a todos los restantes"
+  "applyToAll": "Aplicar a todos los restantes",
+  "connectionLockedSoftStatus": "La selecci\u00f3n est\u00e1 limitada a \u00ab$1\u00bb. Vuelve a esa conexi\u00f3n para seleccionar un archivo.",
+  "connectionLockedSoftHint": "Vuelve al almacenamiento requerido para habilitar este bot\u00f3n.",
+  "connectionLockedUnavailable": "El almacenamiento requerido \u00ab$1\u00bb no est\u00e1 disponible.",
+  "connectionLockedUnavailableShort": "Almacenamiento no disponible"
 }

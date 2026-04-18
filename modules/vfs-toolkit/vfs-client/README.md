@@ -154,7 +154,8 @@ The picker always supports multi-selecting files for management (copy, move, del
 |--------|------|---------|-------------|
 | `types` | [`Array<PickerFileType>`](#pickerfiletype) | `null` | File type filter entries. Adds a type dropdown to the toolbar. |
 | `excludeAcceptAllOption` | `boolean` | `false` | Omit the "All files" option from the type dropdown and pre-select the first type. |
-| `storageRef` | [`StorageRef`](#storageref) | `null` | Open the picker pre-set to this connection. Ignored when `id` has saved state. |
+| `storageRef` | [`StorageRef`](#storageref) | `null` | Open the picker pre-set to this connection. Ignored when `id` has saved state — unless `lockStorage` is set, in which case the lock wins over the saved state. |
+| `lockStorage` | `'strict' \| 'soft'` | `null` | Restrict the picker to the connection given by `storageRef`. `'strict'` hides the provider selector entirely. `'soft'` keeps the selector interactive (useful for copying between connections) but disables the **Select** button while the active connection does not match. If the locked connection is unavailable, the picker still opens but stays in a disabled error state. Requires `storageRef`; otherwise ignored. |
 | `id` | `string` | `null` | Picker context ID. Remembers the last-used directory and connection (`storageRef`); both are restored on the next open, overriding `startIn` and `storageRef`. |
 | `startIn` | `string` | `null` | Absolute path to open in initially. Ignored when `id` has saved state. |
 | `multiple` | `boolean` | `false` | Allow confirming multiple files at once. |
@@ -191,7 +192,8 @@ Opens a save file picker popup. The user can navigate to a folder and type (or e
 |--------|------|---------|-------------|
 | `types` | [`Array<PickerFileType>`](#pickerfiletype) | `null` | File type filter entries. Adds a type dropdown to the toolbar. |
 | `excludeAcceptAllOption` | `boolean` | `false` | Omit the "All files" option from the type dropdown and pre-select the first type. |
-| `storageRef` | [`StorageRef`](#storageref) | `null` | Open the picker pre-set to this connection. Ignored when `id` has saved state. |
+| `storageRef` | [`StorageRef`](#storageref) | `null` | Open the picker pre-set to this connection. Ignored when `id` has saved state — unless `lockStorage` is set, in which case the lock wins over the saved state. |
+| `lockStorage` | `'strict' \| 'soft'` | `null` | Restrict the picker to the connection given by `storageRef`. See `showSelectFilePicker` for semantics. Requires `storageRef`. |
 | `id` | `string` | `null` | Picker context ID. Remembers the last-used directory and connection (`storageRef`); both are restored on the next open, overriding `startIn` and `storageRef`. |
 | `startIn` | `string` | `null` | Absolute path to open in initially. Ignored when `id` has saved state. |
 | `suggestedName` | `string` | - | Pre-filled filename in the save input |
@@ -214,7 +216,8 @@ Opens a directory picker popup. The user can navigate to and select a folder. Re
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `storageRef` | [`StorageRef`](#storageref) | `null` | Open the picker pre-set to this connection. Ignored when `id` has saved state. |
+| `storageRef` | [`StorageRef`](#storageref) | `null` | Open the picker pre-set to this connection. Ignored when `id` has saved state — unless `lockStorage` is set, in which case the lock wins over the saved state. |
+| `lockStorage` | `'strict' \| 'soft'` | `null` | Restrict the picker to the connection given by `storageRef`. See `showSelectFilePicker` for semantics. Requires `storageRef`. |
 | `id` | `string` | `null` | Picker context ID (remembers last-used directory and connection) |
 | `startIn` | `string` | `null` | Absolute path to open in initially |
 | `opfsStorageName` | `string` | - | Display name for the `OPFS` backend. |
