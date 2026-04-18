@@ -375,15 +375,18 @@ export async function fetchProviderConnections() {
 }
 
 /**
- * Asks the provider to open its setup page as a popup window.
- * Returns immediately, connection is established asynchronously via reportNewConnection().
+ * Asks the provider to open its setup page as a popup window. Resolves to
+ * `{providerId, storageId}` after the user completes the setup, or rejects
+ * if the user closes the setup window without completing it.
  *
  * @param {string} providerId
  * @param {string} [addonName]
+ * @returns {Promise<StorageRef>}
  */
 export async function openProviderSetup(providerId, addonName = '') {
   const addonId = browser.runtime.id;
-  return _providerSend(providerId, 'openSetup', { addonId, addonName });
+  const storageId = await _providerSend(providerId, 'openSetup', { addonId, addonName });
+  return { providerId, storageId };
 }
 
 /**

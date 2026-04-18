@@ -412,10 +412,11 @@ function buildRow(entry) {
     }
   });
 
-  // Double-click - navigate dirs only
+  // Double-click — dirs navigate; files confirm the selection in file-pick modes.
   row.addEventListener('dblclick', e => {
     if (e.target.classList.contains('row-rename-input')) return;
     if (isDir) navigateTo(pathJoin(state.cwd, entry.name));
+    else if (MODE !== 'dir' && MODE !== 'browse' && MODE !== 'save') confirmSelection();
   });
 
   // Context menu
@@ -1710,6 +1711,41 @@ async function _switchToOpfs() {
   await loadDir();
 }
 
+// Set the provider button label/icon from fresh provider data. Used when the
+// dropdown DOM that `_updateProviderDisplay` reads from is stale — e.g. a newly
+// added connection or a rename that arrived via `vfs-provider-updated`.
+async function _refreshProviderButton() {
+  if (!_providerBtn) return;
+  const ref = state.storageRef;
+  if (!ref) return;
+  const providers = await vfs.fetchProviderConnections();
+  // Bail out if the active connection changed during the await (e.g. a
+  // concurrent `vfs-remove-connection` switched us to OPFS).
+  if (state.storageRef !== ref) return;
+  const ap = providers.find(p => p.providerId === ref.providerId);
+  const ac = ap?.connections.find(c => (c.storageRef.storageId ?? null) === ref.storageId);
+  if (ap && ac) {
+    const icon = ap.icon ? URL.createObjectURL(ap.icon) : _FALLBACK_ICON;
+    _setProviderContent(_providerBtn, `${ap.name}: ${ac.name}`, icon);
+  }
+}
+
+async function _switchToConnection(storageRef) {
+  const nextId = storageRef.storageId ?? null;
+  if (state.storageRef?.providerId === storageRef.providerId && state.storageRef?.storageId === nextId) return;
+  state.storageRef = { providerId: storageRef.providerId, storageId: nextId };
+  await _refreshProviderButton();
+  _saveIdState('/');
+  state.cwd = '/';
+  state.selected = new Set();
+  state._anchor = null;
+  updatePreview(null);
+  state.capabilities = await vfs.getCapabilities(state.storageRef);
+  applyCapabilities();
+  updateStorageInfo();
+  await loadDir();
+}
+
 // Transition the picker into the "locked connection is unavailable" state.
 // Used when the locked provider/connection disappears at runtime.
 function _enterLockedUnavailable() {
@@ -1799,18 +1835,7 @@ async function _buildDropdown() {
       _setProviderContent(li, label, icon);
       li.addEventListener('click', async () => {
         _providerUl.hidden = true;
-        if (state.storageRef?.providerId === conn.storageRef.providerId && state.storageRef?.storageId === (conn.storageRef.storageId ?? null)) return;
-        state.storageRef = { providerId: conn.storageRef.providerId, storageId: conn.storageRef.storageId ?? null };
-        _updateProviderDisplay();
-        _saveIdState('/');
-        state.cwd = '/';
-        state.selected = new Set();
-        state._anchor = null;
-        updatePreview(null);
-        state.capabilities = await vfs.getCapabilities(state.storageRef);
-        applyCapabilities();
-        updateStorageInfo();
-        await loadDir();
+        await _switchToConnection(conn.storageRef);
       });
 
       const actWrap = document.createElement('span');
@@ -1893,7 +1918,10 @@ async function _buildDropdown() {
       e.stopPropagation();
       _providerUl.hidden = true;
       const addonName = browser.runtime.getManifest().name;
-      try { await vfs.openProviderSetup(p.providerId, addonName); } catch { /* no setup page */ }
+      try {
+        const storageRef = await vfs.openProviderSetup(p.providerId, addonName);
+        await _switchToConnection(storageRef);
+      } catch { /* cancelled or no setup page */ }
     });
     subUl.appendChild(subLi);
   }
@@ -2150,6 +2178,13 @@ async function init() {
           reloadUrl.searchParams.delete('storageRef');
           location.href = reloadUrl.toString();
         }
+      }
+    }
+    // A connection was added or renamed on the active provider — refresh the button
+    // label in case the currently selected connection was the one affected.
+    if (msg.type === 'vfs-provider-updated') {
+      if (msg.providerId === state.storageRef?.providerId) {
+        _refreshProviderButton();
       }
     }
     // Switch to OPFS if the active connection was removed by any picker instance.

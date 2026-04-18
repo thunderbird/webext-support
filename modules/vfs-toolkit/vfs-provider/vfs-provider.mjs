@@ -73,6 +73,7 @@ export class VfsProviderImplementation {
   #configHeight;
   #requestPorts = new Map();
   #activePorts = new Set();
+  #pendingSetups = new Map();
 
   /**
    * @param {object} options
@@ -282,6 +283,32 @@ export class VfsProviderImplementation {
    * the port listener for all vfs-toolkit client connections.
    */
   init() {
+    // ── Setup completion listeners ─────────────────────────────────────────────────
+
+    // The setup page reports success by calling reportNewConnection(..., setupToken),
+    // which dispatches this in-extension runtime message. Resolve the matching entry.
+    browser.runtime.onMessage.addListener(msg => {
+      if (msg?.type !== 'vfs-provider-setup-completed') return;
+      const entry = this.#pendingSetups.get(msg.setupToken);
+      if (!entry) return;
+      this.#pendingSetups.delete(msg.setupToken);
+      entry.resolve(msg.storageId);
+    });
+
+    // If the setup window closes without a completion message, reject after a short
+    // grace so the success path (reportNewConnection then window.close) can land first.
+    browser.windows.onRemoved.addListener(winId => {
+      for (const [token, entry] of this.#pendingSetups) {
+        if (entry.windowId !== winId) continue;
+        setTimeout(() => {
+          const still = this.#pendingSetups.get(token);
+          if (!still) return;
+          this.#pendingSetups.delete(token);
+          still.reject(new Error('Setup cancelled'));
+        }, 500);
+      }
+    });
+
     // ── Discovery listener ─────────────────────────────────────────────────────────
 
     browser.runtime.onMessageExternal.addListener((msg, sender, sendResponse) => {
@@ -396,11 +423,15 @@ export class VfsProviderImplementation {
 
         case 'openSetup': {
           if (!this.#setupPath) throw new Error('Provider has no setup page');
+          const setupToken = crypto.randomUUID();
           const url = new URL(browser.runtime.getURL(this.#setupPath));
           if (args.addonId) url.searchParams.set('addonId', args.addonId);
           if (args.addonName) url.searchParams.set('addonName', args.addonName);
-          browser.windows.create({ url: url.toString(), type: 'popup', width: this.#setupWidth, height: this.#setupHeight });
-          return null;
+          url.searchParams.set('setupToken', setupToken);
+          const win = await browser.windows.create({ url: url.toString(), type: 'popup', width: this.#setupWidth, height: this.#setupHeight });
+          return new Promise((resolve, reject) => {
+            this.#pendingSetups.set(setupToken, { resolve, reject, windowId: win.id });
+          });
         }
 
         case 'openConfig': {
@@ -429,8 +460,11 @@ export class VfsProviderImplementation {
  * @param {string} storageId
  * @param {string} name
  * @param {object} [capabilities]
+ * @param {string} [setupToken] - The token from the setup page URL. When present,
+ *   resolves the picker-side `openProviderSetup` promise so the picker can switch
+ *   to the new connection.
  */
-export async function reportNewConnection(addonId, addonName, storageId, name, capabilities) {
+export async function reportNewConnection(addonId, addonName, storageId, name, capabilities, setupToken) {
   const rv = await browser.storage.local.get({ [CONNECTIONS_KEY]: [] });
   const list = rv[CONNECTIONS_KEY];
   const idx = list.findIndex(c => c.addonId === addonId && c.storageId === storageId);
@@ -439,4 +473,7 @@ export async function reportNewConnection(addonId, addonName, storageId, name, c
   else list.push(entry);
   await browser.storage.local.set({ [CONNECTIONS_KEY]: list });
   await browser.runtime.sendMessage(addonId, { type: 'vfs-toolkit-add-connection', storageId, name, capabilities }).catch(() => { });
+  if (setupToken) {
+    browser.runtime.sendMessage({ type: 'vfs-provider-setup-completed', setupToken, storageId }).catch(() => { });
+  }
 }
