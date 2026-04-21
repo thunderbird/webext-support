@@ -542,26 +542,63 @@ async function updateStorageInfo() {
 
 // ── Navigation ────────────────────────────────────────────────────────────────
 
+// Monotonic counter. Bumped by any operation that commits a state transition
+// (navigateTo, _commitRoot). An in-flight async op records its seq at start
+// and validates at commit; if the seq has moved it was superseded and must
+// discard its result.
+let _stateSeq = 0;
+
 async function navigateTo(path) {
+  const mySeq = ++_stateSeq;
+  const myRef = state.storageRef;   // freeze against provider-switch races
+
+  let entries;
+  try {
+    entries = await vfs.list({ path, storageRef: myRef }, _opts(t('loading')));
+  } catch (err) {
+    if (mySeq !== _stateSeq || state.storageRef !== myRef) return;
+    if (_progressTimer) { clearTimeout(_progressTimer); _progressTimer = null; }
+    _progressLabel = null; _progressShownAt = null;
+    if (_isProviderError(err)) {
+      await showDialog({
+        title: err.details?.title ?? t('error', err.message),
+        message: err.details?.description ?? err.message,
+        buttons: [{ id: 'ok', label: t('btnOK') }],
+        cancelButton: 'ok',
+      });
+    } else {
+      showStatus(t('errorLoadDir', err.message), true);
+    }
+    return;
+  }
+
+  if (mySeq !== _stateSeq || state.storageRef !== myRef) return;
+
+  // Atomic commit — cwd and entries move together so every downstream
+  // handler sees a self-consistent snapshot.
   state.cwd = path;
+  state.entries = entries;
   _saveIdState(path);
   state.selected = new Set();
   state._anchor = null;
   updatePreview(null);
-  await loadDir();
+  _clear();
+  render();
+  updateStorageInfo();
 }
 
 async function loadDir({ silent = false } = {}) {
-  // Snapshot cwd at call time. The user may navigate away while vfs.list is
-  // in flight (e.g. a delta-triggered silent refresh overlapping with a
-  // user-initiated navigation). If that happens, discard our result — the
-  // newer call's result should win, and writing ours would show stale
-  // contents under the wrong cwd label.
+  // Snapshot cwd *and* storageRef at call time. Either can change while
+  // vfs.list is in flight — a delta-triggered silent refresh can race with
+  // a user navigation (cwd change) or a provider switch (storageRef change).
+  // Discard our result if either moved; the newer call's result should win.
   const cwdSnapshot = state.cwd;
-  const isStale = () => state.cwd !== cwdSnapshot;
+  const refSnapshot = state.storageRef;
+  const isStale = () => state.cwd !== cwdSnapshot || state.storageRef !== refSnapshot;
 
   try {
-    const entries = await vfs.list(_e(cwdSnapshot), silent ? {} : _opts(t('loading')));
+    const entries = await vfs.list({ path: cwdSnapshot, storageRef: refSnapshot },
+                                   silent ? {} : _opts(t('loading')));
     if (isStale()) return;
     state.entries = entries;
     if (!silent) _clear();
@@ -1712,18 +1749,69 @@ function _setProviderContent(el, label, icon) {
   el.appendChild(document.createTextNode(label));
 }
 
-async function _switchToOpfs() {
-  state.storageRef = null;
-  _updateProviderDisplay();
-  _saveIdState('/');
+/**
+ * Shared atomic root-commit for provider switches.
+ *
+ * Fetches the new provider's capabilities + root listing first, then commits
+ * `storageRef + cwd + entries + capabilities` together. This avoids the
+ * pre-commit window (where state.storageRef said "new provider" while
+ * state.entries still held the old provider's rows) that the old
+ * `_switchTo{Connection,Opfs}` pattern produced.
+ *
+ * Participates in `_stateSeq`: any concurrent navigateTo or switch bumps
+ * the sequence, and older in-flight operations detect supersession and
+ * discard their results.
+ */
+async function _commitRoot(storageRef) {
+  const mySeq = ++_stateSeq;
+  let capabilities, entries;
+  try {
+    capabilities = await vfs.getCapabilities(storageRef);
+    if (mySeq !== _stateSeq) return;
+    entries = await vfs.list({ path: '/', storageRef }, _opts(t('loading')));
+  } catch (err) {
+    if (mySeq !== _stateSeq) return;
+    if (_progressTimer) { clearTimeout(_progressTimer); _progressTimer = null; }
+    _progressLabel = null; _progressShownAt = null;
+    if (_isProviderError(err)) {
+      await showDialog({
+        title: err.details?.title ?? t('error', err.message),
+        message: err.details?.description ?? err.message,
+        buttons: [{ id: 'ok', label: t('btnOK') }],
+        cancelButton: 'ok',
+      });
+    } else {
+      showStatus(t('errorLoadDir', err.message), true);
+    }
+    return;
+  }
+
+  if (mySeq !== _stateSeq) return;
+
+  // Atomic commit.
+  state.storageRef = storageRef;
   state.cwd = '/';
+  state.entries = entries;
+  state.capabilities = capabilities;
+  _saveIdState('/');
   state.selected = new Set();
   state._anchor = null;
   updatePreview(null);
-  state.capabilities = await vfs.getCapabilities(null);
   applyCapabilities();
+  _clear();
+  render();
   updateStorageInfo();
-  await loadDir();
+
+  // Update provider button/dropdown label post-commit. _refreshProviderButton
+  // may itself fetch connections; not awaited so the entries view isn't held
+  // back by a slower label update.
+  if (storageRef === null) _updateProviderDisplay();
+  else _refreshProviderButton().catch(() => { });
+}
+
+async function _switchToOpfs() {
+  if (state.storageRef === null) return;
+  await _commitRoot(null);
 }
 
 // Set the provider button label/icon from fresh provider data. Used when the
@@ -1748,17 +1836,7 @@ async function _refreshProviderButton() {
 async function _switchToConnection(storageRef) {
   const nextId = storageRef.storageId ?? null;
   if (state.storageRef?.providerId === storageRef.providerId && state.storageRef?.storageId === nextId) return;
-  state.storageRef = { providerId: storageRef.providerId, storageId: nextId };
-  await _refreshProviderButton();
-  _saveIdState('/');
-  state.cwd = '/';
-  state.selected = new Set();
-  state._anchor = null;
-  updatePreview(null);
-  state.capabilities = await vfs.getCapabilities(state.storageRef);
-  applyCapabilities();
-  updateStorageInfo();
-  await loadDir();
+  await _commitRoot({ providerId: storageRef.providerId, storageId: nextId });
 }
 
 // Transition the picker into the "locked connection is unavailable" state.
