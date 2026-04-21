@@ -415,7 +415,10 @@ function buildRow(entry) {
   // Double-click — dirs navigate; files confirm the selection in file-pick modes.
   row.addEventListener('dblclick', e => {
     if (e.target.classList.contains('row-rename-input')) return;
-    if (isDir) navigateTo(pathJoin(state.cwd, entry.name));
+    // Use the render-time `entryPath` instead of recomputing from live
+    // `state.cwd`: rapid clicks on a still-visible row while a previous
+    // navigation is in flight would otherwise compound the path.
+    if (isDir) navigateTo(entryPath);
     else if (MODE !== 'dir' && MODE !== 'browse' && MODE !== 'save') confirmSelection();
   });
 
@@ -2127,7 +2130,9 @@ async function init() {
     const kCanModify = singleEntry ? (singleIsDir ? kc.folder?.modify : kc.file?.modify) : false;
 
     if (e.key === 'Enter' && singleEntry) {
-      if (singleIsDir) navigateTo(pathJoin(state.cwd, singleEntry.name));
+      // Use the entry's provider-supplied absolute path (immutable since list)
+      // rather than recomputing from live `state.cwd`, which may have advanced.
+      if (singleIsDir) navigateTo(singleEntry.path || pathJoin(state.cwd, singleEntry.name));
       else confirmSelection();
     }
     if (e.key === 'Backspace' || e.key === 'ArrowLeft') {
