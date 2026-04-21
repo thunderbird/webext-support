@@ -549,10 +549,21 @@ async function navigateTo(path) {
 }
 
 async function loadDir({ silent = false } = {}) {
+  // Snapshot cwd at call time. The user may navigate away while vfs.list is
+  // in flight (e.g. a delta-triggered silent refresh overlapping with a
+  // user-initiated navigation). If that happens, discard our result — the
+  // newer call's result should win, and writing ours would show stale
+  // contents under the wrong cwd label.
+  const cwdSnapshot = state.cwd;
+  const isStale = () => state.cwd !== cwdSnapshot;
+
   try {
-    state.entries = await vfs.list(_e(state.cwd), silent ? {} : _opts(t('loading')));
+    const entries = await vfs.list(_e(cwdSnapshot), silent ? {} : _opts(t('loading')));
+    if (isStale()) return;
+    state.entries = entries;
     if (!silent) _clear();
   } catch (err) {
+    if (isStale()) return;
     if (!silent) {
       if (_progressTimer) { clearTimeout(_progressTimer); _progressTimer = null; }
       _progressLabel = null; _progressShownAt = null;
@@ -571,6 +582,7 @@ async function loadDir({ silent = false } = {}) {
       }
     }
   }
+  if (isStale()) return;
   render();
   if (!silent) updateStorageInfo();
 }
