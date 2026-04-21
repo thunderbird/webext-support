@@ -213,7 +213,7 @@ const state = {
   lockedUnavailable: false, // true when LOCKED_REF is not present in the providers list
   lockedLabel: null, // resolved "<provider>: <connection>" for LOCKED_REF, set in init()
   filter: '',
-  typeIndex: EXCLUDE_ACCEPT_ALL ? 0 : null,
+  typeIndex: TYPES?.length ? 0 : null,
   clipboard: null, // { entries: Entry[], op: 'cut' | 'copy' }
   dragging: null,
   capabilities: null,
