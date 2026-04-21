@@ -17,5 +17,3 @@ vfs.action.onClicked.addListener((storageRef) => {
   const url = '/test/test.html' + (storageRef ? '?storageRef=' + encodeURIComponent(JSON.stringify(storageRef)) : '');
   browser.tabs.create({ url });
 });
-
-browser.tabs.create({ url: "/page/page.html" });

@@ -131,13 +131,11 @@
 </head>
 
 <body>
-  <div class="vfs-section">
     <h3 class="vfs-heading">Testing the VFS Toolkit</h3>
     <p>
       The following buttons test the file pickers of the <a
         href="https://github.com/thunderbird/webext-support/tree/master/modules/vfs-toolkit">VFS Toolkit</a>, a
-      WebExtension framework for file access across multiple storage backends. Users can pick whatever storage backend they
-      prefer by installing additional provider add-ons.
+      WebExtension framework for file access across multiple storage backends.
     </p>
     <p>
       The picker of this example client implementation provides a test framework for add-on developers to
@@ -149,46 +147,6 @@
       <button class="options-button" id="show-saveFile-picker">Show SaveFile Picker</button>
       <button class="options-button" id="show-directory-picker">Show Directory Picker</button>
     </div>
-    <p>The following providers are available:</p>
-    <div class="vfs-providers">
-      <div class="vfs-provider">
-        <svg class="vfs-provider-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-          <ellipse cx="12" cy="5" rx="9" ry="3" />
-          <path d="M3 8c0 1.66 4.03 3 9 3s9-1.34 9-3v4c0 1.66-4.03 3-9 3S3 13.66 3 12V8z" />
-          <path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3v4c0 1.66-4.03 3-9 3S3 17.66 3 16v-4z" />
-        </svg>
-        <div class="vfs-provider-info">
-          <span class="vfs-provider-name">OPFS (built-in default)</span>
-          <span class="vfs-provider-desc">Origin Private File System — a virtual file system provided by Mozilla, used
-            as the default storage inside the WebExtension. All stored files are cleared when the add-on is
-            uninstalled.</span>
-        </div>
-      </div>
-      <div class="vfs-provider">
-        <img src="https://addons.thunderbird.net/user-media/addon_icons/989/989523-64.png?modified=bad9b4f7"
-          alt="WebDAV provider icon" />
-        <div class="vfs-provider-info">
-          <span class="vfs-provider-name"><a
-              href="https://addons.thunderbird.net/en-US/thunderbird/addon/vfs-provider-webdav/">VFS-Provider:
-              WebDAV</a></span>
-          <span class="vfs-provider-desc">A shared WebDAV account manager. Other add-ons that need access to a WebDAV
-            file storage can ask this provider to set up and manage the connection on their behalf. Works with ownCloud,
-            Nextcloud and many other WebDAV-based cloud services.</span>
-        </div>
-      </div>
-      <div class="vfs-provider">
-        <img src="https://addons.thunderbird.net/user-media/addon_icons/989/989501-64.png?modified=81caf8dd"
-          alt="Local Home Folder Access provider icon" />
-        <div class="vfs-provider-info">
-          <span class="vfs-provider-name"><a
-              href="https://addons.thunderbird.net/en-US/thunderbird/addon/vfs-home-folder-access/">VFS-Provider: Local
-              Home Folder Access</a></span>
-          <span class="vfs-provider-desc">Enables access to the user's local home folder through a native messaging
-            helper application (Python 3 required). Not via Experiments!</span>
-        </div>
-      </div>
-    </div>
-  </div>
 </body>
 
 </html>

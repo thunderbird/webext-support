@@ -24,5 +24,8 @@
     "scripts": [
       "background.js"
     ]
+  },
+  "options_ui": {
+    "page": "page/page.html"
   }
 }
