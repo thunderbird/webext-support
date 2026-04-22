@@ -966,6 +966,14 @@ function makeRandomBuffer(size) {
   return buf;
 }
 
+// Delay between per-file operations to avoid tripping remote rate limits
+// (e.g., fail2ban). Excluded from benchmark timing.
+const OP_DELAY_MS = 250;
+
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
 async function runBenchmark(storageRef) {
   log.innerHTML = '';
   const base = '/vfs-benchmark-' + Date.now();
@@ -988,13 +996,15 @@ async function runBenchmark(storageRef) {
       const blob = new Blob([makeRandomBuffer(suite.size)]);
 
       suite.entries = [];
-      const start = performance.now();
+      let elapsedMs = 0;
       for (let i = 0; i < suite.count; i++) {
+        await sleep(OP_DELAY_MS);
         const entry = { storageRef, path: `${base}/${suite.label}-${i}.bin` };
+        const t0 = performance.now();
         await vfs.writeFile(entry, blob);
+        elapsedMs += performance.now() - t0;
         suite.entries.push(entry);
       }
-      const elapsedMs = performance.now() - start;
       const totalBytes = suite.size * suite.count;
       const mib = totalBytes / (1024 * 1024);
       const mibps = mib / (elapsedMs / 1000);
@@ -1009,13 +1019,15 @@ async function runBenchmark(storageRef) {
     for (const suite of suites) {
       logInfo(`Reading back ${suite.count} × ${formatSize(suite.size)} (${suite.label}) …`);
       let readBytes = 0;
-      const start = performance.now();
+      let elapsedMs = 0;
       for (const entry of suite.entries) {
+        await sleep(OP_DELAY_MS);
+        const t0 = performance.now();
         const f = await vfs.readFile(entry);
         const ab = await f.arrayBuffer();
+        elapsedMs += performance.now() - t0;
         readBytes += ab.byteLength;
       }
-      const elapsedMs = performance.now() - start;
       const mib = readBytes / (1024 * 1024);
       const mibps = mib / (elapsedMs / 1000);
       const msPerFile = elapsedMs / suite.count;
@@ -1030,13 +1042,15 @@ async function runBenchmark(storageRef) {
     await vfs.addFolder({ storageRef, path: copiedBase });
     for (const suite of suites) {
       logInfo(`Copying ${suite.count} × ${formatSize(suite.size)} (${suite.label}) → copied/ …`);
-      const start = performance.now();
+      let elapsedMs = 0;
       for (let i = 0; i < suite.entries.length; i++) {
+        await sleep(OP_DELAY_MS);
         const from = suite.entries[i];
         const to = { storageRef, path: `${copiedBase}/${suite.label}-${i}.bin` };
+        const t0 = performance.now();
         await vfs.copyFile(from, to);
+        elapsedMs += performance.now() - t0;
       }
-      const elapsedMs = performance.now() - start;
       const totalBytes = suite.size * suite.count;
       const mib = totalBytes / (1024 * 1024);
       const mibps = mib / (elapsedMs / 1000);
@@ -1052,14 +1066,16 @@ async function runBenchmark(storageRef) {
     await vfs.addFolder({ storageRef, path: movedBase });
     for (const suite of suites) {
       logInfo(`Moving ${suite.count} × ${formatSize(suite.size)} (${suite.label}) → moved/ …`);
-      const start = performance.now();
+      let elapsedMs = 0;
       for (let i = 0; i < suite.entries.length; i++) {
+        await sleep(OP_DELAY_MS);
         const from = suite.entries[i];
         const to = { storageRef, path: `${movedBase}/${suite.label}-${i}.bin` };
+        const t0 = performance.now();
         await vfs.moveFile(from, to);
+        elapsedMs += performance.now() - t0;
         suite.entries[i] = to;
       }
-      const elapsedMs = performance.now() - start;
       const totalBytes = suite.size * suite.count;
       const mib = totalBytes / (1024 * 1024);
       const mibps = mib / (elapsedMs / 1000);
