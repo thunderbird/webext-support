@@ -1025,6 +1025,51 @@ async function runBenchmark(storageRef) {
         `${mibps.toFixed(2)} MiB/s, ${msPerFile.toFixed(1)} ms/file`
       );
     }
+
+    const copiedBase = `${base}/copied`;
+    await vfs.addFolder({ storageRef, path: copiedBase });
+    for (const suite of suites) {
+      logInfo(`Copying ${suite.count} × ${formatSize(suite.size)} (${suite.label}) → copied/ …`);
+      const start = performance.now();
+      for (let i = 0; i < suite.entries.length; i++) {
+        const from = suite.entries[i];
+        const to = { storageRef, path: `${copiedBase}/${suite.label}-${i}.bin` };
+        await vfs.copyFile(from, to);
+      }
+      const elapsedMs = performance.now() - start;
+      const totalBytes = suite.size * suite.count;
+      const mib = totalBytes / (1024 * 1024);
+      const mibps = mib / (elapsedMs / 1000);
+      const msPerFile = elapsedMs / suite.count;
+      logInfo(
+        `copy ${suite.label}: ${suite.count} files × ${formatSize(suite.size)}, ` +
+        `${(elapsedMs / 1000).toFixed(2)}s total, ` +
+        `${mibps.toFixed(2)} MiB/s, ${msPerFile.toFixed(1)} ms/file`
+      );
+    }
+
+    const movedBase = `${base}/moved`;
+    await vfs.addFolder({ storageRef, path: movedBase });
+    for (const suite of suites) {
+      logInfo(`Moving ${suite.count} × ${formatSize(suite.size)} (${suite.label}) → moved/ …`);
+      const start = performance.now();
+      for (let i = 0; i < suite.entries.length; i++) {
+        const from = suite.entries[i];
+        const to = { storageRef, path: `${movedBase}/${suite.label}-${i}.bin` };
+        await vfs.moveFile(from, to);
+        suite.entries[i] = to;
+      }
+      const elapsedMs = performance.now() - start;
+      const totalBytes = suite.size * suite.count;
+      const mib = totalBytes / (1024 * 1024);
+      const mibps = mib / (elapsedMs / 1000);
+      const msPerFile = elapsedMs / suite.count;
+      logInfo(
+        `move ${suite.label}: ${suite.count} files × ${formatSize(suite.size)}, ` +
+        `${(elapsedMs / 1000).toFixed(2)}s total, ` +
+        `${mibps.toFixed(2)} MiB/s, ${msPerFile.toFixed(1)} ms/file`
+      );
+    }
   } catch (err) {
     console.error('[benchmark]', err);
     logFail(`benchmark error: ${err.message}`);
