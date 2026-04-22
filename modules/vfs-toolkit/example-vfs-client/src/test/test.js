@@ -932,6 +932,119 @@ async function runTests(storageRef) {
   summary.style.color = failed ? '#f44747' : '#4ec9b0';
 }
 
+// ── Benchmark ─────────────────────────────────────────────────────────────────
+
+function logInfo(text) {
+  const li = document.createElement('li');
+  li.className = 'info';
+  li.textContent = text;
+  log.appendChild(li);
+  return li;
+}
+
+function logFail(text) {
+  const li = document.createElement('li');
+  li.className = 'fail';
+  li.textContent = text;
+  log.appendChild(li);
+  return li;
+}
+
+function formatSize(bytes) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KiB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MiB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GiB`;
+}
+
+function makeRandomBuffer(size) {
+  const buf = new Uint8Array(size);
+  const CHUNK = 65536;
+  for (let off = 0; off < size; off += CHUNK) {
+    crypto.getRandomValues(buf.subarray(off, Math.min(off + CHUNK, size)));
+  }
+  return buf;
+}
+
+async function runBenchmark(storageRef) {
+  log.innerHTML = '';
+  const base = '/vfs-benchmark-' + Date.now();
+  const targetLabel = await resolveTargetLabel(storageRef);
+  logInfo(`⏱ Benchmark starting — target: ${targetLabel}`);
+  logInfo(`Temp folder: ${base}`);
+
+  const suites = [
+    { label: 'small',  size: 1024,              count: 50 },
+    { label: 'medium', size: 5 * 1024 * 1024,   count: 10 },
+    { label: 'large',  size: 100 * 1024 * 1024, count: 3  },
+  ];
+
+  const startAll = performance.now();
+  await vfs.addFolder({ storageRef, path: base });
+
+  try {
+    for (const suite of suites) {
+      logInfo(`Preparing ${suite.count} × ${formatSize(suite.size)} (${suite.label}) …`);
+      const blob = new Blob([makeRandomBuffer(suite.size)]);
+
+      suite.entries = [];
+      const start = performance.now();
+      for (let i = 0; i < suite.count; i++) {
+        const entry = { storageRef, path: `${base}/${suite.label}-${i}.bin` };
+        await vfs.writeFile(entry, blob);
+        suite.entries.push(entry);
+      }
+      const elapsedMs = performance.now() - start;
+      const totalBytes = suite.size * suite.count;
+      const mib = totalBytes / (1024 * 1024);
+      const mibps = mib / (elapsedMs / 1000);
+      const msPerFile = elapsedMs / suite.count;
+      logInfo(
+        `write ${suite.label}: ${suite.count} files × ${formatSize(suite.size)}, ` +
+        `${(elapsedMs / 1000).toFixed(2)}s total, ` +
+        `${mibps.toFixed(2)} MiB/s, ${msPerFile.toFixed(1)} ms/file`
+      );
+    }
+
+    for (const suite of suites) {
+      logInfo(`Reading back ${suite.count} × ${formatSize(suite.size)} (${suite.label}) …`);
+      let readBytes = 0;
+      const start = performance.now();
+      for (const entry of suite.entries) {
+        const f = await vfs.readFile(entry);
+        const ab = await f.arrayBuffer();
+        readBytes += ab.byteLength;
+      }
+      const elapsedMs = performance.now() - start;
+      const mib = readBytes / (1024 * 1024);
+      const mibps = mib / (elapsedMs / 1000);
+      const msPerFile = elapsedMs / suite.count;
+      logInfo(
+        `read ${suite.label}: ${suite.count} files × ${formatSize(suite.size)}, ` +
+        `${(elapsedMs / 1000).toFixed(2)}s total, ` +
+        `${mibps.toFixed(2)} MiB/s, ${msPerFile.toFixed(1)} ms/file`
+      );
+    }
+  } catch (err) {
+    console.error('[benchmark]', err);
+    logFail(`benchmark error: ${err.message}`);
+    throw err;
+  } finally {
+    try {
+      logInfo(`Cleaning up ${base} …`);
+      await vfs.deleteFolder({ storageRef, path: base });
+    } catch (err) {
+      console.error('[benchmark cleanup]', err);
+      logFail(`cleanup error: ${err.message}`);
+    }
+  }
+
+  const totalElapsed = (performance.now() - startAll) / 1000;
+  summary.textContent = `benchmark done in ${totalElapsed.toFixed(1)}s`;
+  summary.className = 'pass';
+  summary.style.color = '#4ec9b0';
+}
+
 // ── Startup ───────────────────────────────────────────────────────────────────
 
 const _params     = new URLSearchParams(location.search);
@@ -942,16 +1055,41 @@ resolveTargetLabel(_storageRef).then(label => {
   document.getElementById('target-info').textContent = `Target: ${label}`;
 });
 
-document.getElementById('btn-run').addEventListener('click', async () => {
-  const btn = document.getElementById('btn-run');
-  btn.disabled = true;
+const btnRun   = document.getElementById('btn-run');
+const btnBench = document.getElementById('btn-benchmark');
+
+function startSpinner() {
   const spinner = document.createElement('span');
   spinner.className = 'spinner';
   summary.replaceChildren(spinner);
   summary.className = '';
+  summary.style.color = '';
+}
+
+btnRun.addEventListener('click', async () => {
+  btnRun.disabled = true;
+  btnBench.disabled = true;
+  startSpinner();
   try {
     await runTests(_storageRef);
   } finally {
-    btn.disabled = false;
+    btnRun.disabled = false;
+    btnBench.disabled = false;
+  }
+});
+
+btnBench.addEventListener('click', async () => {
+  btnRun.disabled = true;
+  btnBench.disabled = true;
+  startSpinner();
+  try {
+    await runBenchmark(_storageRef);
+  } catch (err) {
+    summary.textContent = `benchmark failed: ${err.message}`;
+    summary.className = 'fail';
+    summary.style.color = '#f44747';
+  } finally {
+    btnRun.disabled = false;
+    btnBench.disabled = false;
   }
 });
