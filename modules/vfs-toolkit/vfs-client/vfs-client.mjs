@@ -267,26 +267,29 @@ export function init(options = {}) {
 
   // Listen for providers reporting new or removed connections.
   browser.runtime.onMessageExternal.addListener((msg, sender) => {
-    if (msg?.type === 'vfs-toolkit-add-connection' || msg?.type === 'vfs-toolkit-remove-connection') {
-      // Only accept messages from known providers.
-      _readProviderList().then(list => {
-        if (!list.some(p => p.providerId === sender.id)) return;
-        switch (msg.type) {
-          case 'vfs-toolkit-add-connection':
-            // New connections are picked up automatically when the user next opens the
-            // provider dropdown - no broadcast needed.
-            _addConnection(sender.id, msg.storageId, msg.name, msg.capabilities);
-            break;
-          case 'vfs-toolkit-remove-connection':
-            // Removed connections must be broadcast immediately so that any picker
-            // currently showing the removed connection can switch away from it.
-            _removeConnection(sender.id, msg.storageId).then(() => {
-              browser.runtime.sendMessage({ type: 'vfs-remove-connection', providerId: sender.id, storageId: msg.storageId }).catch(() => { });
-            });
-            break;
-        }
-      });
+    // Only claim our own message types. Returning false for everything else
+    // lets other onMessageExternal listeners respond instead.
+    if (msg?.type !== 'vfs-toolkit-add-connection' && msg?.type !== 'vfs-toolkit-remove-connection') {
+      return false;
     }
+    // Only accept messages from known providers.
+    return _readProviderList().then(list => {
+      if (!list.some(p => p.providerId === sender.id)) return;
+      switch (msg.type) {
+        case 'vfs-toolkit-add-connection':
+          // New connections are picked up automatically when the user next opens the
+          // provider dropdown - no broadcast needed.
+          _addConnection(sender.id, msg.storageId, msg.name, msg.capabilities);
+          break;
+        case 'vfs-toolkit-remove-connection':
+          // Removed connections must be broadcast immediately so that any picker
+          // currently showing the removed connection can switch away from it.
+          _removeConnection(sender.id, msg.storageId).then(() => {
+            browser.runtime.sendMessage({ type: 'vfs-remove-connection', providerId: sender.id, storageId: msg.storageId }).catch(() => { });
+          });
+          break;
+      }
+    });
   });
 }
 
