@@ -24,8 +24,8 @@ We will see more storage backends being made available, soon, for example **Next
 
 The repository includes example implementations:
 
-* Client: [https://github.com/thunderbird/webext-support/raw/refs/heads/master/modules/vfs-toolkit/example-vfs-client/dist/vfs-toolkit-example-client_1_3_3.xpi](vfs-toolkit-example-client_1_3_3.xpi)
-* Provider: [https://github.com/thunderbird/webext-support/raw/refs/heads/master/modules/vfs-toolkit/example-vfs-provider/dist/vfs-toolkit-example-provider_1_3_2.xpi](vfs-toolkit-example-provider_1_3_2.xpi)
+* Client: [vfs-toolkit-example-client_1_3_3.xpi](https://github.com/thunderbird/webext-support/raw/refs/heads/master/modules/vfs-toolkit/example-vfs-client/dist/vfs-toolkit-example-client_1_3_3.xpi)
+* Provider: [vfs-toolkit-example-provider_1_3_2.xpi](https://github.com/thunderbird/webext-support/raw/refs/heads/master/modules/vfs-toolkit/example-vfs-provider/dist/vfs-toolkit-example-provider_1_3_2.xpi)
 
 ## Tests
 
