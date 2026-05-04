@@ -1,7 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Read(//home/john/Documents/GitHub/webext-support/modules/vfs-toolkit/**)"
-    ]
-  }
-}
