@@ -24,8 +24,8 @@ We will see more storage backends being made available, soon, for example **Next
 
 The repository includes example implementations:
 
-* Client: [vfs-toolkit-example-client.xpi](vfs-toolkit-example-client_1_3_3.xpi)
-* Provider: [vfs-toolkit-example-provider.xpi](vfs-toolkit-example-provider_1_3_2.xpi)
+* Client: [example-vfs-client/dist/vfs-toolkit-example-client_1_3_3.xpi](vfs-toolkit-example-client_1_3_3.xpi)
+* Provider: [example-vfs-provider/dist/vfs-toolkit-example-provider_1_3_2.xpi](vfs-toolkit-example-provider_1_3_2.xpi)
 
 ## Tests
 
