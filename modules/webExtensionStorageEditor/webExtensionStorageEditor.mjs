@@ -2,31 +2,30 @@
  * A simple storage editor, either opened in a new tab or popup, displaying all
  * entries in the specified storage area. Boolean values can be toggled inline,
  * other values can be edited with save/cancel controls.
- * 
- * This file acts both as the module loaded by the consumer (for example a background
- * page) and as the script loaded by the editor popup (query param `viewer=1`).
- * 
- * Usage example:
  *
- * ```js
- * import * as webExtensionStorageEditor from './modules/webExtensionStorageEditor.mjs';
- * webExtensionStorageEditor.open({
- *     storageArea: 'local',
- *     baseFilter: 'myKeyPrefix',
- *     type: 'popup',
- * });
- * ```
+ * Entries grouped inside an object are flattened into dotted leaf rows, so a key
+ * `debug` holding `{ something: true, other: false }` is shown and edited as the
+ * individual entries `debug.something` and `debug.other`, just like flat dotted
+ * keys. Editing a leaf patches its parent object in place. Arrays and empty
+ * objects are kept as a single JSON-editable entry.
+ *
+ * This file acts both as the module loaded by the consumer (for example a
+ * background page) and as the script loaded by the editor popup (`viewer=1`).
+ *
+ * See the README and the open() JSDoc below for usage.
  */
 
 /**
  * Open a storage editor showing entries in a browser.storage area.
- * 
- * @param {Object} [options] Options for opening the viewer.
- * @param {'local'|'sync'|'session'} [options.storageArea='local'] - storage area to inspect.
- * @param {'tab'|'popup'} [options.type='tab'] - open as a tab or popup window.
- * @param {string} [options.baseFilter=''] - optional base filter string, limiting the shown entries
- * @param {string} [options.footerText] - optional footer text to display in the viewer,
- *    when omitted a sensible default is used.
+ *
+ * @param {Object} [options] - Options for opening the viewer.
+ * @param {"local"|"sync"|"session"} [options.storageArea="local"] - The storage
+ *    area to inspect.
+ * @param {"tab"|"popup"} [options.type="tab"] - Open as a tab or popup window.
+ * @param {string} [options.baseFilter=""] - Base filter limiting the shown
+ *    entries.
+ * @param {string} [options.footerText] - Footer text for the viewer. When
+ *    omitted, a sensible default is used.
  * @returns {Promise<void>} Resolves after the tab or popup has been created.
  */
 export async function open(options = {}) {
@@ -35,7 +34,12 @@ export async function open(options = {}) {
   const baseFilter = options?.baseFilter || "";
   const footerText = options?.footerText || "Click ✎ to edit values. Press ✓ to save or ESC to cancel. Boolean values can be toggled.";
 
-  // small helper to avoid injecting raw HTML from callers
+  /**
+   * Escape a string so caller-provided text cannot inject HTML markup.
+   *
+   * @param {string} s - The text to escape.
+   * @returns {string} The escaped text.
+   */
   const escapeHtml = (s) => String(s)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -165,9 +169,24 @@ export async function open(options = {}) {
     await browser.tabs.create({ url });
   }
 
-  // revoke the blob url after a short delay to avoid leaking object URLs
+  // Revoke the blob URL after a short delay to avoid leaking object URLs.
   setTimeout(() => URL.revokeObjectURL(url), 15_000);
 }
+
+/**
+ * A value stored in a storage area. It can be any JSON-compatible type.
+ *
+ * @typedef {boolean|number|string|Array|Object} JSONValue
+ */
+
+/**
+ * A single flattened storage entry, identifying one editable leaf.
+ *
+ * @typedef {object} LeafEntry
+ * @property {string} topKey - The real top-level storage key.
+ * @property {string[]} subPath - The property path within that key's value.
+ * @property {JSONValue} value - The leaf value found at that path.
+ */
 
 function init() {
   const params = new URL(import.meta.url).searchParams;
@@ -178,6 +197,26 @@ function init() {
   const storage = browser.storage[storageArea];
   const tbody = document.getElementById("entries");
 
+  // Maps rowId -> <tr>. Using a Map (instead of querying the DOM by row id)
+  // keeps lookups safe for dotted/quoted keys that would break CSS selectors.
+  const rowsById = new Map();
+
+  /**
+   * Whether a value is a non-null, non-array object.
+   *
+   * @param {JSONValue} v - The value to test.
+   * @returns {boolean} True for a plain object that can be flattened.
+   */
+  function isPlainObject(v) {
+    return v !== null && typeof v === "object" && !Array.isArray(v);
+  }
+
+  /**
+   * Classify a value into one of the editor's row types.
+   *
+   * @param {JSONValue} v - The value to classify.
+   * @returns {"object"|"boolean"|"number"|"string"} The row type.
+   */
   function getType(v) {
     if (v !== null && typeof v === "object") {
       return "object";
@@ -190,89 +229,204 @@ function init() {
     }
     return "string";
   }
+
+  /**
+   * Format a value for the single-line display cell.
+   *
+   * @param {JSONValue} v - The value to format.
+   * @returns {string} A compact, human-readable representation.
+   */
   function formatDisplayValue(v) {
     return getType(v) === "object" ? JSON.stringify(v) : String(v);
   }
+
+  /**
+   * Format a value for the editable field (objects as pretty JSON).
+   *
+   * @param {JSONValue} v - The value to format.
+   * @returns {string} The editable representation.
+   */
   function formatEditorValue(v) {
     return getType(v) === "object" ? JSON.stringify(v, null, 2) : String(v);
   }
-  function getRowId(key, value) {
-    return `${key}.${getType(value)}`;
+
+  /**
+   * Flatten a raw storage object into individual editable leaves.
+   *
+   * A grouped object such as `{ debug: { something: true } }` becomes a leaf
+   * `debug.something`, so it is displayed and edited exactly like a flat dotted
+   * key. Plain objects are recursed into. Arrays and empty objects are kept as a
+   * single JSON leaf. Each leaf keeps its real top-level key and property path
+   * separately, so the displayed dotted key never has to be split back apart and
+   * keys that themselves contain dots stay unambiguous when written back.
+   *
+   * @param {Object<string, JSONValue>} all - The raw storage.get(null) result.
+   * @returns {LeafEntry[]} One entry per editable leaf.
+   */
+  function collectLeaves(all) {
+    const leaves = [];
+
+    /**
+     * Recurse into one value, appending its leaves to the outer list.
+     *
+     * @param {string} topKey - The top-level storage key being walked.
+     * @param {string[]} subPath - The property path reached so far.
+     * @param {JSONValue} value - The value at that path.
+     * @returns {void}
+     */
+    const walk = (topKey, subPath, value) => {
+      if (isPlainObject(value) && Object.keys(value).length > 0) {
+        for (const [k, v] of Object.entries(value)) {
+          walk(topKey, [...subPath, k], v);
+        }
+      } else {
+        leaves.push({ topKey, subPath, value });
+      }
+    };
+    for (const [topKey, value] of Object.entries(all)) {
+      walk(topKey, [], value);
+    }
+    return leaves;
+  }
+
+  /**
+   * Build the dotted key shown in the editor for a leaf.
+   *
+   * @param {string} topKey - The real top-level storage key.
+   * @param {string[]} subPath - The property path within that key's value.
+   * @returns {string} The displayed dotted key.
+   */
+  function displayKey(topKey, subPath) {
+    return [topKey, ...subPath].join(".");
+  }
+
+  /**
+   * Build a stable identity for a leaf's row.
+   *
+   * Encoding the path as JSON avoids collisions between, for example, a flat
+   * "a.b" key and a nested a then b. Including the type means a value that
+   * changes type recreates the row, and thus its input or textarea editor.
+   *
+   * @param {string} topKey - The real top-level storage key.
+   * @param {string[]} subPath - The property path within that key's value.
+   * @param {JSONValue} value - The leaf value.
+   * @returns {string} The row identity.
+   */
+  function getRowId(topKey, subPath, value) {
+    return JSON.stringify([topKey, subPath]) + "::" + getType(value);
+  }
+
+  /**
+   * Write a single leaf back into storage.
+   *
+   * For a nested leaf the parent object is re-read, cloned and patched, so
+   * sibling entries are preserved and concurrent changes to other keys in the
+   * same object are not clobbered.
+   *
+   * @param {string} topKey - The real top-level storage key.
+   * @param {string[]} subPath - The property path within that key's value.
+   * @param {JSONValue} newValue - The value to store at that path.
+   * @returns {Promise<void>} Resolves once the write completes.
+   */
+  async function writeLeaf(topKey, subPath, newValue) {
+    if (subPath.length === 0) {
+      await storage.set({ [topKey]: newValue });
+      return;
+    }
+    const data = await storage.get(topKey);
+    const root = isPlainObject(data[topKey]) ? structuredClone(data[topKey]) : {};
+    let node = root;
+    for (let i = 0; i < subPath.length - 1; i++) {
+      const k = subPath[i];
+      if (!isPlainObject(node[k])) node[k] = {};
+      node = node[k];
+    }
+    node[subPath[subPath.length - 1]] = newValue;
+    await storage.set({ [topKey]: root });
+  }
+
+  /**
+   * Build a table row for one leaf and wire up its edit controls.
+   *
+   * @param {string} topKey - The real top-level storage key.
+   * @param {string[]} subPath - The property path within that key's value.
+   * @param {JSONValue} value - The leaf value to display.
+   * @returns {HTMLTableRowElement} The row, not yet attached to the table.
+   */
+  function createRow(topKey, subPath, value) {
+    const key = displayKey(topKey, subPath);
+    const tr = document.createElement("tr");
+    const tdKey = document.createElement("td");
+    const tdType = document.createElement("td");
+    const tdVal = document.createElement("td");
+    const tdCtrl = document.createElement("td");
+    const displayValue = formatDisplayValue(value);
+    const editorValue = formatEditorValue(value);
+    const rowType = getType(value);
+
+    tdKey.className = "key";
+    tdType.className = "type";
+    tdCtrl.className = "controls";
+    tdKey.textContent = key;
+    tdType.textContent = rowType;
+
+    const displayArea = document.createElement("div");
+    displayArea.className = "displayArea";
+    displayArea.textContent = displayValue;
+
+    const editArea = document.createElement("div");
+    editArea.className = "editArea";
+    editArea.style.display = "none";
+
+    let editorEl;
+    if (rowType === "object") {
+      editorEl = document.createElement("textarea");
+      editorEl.rows = 5;
+    } else {
+      editorEl = document.createElement("input");
+      editorEl.type = "text";
+    }
+    // Force the editor content to the last saved value.
+    editorEl.value = editorValue;
+    editArea.appendChild(editorEl);
+
+    const errorBox = document.createElement("div");
+    errorBox.className = "error";
+
+    const editBtn = document.createElement("button");
+    editBtn.className = "editBtn";
+
+    tdVal.append(displayArea, editArea, errorBox);
+    tdCtrl.appendChild(editBtn);
+    tr.append(tdKey, tdType, tdVal, tdCtrl);
+
+    // Store the current value in data attributes for change detection.
+    tr.dataset.displayValue = displayValue;
+    tr.dataset.editorValue = editorValue;
+
+    tr.tabIndex = 0;
+
+    attachEditHandler(tr, topKey, subPath, rowType);
+    return tr;
   }
 
   async function loadEntries() {
     const all = await storage.get(null);
-    const visibleKeys = [];
+    const seen = new Set();
 
-    function createRow(key, value) {
-      const tr = document.createElement("tr");
-      const tdKey = document.createElement("td");
-      const tdType = document.createElement("td");
-      const tdVal = document.createElement("td");
-      const tdCtrl = document.createElement("td");
-      const displayValue = formatDisplayValue(value);
-      const editorValue = formatEditorValue(value);
-
-      tdKey.className = "key";
-      tdType.className = "type";
-      tdCtrl.className = "controls";
-      tdKey.textContent = key;
-      tdType.textContent = getType(value);
-
-      const displayArea = document.createElement("div");
-      displayArea.className = "displayArea";
-      displayArea.textContent = displayValue;
-
-      const editArea = document.createElement("div");
-      editArea.className = "editArea";
-      editArea.style.display = "none";
-
-      const rowType = getType(value);
-      let editorEl;
-      if (rowType === "object") {
-        editorEl = document.createElement("textarea");
-        editorEl.rows = 5;
-      } else {
-        editorEl = document.createElement("input");
-        editorEl.type = "text";
-      }
-      // force editor content to the last saved value
-      editorEl.value = editorValue;
-      editArea.appendChild(editorEl);
-
-      const errorBox = document.createElement("div");
-      errorBox.className = "error";
-
-      const editBtn = document.createElement("button");
-      editBtn.className = "editBtn";
-
-      tdVal.append(displayArea, editArea, errorBox);
-      tdCtrl.appendChild(editBtn);
-      tr.append(tdKey, tdType, tdVal, tdCtrl);
-
-      // store current value in data attributes for change detection
-      tr.dataset.displayValue = displayValue;
-      tr.dataset.editorValue = editorValue;
-
-      tr.tabIndex = 0;
-
-      const rowId = getRowId(key, value);
-      tr.dataset.rowId = rowId;
-      tbody.appendChild(tr);
-      attachEditHandler(tr, key, rowType);
-    }
-
-    for (const [key, value] of Object.entries(all)) {
+    for (const { topKey, subPath, value } of collectLeaves(all)) {
+      const key = displayKey(topKey, subPath);
       if (!(key.includes(baseFilter) && key.includes(userFilter))) {
-        continue
+        continue;
       }
 
-      const rowId = getRowId(key, value);
-      visibleKeys.push(rowId);
+      const rowId = getRowId(topKey, subPath, value);
+      seen.add(rowId);
 
       const displayValue = formatDisplayValue(value);
       const editorValue = formatEditorValue(value);
-      const tr = document.querySelector(`tr[data-row-id="${rowId}"]`);
+
+      let tr = rowsById.get(rowId);
       if (tr) {
         if (tr.dataset.displayValue !== displayValue) {
           tr.dataset.displayValue = displayValue;
@@ -280,34 +434,52 @@ function init() {
 
           const displayArea = tr.querySelector(".displayArea");
           if (displayArea) displayArea.textContent = displayValue;
-          const editArea = tr.querySelector(".editArea");
-          const editorEl = editArea.querySelector("textarea, input");
-          editorEl.value = editorValue;
+          // Don't overwrite a value the user is currently editing. The fresh
+          // value is kept in the dataset and shown if the edit is cancelled.
+          if (!tr.classList.contains("row-editing")) {
+            const editorEl = tr.querySelector(".editArea textarea, .editArea input");
+            if (editorEl) editorEl.value = editorValue;
+          }
         }
-        tbody.appendChild(tr);
       } else {
-        createRow(key, value);
+        tr = createRow(topKey, subPath, value);
+        rowsById.set(rowId, tr);
       }
+      tbody.appendChild(tr);
     }
 
-    // remove any rows that are no longer present / visible
-    const visibleRows = Array.from(document.querySelectorAll('tr[data-row-id]'));
-    for (const visibleRow of visibleRows) {
-      const existingKey = visibleRow.dataset.rowId;
-      if (!visibleKeys.includes(existingKey)) {
-        visibleRow.remove();
+    // Remove any rows that are no longer present or visible.
+    for (const [rowId, tr] of rowsById) {
+      if (!seen.has(rowId)) {
+        tr.remove();
+        rowsById.delete(rowId);
       }
     }
   }
 
-  function attachEditHandler(tr, key, type) {
+  /**
+   * Wire up the toggle or edit controls for one leaf's row.
+   *
+   * @param {HTMLTableRowElement} tr - The row to attach handlers to.
+   * @param {string} topKey - The real top-level storage key.
+   * @param {string[]} subPath - The property path within that key's value.
+   * @param {"object"|"boolean"|"number"|"string"} type - The leaf's type.
+   * @returns {void}
+   */
+  function attachEditHandler(tr, topKey, subPath, type) {
     const editBtn = tr.querySelector(".editBtn");
     const displayArea = tr.querySelector(".displayArea");
     const editArea = tr.querySelector(".editArea");
     const errorBox = tr.querySelector(".error");
 
-    async function setValue(keyInner, newValue) {
-      await storage.set({ [keyInner]: newValue });
+    /**
+     * Persist a new value for this leaf and refresh the row's display.
+     *
+     * @param {JSONValue} newValue - The value to store.
+     * @returns {Promise<void>} Resolves once the write completes.
+     */
+    async function setValue(newValue) {
+      await writeLeaf(topKey, subPath, newValue);
       const displayValue = formatDisplayValue(newValue);
       const editorValue = formatEditorValue(newValue);
       displayArea.textContent = displayValue;
@@ -323,7 +495,7 @@ function init() {
       editBtn.addEventListener('click', async () => {
         errorBox.style.display = "none";
         try {
-          await setValue(key, tr.dataset.displayValue === "true" ? false : true);
+          await setValue(tr.dataset.displayValue === "true" ? false : true);
           tr.classList.add('row-editing');
           setTimeout(() => tr.classList.remove('row-editing'), 300);
         } catch (err) {
@@ -350,14 +522,14 @@ function init() {
         return;
       }
 
-      // object types are edited as multiline, Enter cannot be used to save
+      // Object types are edited as multiline, so Enter cannot be used to save.
       if (type !== "object" && ev.key === "Enter") {
         ev.preventDefault();
         saveEdit();
         return
       }
 
-      // use Ctrl/Cmd+S for object save instead
+      // Use Ctrl/Cmd+S to save an object instead.
       if (type == "object" && (ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 's') {
         ev.preventDefault();
         saveEdit();
@@ -403,7 +575,7 @@ function init() {
         } else {
           newVal = editorEl.value;
         }
-        await setValue(key, newVal);
+        await setValue(newVal);
         cancelEdit();
       } catch (err) {
         errorBox.textContent = "Save failed: " + err;
@@ -418,20 +590,20 @@ function init() {
     loadEntries();
   });
 
-  // auto-refresh when storage changes in the same area and affected keys match current filters
+  // Auto-refresh on any change in this area. A single changed top-level key can
+  // map to many flattened rows, so re-read and re-render rather than trying to
+  // match raw change keys against the (flattened) filters.
   browser.storage.onChanged.addListener((changes, areaName) => {
     if (areaName !== storageArea) return;
-    const changedKeys = Object.keys(changes || {});
-    if (changedKeys.some(k => k.includes(baseFilter) && k.includes(userFilter))) {
-      loadEntries();
-    }
+    loadEntries();
   });
 
   loadEntries();
 }
 
 /**
- * If the module is loaded as a page module with ?viewer=1, execute the viewer init code.
+ * When the module is loaded as a page script (`viewer=1`), run the viewer init
+ * code.
  */
 const moduleParams = new URL(import.meta.url).searchParams;
 if (moduleParams.has('viewer')) {

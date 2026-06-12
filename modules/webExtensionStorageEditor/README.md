@@ -27,6 +27,21 @@ The user can toggle boolean values directly by clicking the ⇄ button. This all
 
 When a `baseFilter` is provided, only entries that match the given filter are displayed. This enables the developer to expose only a specific subset of keys. The user can apply an additional filter in the filter input element.
 
+## Grouped settings
+
+Settings do not have to be stored as flat top-level keys. An entry whose value is an object is automatically flattened into individual dotted leaf entries. For example, a single storage key `debug` holding
+
+```json
+{
+    "something": true,
+    "other": false
+}
+```
+
+is displayed and edited as the two entries `debug.something` and `debug.other`, exactly as if they had been stored as flat dotted keys. Editing or toggling a leaf patches its parent object in place, leaving sibling entries untouched. Nested objects are flattened recursively; arrays and empty objects are kept as a single JSON-editable entry.
+
+Any change made outside the editor (including to a grouped object) is reflected immediately, as the view re-renders on every `storage.onChanged` event for the inspected area.
+
 ## Examples
 
 Open a tab showing all `sync` storage entries:
