@@ -57,7 +57,7 @@ browser.LegacyPrefs.onChanged.addListener(async (name, value) => {
 
 ## Accessing local storage from inside an Experiment
 
-Once the settings have been migrated, code which used to read them through `Services.prefs` cannot reach them anymore. If that code lives in an Experiment, the migration suddenly requires rewriting it to take its settings as parameters, or to receive them through some other channel.
+Once the settings have been migrated, code which used to read them through `Services.prefs` cannot reach them anymore, and the migration additionally requires rewriting the Experiment to take its settings as parameters, or to receive them through some other channel.
 
 The helper below is a way to avoid that work for now. It returns a Promise based `storage.local`, backed by the extension's own API surface, reading the very same values your background script sees:
 
@@ -92,6 +92,6 @@ const localStorage = getLocalStorage(context);
 const { debugLevel = 0 } = await localStorage.get("debugLevel");
 ```
 
-Note that your add-on needs the `storage` permission, otherwise your background script cannot access those values.
+Note that your add-on needs the `storage` permission, otherwise you cannot access those values.
 
-Please consider this a temporary solution. An Experiment should be state-less and should get everything it needs from its caller, which keeps the settings in one place and makes the Experiment testable on its own. Reading the local storage directly ties it to a storage layout it does not own.
+Please consider this a temporary solution. An Experiment should be state-less and should get everything it needs from its caller.
