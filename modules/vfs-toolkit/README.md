@@ -12,8 +12,9 @@ The following storage backends are currently available:
 - **[OPFS](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API/Origin_private_file_system)** - access/save files in a virtual file system stored within the user's profile
 - **[WebDAV](https://addons.thunderbird.net/addon/vfs-provider-webdav/)** - access/save files directly on a WebDAV server (for example Nextcloud or ownCloud)
 - **[Local Home Folder](https://addons.thunderbird.net/addon/vfs-home-folder-access/)** - access/save files in the user's local home folder (via Native Messaging)
+- **[OneDrive](https://addons.thunderbird.net/addon/vfs-provider-onedrive/)** - access/save files in the user's Microsoft OneDrive account
 
-We will see more storage backends being made available, soon, for example **Nextcloud** and **Seafile**.
+More storage backends will be made available soon, for example **Google Drive**, **Dropbox**, **Nextcloud** or **Seafile** - and anyone can add support for further ones through the provider API.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/thunderbird/webext-support/refs/heads/master/modules/vfs-toolkit/vfs-toolkit-filepicker.png" alt="VFS Toolkit File Picker" width="600"><br>
@@ -43,4 +44,6 @@ While `vfs-toolkit` includes built-in support for the `OPFS` storage backend, it
 
 Through its provider API, third-party extensions can implement storage providers that integrate with `vfs-toolkit` through a standardized communication mechanism.
 
-In practice, this allows WebExtensions using `vfs-toolkit` to access files stored outside the local `OPFS`, for example on cloud storage services such as Dropbox, Google Drive, or WebDAV-based systems.
+In practice, this allows WebExtensions using `vfs-toolkit` to access files stored outside the local `OPFS` - today already on [WebDAV](https://addons.thunderbird.net/addon/vfs-provider-webdav/) servers, in [Microsoft OneDrive](https://addons.thunderbird.net/addon/vfs-provider-onedrive/), or in the user's [local home folder](https://addons.thunderbird.net/addon/vfs-home-folder-access/) - and tomorrow on any other service someone writes a provider for, be it Google Drive, Dropbox, Seafile or an in-house storage system.
+
+Since the user decides which providers to install, an add-on gains support for each new storage backend without any code changes.
