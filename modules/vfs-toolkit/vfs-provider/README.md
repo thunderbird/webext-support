@@ -173,7 +173,7 @@ document.getElementById('grant-btn').addEventListener('click', async () => {
 });
 ```
 
-`reportNewConnection` persists the connection in the provider's local storage and sends a notification to the consumer's vfs-toolkit client API. The client stores the connection and is then able to access it via a file picker or through the client API (without user interaction).
+`reportNewConnection` persists the connection in the provider's local storage and sends a notification to the consumer's vfs-toolkit client API. It resolves after the client has stored the connection, so the connection is immediately available through a file picker or the client API.
 
 ### Capabilities
 
