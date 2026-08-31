@@ -188,6 +188,7 @@ The picker always supports multi-selecting files for management (copy, move, del
 | `startIn` | `string` | `null` | Absolute path to open in initially. Ignored when `id` has saved state. |
 | `multiple` | `boolean` | `false` | Allow confirming multiple files at once. |
 | `opfsStorageName` | `string` | - | Display name for the `OPFS` backend. |
+| `signal` | `AbortSignal` | `null` | Close and reject only this picker with `AbortError` when aborted. |
 | `width` | `number` | `800` | Popup width in pixels |
 | `height` | `number` | `600` | Popup height in pixels |
 
@@ -249,6 +250,7 @@ Opens a directory picker popup. The user can navigate to and select a folder. Re
 | `id` | `string` | `null` | Picker context ID (remembers last-used directory and connection) |
 | `startIn` | `string` | `null` | Absolute path to open in initially |
 | `opfsStorageName` | `string` | - | Display name for the `OPFS` backend. |
+| `signal` | `AbortSignal` | `null` | Close and reject only this picker with `AbortError` when aborted. |
 | `width` | `number` | `800` | Popup width in pixels |
 | `height` | `number` | `600` | Popup height in pixels |
 
@@ -321,6 +323,7 @@ Lists the contents of a directory. Returns [`Array<Entry>`](#entry) with sorted 
 | Option | Type | Description |
 |--------|------|-------------|
 | `onProgress` | [`OnProgress`](#onprogress) | Progress callback |
+| `signal` | `AbortSignal` | Cancel only this provider request and reject it with `AbortError` |
 
 **Example:**
 
@@ -349,6 +352,7 @@ Reads a file and returns a [`File`](https://developer.mozilla.org/en-US/docs/Web
 | Option | Type | Description |
 |--------|------|-------------|
 | `onProgress` | [`OnProgress`](#onprogress) | Progress callback |
+| `signal` | `AbortSignal` | Cancel only this provider request and reject it with `AbortError` |
 
 **Example:**
 
@@ -654,6 +658,19 @@ Cancels all pending operations for an external provider. Each pending action is 
 | `storageRef` | [`StorageRef`](#storageref) | Connection whose operations to abort. `null` is a no-op. |
 
 See [Cancellation](#cancellation) for the full cancel flow.
+
+---
+
+### Cancellation
+
+Pass an `AbortSignal` to `list()`, `readFile()`, `showSelectFilePicker()`, or
+`showDirectoryPicker()` when one operation must be cancelled independently.
+For provider-backed reads and listings, the client rejects that request locally
+and sends its request ID to the provider. Picker signals close only the matching
+popup.
+
+`abort(storageRef)` remains the bulk operation: it cancels every pending request
+on the provider connection. It does not affect the built-in OPFS backend.
 
 ---
 

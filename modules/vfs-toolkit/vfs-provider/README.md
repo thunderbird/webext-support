@@ -100,11 +100,16 @@ For long-running operations, call `this.reportProgress(requestId, percent)` peri
 
 ### Reporting out-of-band changes
 
-If your backend can change independently of client requests (e.g. a background sync), call `this.reportStorageChange(storageId, entries)` with an array of [`StorageChangeEntry`](../vfs-client/README.md#onstoragechange) objects describing what changed. All connected clients will be notified.
+If your backend can change independently of client requests (e.g. a background sync), call `this.reportStorageChange(storageId, entries)` with an array of [`StorageChangeEntry`](../vfs-client/README.md#onstoragechange) objects describing what changed. Connected clients with a grant for that storage are notified.
 
 ### Cancellation
 
-When the user cancels an operation (e.g. by clicking ✕ in the picker), `onCancel` is called with the `requestId` of the in-progress request. Your implementation should record that ID and check it in the affected `on*` method to abort the operation. The client rejects the pending promise immediately — it will no longer wait for a response on the canceled request.
+When the user cancels an operation (e.g. by clicking ✕ in the picker), `onCancel` is called with the `requestId` of the in-progress request. Your implementation should record that ID and check it in the affected `on*` method to abort the operation. The client rejects the pending promise immediately — it will no longer wait for a response on the canceled request. A cancel request can target only work started through the same runtime port.
+
+The provider also calls `onCancel` for unfinished requests when their runtime
+port disconnects. Progress and final responses emitted after disconnect are
+ignored, so provider implementations may stop asynchronously without having to
+coordinate another response with the client.
 
 #### Partial-completion notifications after abort
 
