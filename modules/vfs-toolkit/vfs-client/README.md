@@ -71,7 +71,7 @@ additionally enable support for external storage backend providers.
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `enableExternalProviders` | `boolean` | `false` | Enable external provider support. Requires the `management` and `storage` permissions. |
-| `configStorageKey` | `string` | — | Storage key for persisting provider connection data. Required when `enableExternalProviders` is `true`. |
+| `configStorageKey` | `string` | — | Storage key for persisting provider connection data. Required for external providers and providers registered by the same add-on. |
 
 **Example — OPFS only (background script):**
 
@@ -86,6 +86,34 @@ vfs.init();
 import * as vfs from '/vendor/vfs-toolkit/vfs-client/vfs-client.mjs';
 vfs.init({ enableExternalProviders: true, configStorageKey: "vfs-toolkit-config-data" });
 ```
+
+---
+
+#### `vfs.registerLocalProvider(descriptor, connect)`
+
+Registers a provider implemented by the same add-on as the client. Call this from
+the background after `vfs.init()` and after the provider has initialized.
+
+`descriptor` uses the same provider and connection metadata returned by
+`fetchProviderConnections()`, but each descriptor connection contains its
+`storageId` directly. `providerId` must equal `browser.runtime.id`. `connect`
+returns the local client port created by the provider's `connectLocal()` method.
+Register the descriptor again when its connections change.
+
+```js
+vfs.init({ configStorageKey: "vfs-toolkit-config-data" });
+
+await vfs.registerLocalProvider({
+  providerId: browser.runtime.id,
+  name: "My Provider",
+  connections: localConnections,
+  icon: null,
+  hasConfig: false,
+}, () => provider.connectLocal());
+```
+
+The background uses the local port returned by `connect`. Picker pages run in a
+separate extension context and connect to the provider through `runtime.onConnect`.
 
 ---
 

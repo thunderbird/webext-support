@@ -23,6 +23,29 @@ const provider = new MyProvider({
 provider.init();
 ```
 
+### Client and provider in the same add-on
+
+`connectLocal()` creates a client port when the provider and client share one
+background document. Pass that method to the client's `registerLocalProvider()`
+function:
+
+```js
+import * as vfs from '../vfs-client/vfs-client.mjs';
+
+provider.init();
+vfs.init({ configStorageKey: 'vfs-toolkit-config-data' });
+
+await vfs.registerLocalProvider({
+  providerId: browser.runtime.id,
+  name: 'My Provider',
+  connections: localConnections,
+}, () => provider.connectLocal());
+```
+
+The local port enters the same provider command handler as ports opened by other
+extensions. Picker windows use an internal runtime port because they run in a
+separate extension context.
+
 ## Constructor options
 
 | Option | Type | Default | Description |
