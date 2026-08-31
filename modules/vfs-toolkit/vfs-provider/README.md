@@ -78,7 +78,7 @@ throw Object.assign(new Error('File already exists'), { code: 'E:EXIST' });
 | Code | When to throw | Consumer behaviour |
 |------|---------------|--------------------|
 | `E:EXIST` | A target file or folder already exists and the caller did not permit overwriting/merging. | The picker shows a conflict dialog instead of a generic error. API callers receive the error with the code attached. |
-| `E:AUTH` | The `storageId` presented by the consumer was not issued by this provider (e.g. it was revoked or came from a different provider instance). | The client replaces the error message with a generic "Unauthorized storage connection." message so implementation details are not leaked. |
+| `E:AUTH` | The connected consumer has no grant for the requested `storageId` (e.g. it was revoked or belongs to another consumer). | The client replaces the error message with a generic "Unauthorized storage connection." message so implementation details are not leaked. |
 | `E:PROVIDER` | The provider itself is unavailable or misconfigured. Attach a `details` object to give the consumer actionable context. | If the picker is open it shows an error popup using the `title` and `description` from `details`. API callers can inspect `details.id` to identify the specific problem programmatically. |
 
 For `E:PROVIDER`, the `details` object should have the following shape:
@@ -148,6 +148,12 @@ Single-file operations (`onReadFile`, `onWriteFile`, `onMoveFile`, `onDeleteFile
 
 A consumer add-on must establish connections to your provider. Each connection has a unique `storageId`, a human-readable `name` that appears in the picker's provider dropdown, and a set of capabilities.
 
+The provider derives the consumer ID from the runtime port. Storage commands are
+accepted only when the provider has stored the exact consumer and `storageId`
+pair. Add-on IDs sent inside command payloads are not used for authorization.
+The add-on name remains a consumer-supplied display label and must not be used
+for access decisions.
+
 ### Setup page
 
 Even if your provider does not require the user to enter credentials to connect to the actual data/storage, you still need to have a simple setup page and grant access for the connecting add-on. The page is defined via the `setupPath` option in the constructor. When a consumer requests a new connection to your storage backend, the provider API will open that page as a popup window.
@@ -160,6 +166,7 @@ import { reportNewConnection } from '../vfs-provider.mjs';
 const params = new URLSearchParams(location.search);
 const addonId = params.get('addonId');
 const addonName = params.get('addonName');
+const setupToken = params.get('setupToken');
 
 const capabilities = {
   file:   { read: true, add: true, modify: true, delete: true },
@@ -168,12 +175,30 @@ const capabilities = {
 
 document.getElementById('grant-btn').addEventListener('click', async () => {
   const storageId = crypto.randomUUID();
-  await reportNewConnection(addonId, addonName, storageId, 'My Provider', capabilities);
+  await reportNewConnection(
+    addonId,
+    addonName,
+    storageId,
+    'My Provider',
+    capabilities,
+    setupToken,
+  );
   window.close();
 });
 ```
 
-`reportNewConnection` persists the connection in the provider's local storage and sends a notification to the consumer's vfs-toolkit client API. It resolves after the client has stored the connection, so the connection is immediately available through a file picker or the client API.
+The one-time `setupToken` ties approval to the runtime port that opened the setup
+window. Closing that port invalidates the token immediately; closing the window
+invalidates it after a short completion grace period. With a valid token,
+`reportNewConnection` uses the consumer identity captured from the port instead
+of the URL parameters.
+
+`reportNewConnection` persists the connection in the provider's local storage and sends a notification to the consumer's vfs-toolkit client API. When the consumer is available, the call waits for its cache update before completing. Notification delivery remains best effort so a provider can also provision an add-on that is not currently running. Calls without a setup token are intended for that provider-initiated provisioning path.
+
+If the setup page delegates approval to its background, the background can call
+`provider.completeSetup(setupToken, storageId, name, capabilities)` directly.
+For a client in the same background document, register its updated connection
+descriptor again after this direct form completes.
 
 ### Capabilities
 
