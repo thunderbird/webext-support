@@ -9,6 +9,11 @@
 
 import * as vfs from './vfs-client.mjs';
 
+const params = new URLSearchParams(location.search);
+const SHOW_TOOLBAR_ACTIONS = params.get('showToolbarActions') !== '0';
+// Apply the reduced toolbar before locale loading can delay picker initialization.
+document.documentElement.classList.toggle('toolbar-actions-hidden', !SHOW_TOOLBAR_ACTIONS);
+
 
 // ── Locale resolution ─────────────────────────────────────────────────────────
 
@@ -86,7 +91,6 @@ function localizeDocument(doc = document) {
 
 // ── Communication mode detection ─────────────────────────────────────────────
 
-const params = new URLSearchParams(location.search);
 const SESSION_ID = params.get('session');
 const MULTIPLE = params.get('multiple') === '1';
 const TYPES = params.get('types') ? JSON.parse(params.get('types')) : null;

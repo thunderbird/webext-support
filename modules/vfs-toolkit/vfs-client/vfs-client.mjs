@@ -872,6 +872,8 @@ export async function getStorageUsage(storageRef = null) {
  * @param {string} [options.opfsStorageName]
  *   Display name for the built-in OPFS (local storage) option in the provider dropdown.
  *   Has no effect on external providers, which use their own reported name.
+ * @param {boolean} [options.showToolbarActions=true]
+ *   Show the toolbar action buttons. The filters remain visible when set to false.
  * @param {boolean} [options.multiple=false] - Allow selecting multiple files. When false
  *   (default), the returned array always contains exactly one entry.
  * @returns {Promise<Entry[]|null>} Array of `Entry` objects (each with `path` and `storageRef`), or null if cancelled.
@@ -880,7 +882,7 @@ export function showSelectFilePicker(options = {}) {
   // mode=open is the default, no extra param needed
   return new Promise((resolve, reject) => {
     const sessionId = crypto.randomUUID();
-    const { types = null, excludeAcceptAllOption = false, width = 800, height = 600, storageRef = null, lockStorage = null, multiple = false, id = null, startIn = null, opfsStorageName = null, buttons = null } = options;
+    const { types = null, excludeAcceptAllOption = false, width = 800, height = 600, storageRef = null, lockStorage = null, multiple = false, id = null, startIn = null, opfsStorageName = null, buttons = null, showToolbarActions = true } = options;
 
     pendingPickers.set(sessionId, { resolve, reject, defaultValue: [] });
 
@@ -896,6 +898,7 @@ export function showSelectFilePicker(options = {}) {
     if (startIn) pickerParams.set('startIn', startIn);
     if (opfsStorageName) pickerParams.set('opfsStorageName', opfsStorageName);
     if (buttons?.length) pickerParams.set('buttons', JSON.stringify(buttons));
+    if (!showToolbarActions) pickerParams.set('showToolbarActions', '0');
 
     _openPopupWindow(sessionId, pickerParams, width, height).catch(reject);
   });
@@ -930,12 +933,14 @@ export function showSelectFilePicker(options = {}) {
  *   confirm-button effect in browse mode since browse has no confirm button.
  * @param {string} [options.opfsStorageName]
  *   Display name for the built-in OPFS (local storage) option in the provider dropdown.
+ * @param {boolean} [options.showToolbarActions=true]
+ *   Show the toolbar action buttons. The filters remain visible when set to false.
  * @returns {Promise<null>} Always resolves to `null`.
  */
 export function showBrowseFilePicker(options = {}) {
   return new Promise((resolve, reject) => {
     const sessionId = crypto.randomUUID();
-    const { width = 800, height = 600, storageRef = null, lockStorage = null, id = null, startIn = null, opfsStorageName = null, buttons = null } = options;
+    const { width = 800, height = 600, storageRef = null, lockStorage = null, id = null, startIn = null, opfsStorageName = null, buttons = null, showToolbarActions = true } = options;
 
     pendingPickers.set(sessionId, { resolve, reject, defaultValue: null });
 
@@ -949,6 +954,7 @@ export function showBrowseFilePicker(options = {}) {
     if (startIn) pickerParams.set('startIn', startIn);
     if (opfsStorageName) pickerParams.set('opfsStorageName', opfsStorageName);
     if (buttons?.length) pickerParams.set('buttons', JSON.stringify(buttons));
+    if (!showToolbarActions) pickerParams.set('showToolbarActions', '0');
 
     _openPopupWindow(sessionId, pickerParams, width, height).catch(reject);
   });
@@ -971,6 +977,8 @@ export function showBrowseFilePicker(options = {}) {
  *   Restrict the picker to the connection given by `storageRef`. See
  *   `showSelectFilePicker` for semantics.
  * @param {string} [options.opfsStorageName]
+ * @param {boolean} [options.showToolbarActions=true]
+ *   Show the toolbar action buttons. The filters remain visible when set to false.
  * @param {number} [options.width=800]
  * @param {number} [options.height=600]
  * @returns {Promise<Entry|null>}
@@ -980,7 +988,7 @@ export function showSaveFilePicker(options = {}) {
     const sessionId = crypto.randomUUID();
     const { types = null, excludeAcceptAllOption = false, width = 800, height = 600,
       storageRef = null, lockStorage = null, id = null, startIn = null, opfsStorageName = null,
-      suggestedName = null, buttons = null } = options;
+      suggestedName = null, buttons = null, showToolbarActions = true } = options;
 
     pendingPickers.set(sessionId, { resolve, reject, defaultValue: null });
 
@@ -997,6 +1005,7 @@ export function showSaveFilePicker(options = {}) {
     if (opfsStorageName) pickerParams.set('opfsStorageName', opfsStorageName);
     if (suggestedName) pickerParams.set('suggestedName', suggestedName);
     if (buttons?.length) pickerParams.set('buttons', JSON.stringify(buttons));
+    if (!showToolbarActions) pickerParams.set('showToolbarActions', '0');
 
     _openPopupWindow(sessionId, pickerParams, width, height).catch(reject);
   });
@@ -1015,6 +1024,8 @@ export function showSaveFilePicker(options = {}) {
  *   Restrict the picker to the connection given by `storageRef`. See
  *   `showSelectFilePicker` for semantics.
  * @param {string} [options.opfsStorageName]
+ * @param {boolean} [options.showToolbarActions=true]
+ *   Show the toolbar action buttons. The filters remain visible when set to false.
  * @param {number} [options.width=800]
  * @param {number} [options.height=600]
  * @returns {Promise<Entry|null>}
@@ -1023,7 +1034,7 @@ export function showDirectoryPicker(options = {}) {
   return new Promise((resolve, reject) => {
     const sessionId = crypto.randomUUID();
     const { width = 800, height = 600, storageRef = null, lockStorage = null, id = null,
-      startIn = null, opfsStorageName = null, buttons = null } = options;
+      startIn = null, opfsStorageName = null, buttons = null, showToolbarActions = true } = options;
 
     pendingPickers.set(sessionId, { resolve, reject, defaultValue: null });
 
@@ -1037,6 +1048,7 @@ export function showDirectoryPicker(options = {}) {
     if (startIn) pickerParams.set('startIn', startIn);
     if (opfsStorageName) pickerParams.set('opfsStorageName', opfsStorageName);
     if (buttons?.length) pickerParams.set('buttons', JSON.stringify(buttons));
+    if (!showToolbarActions) pickerParams.set('showToolbarActions', '0');
 
     _openPopupWindow(sessionId, pickerParams, width, height).catch(reject);
   });

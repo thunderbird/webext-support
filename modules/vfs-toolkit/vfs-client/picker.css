@@ -157,6 +157,10 @@ body {
   display: contents;
 }
 
+html.toolbar-actions-hidden #vfs-toolbar .vfs-toolbar-action {
+  display: none;
+}
+
 /* Filter input */
 #vfs-type-select {
   height: 26px;

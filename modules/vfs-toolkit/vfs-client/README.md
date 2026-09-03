@@ -28,6 +28,7 @@ Common features:
 - **Save as:** download a file to the local filesystem (right-click → "Save as…")
 - Provider dropdown in the location bar when multiple providers are available
 - File type filter dropdown and filename filter input in the toolbar
+- Toolbar action buttons can be hidden without removing the filters
 - Storage usage shown in the footer
 - Toolbar buttons and context menu items disabled automatically based on provider capabilities
 - Progress bar with file counter for batch operations; **✕ cancel button** to abort mid-operation
@@ -160,6 +161,7 @@ The picker always supports multi-selecting files for management (copy, move, del
 | `startIn` | `string` | `null` | Absolute path to open in initially. Ignored when `id` has saved state. |
 | `multiple` | `boolean` | `false` | Allow confirming multiple files at once. |
 | `opfsStorageName` | `string` | - | Display name for the `OPFS` backend. |
+| `showToolbarActions` | `boolean` | `true` | Show the built-in and custom toolbar action buttons. When `false`, the filters remain visible; context-menu actions and keyboard shortcuts remain available. |
 | `width` | `number` | `800` | Popup width in pixels |
 | `height` | `number` | `600` | Popup height in pixels |
 
@@ -198,6 +200,7 @@ Opens a save file picker popup. The user can navigate to a folder and type (or e
 | `startIn` | `string` | `null` | Absolute path to open in initially. Ignored when `id` has saved state. |
 | `suggestedName` | `string` | - | Pre-filled filename in the save input |
 | `opfsStorageName` | `string` | - | Display name for the `OPFS` backend. |
+| `showToolbarActions` | `boolean` | `true` | Show the built-in and custom toolbar action buttons. When `false`, the filters remain visible; context-menu actions and keyboard shortcuts remain available. |
 | `width` | `number` | `800` | Popup width in pixels |
 | `height` | `number` | `600` | Popup height in pixels |
 
@@ -221,6 +224,7 @@ Opens a directory picker popup. The user can navigate to and select a folder. Re
 | `id` | `string` | `null` | Picker context ID (remembers last-used directory and connection) |
 | `startIn` | `string` | `null` | Absolute path to open in initially |
 | `opfsStorageName` | `string` | - | Display name for the `OPFS` backend. |
+| `showToolbarActions` | `boolean` | `true` | Show the built-in and custom toolbar action buttons. When `false`, the filters remain visible; context-menu actions and keyboard shortcuts remain available. |
 | `width` | `number` | `800` | Popup width in pixels |
 | `height` | `number` | `600` | Popup height in pixels |
 
