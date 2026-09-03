@@ -9,6 +9,11 @@
 
 import * as vfs from './vfs-client.mjs';
 
+const params = new URLSearchParams(location.search);
+const SHOW_TOOLBAR_ACTIONS = params.get('showToolbarActions') !== '0';
+// Apply the reduced toolbar before locale loading can delay picker initialization.
+document.documentElement.classList.toggle('toolbar-actions-hidden', !SHOW_TOOLBAR_ACTIONS);
+
 
 // ── Locale resolution ─────────────────────────────────────────────────────────
 
@@ -86,7 +91,6 @@ function localizeDocument(doc = document) {
 
 // ── Communication mode detection ─────────────────────────────────────────────
 
-const params = new URLSearchParams(location.search);
 const SESSION_ID = params.get('session');
 const MULTIPLE = params.get('multiple') === '1';
 const TYPES = params.get('types') ? JSON.parse(params.get('types')) : null;
@@ -100,6 +104,7 @@ const SUGGESTED_NAME = params.get('suggestedName') ?? null;
 // the client extension background via browser.runtime.sendMessage so the background
 // can react (e.g. open a test tab) without any provider involvement.
 const BUTTONS = params.get('buttons') ? JSON.parse(params.get('buttons')) : [];
+const SHOW_CONTEXT_MENU = params.get('showContextMenu') !== '0';
 // 'strict' | 'soft' | null. When set, the picker is locked to LOCKED_REF:
 // 'strict' hides the provider selector entirely; 'soft' disables the confirm
 // button while the user browses a different connection.
@@ -424,6 +429,7 @@ function buildRow(entry) {
 
   // Context menu
   row.addEventListener('contextmenu', e => {
+    if (!SHOW_CONTEXT_MENU) return;
     e.preventDefault();
     if (!state.selected.has(entry.name)) {
       selectEntry(entry.name, isDir ? null : entryPath);
@@ -2156,6 +2162,7 @@ async function init() {
     if (!contextMenu.contains(e.target)) hideContextMenu();
   });
   listArea.addEventListener('contextmenu', e => {
+    if (!SHOW_CONTEXT_MENU) return;
     if (!e.target.closest('.vfs-row')) {
       e.preventDefault();
       e.stopPropagation();
