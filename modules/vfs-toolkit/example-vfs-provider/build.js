@@ -181,10 +181,10 @@ console.log("Copying vfs-provider library ...");
 rm("src/vendor/vfs-provider");
 cp("../vfs-provider", "src/vendor/vfs-provider");
 
-console.log(`Creating extension file (dist/${xpiName}) ...`);
+console.log(`Creating a named extension file (dist/${xpiName}) ...`);
 zip("src", `dist/${xpiName}`);
 
-console.log(`Copying to parent folder (../${xpiName}) ...`);
-fs.copyFileSync(`dist/${xpiName}`, path.join("..", xpiName));
+console.log(`Creating a latest extension file (dist/latest.xpi) ...`);
+zip("src", `dist/latest.xpi`);
 
 console.log("Build finished. Output is in the 'dist' folder.");
