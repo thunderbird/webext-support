@@ -13,7 +13,8 @@
   "description": "An example client using the VFS toolkit.",
   "permissions": [
     "storage",
-    "management"
+    "management",
+    "downloads"
   ],
   "icons": {
     "48": "icon.svg",
