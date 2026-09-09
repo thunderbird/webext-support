@@ -156,10 +156,10 @@ console.log("Copying vfs-client library ...");
 rm("src/vendor/vfs-client");
 cp("../vfs-client", "src/vendor/vfs-client");
 
-console.log(`Creating extension file (dist/${xpiName}) ...`);
+console.log(`Creating a versioned extension file (dist/${xpiName}) ...`);
 zip("src", `dist/${xpiName}`);
 
-console.log(`Copying to parent folder (../${xpiName}) ...`);
-fs.copyFileSync(`dist/${xpiName}`, path.join("..", xpiName));
+console.log(`Creating a latest extension file (dist/latest.xpi) ...`);
+zip("src", `dist/latest.xpi`);
 
 console.log("Build finished. Output is in the 'dist' folder.");
