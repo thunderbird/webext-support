@@ -25,8 +25,8 @@ More storage backends will be made available soon, for example **Google Drive**,
 
 The repository includes example implementations:
 
-* Client: [vfs-toolkit-example-client_1_3_3.xpi](https://github.com/thunderbird/webext-support/raw/refs/heads/master/modules/vfs-toolkit/example-vfs-client/dist/vfs-toolkit-example-client_1_3_3.xpi)
-* Provider: [vfs-toolkit-example-provider_1_3_2.xpi](https://github.com/thunderbird/webext-support/raw/refs/heads/master/modules/vfs-toolkit/example-vfs-provider/dist/vfs-toolkit-example-provider_1_3_2.xpi)
+* Client: [vfs-toolkit-example-client_latest.xpi](https://github.com/thunderbird/webext-support/raw/refs/heads/master/modules/vfs-toolkit/example-vfs-client/dist/latest.xpi)
+* Provider: [vfs-toolkit-example-provider_latest.xpi](https://github.com/thunderbird/webext-support/raw/refs/heads/master/modules/vfs-toolkit/example-vfs-provider/dist/latest.xpi)
 
 ## Tests
 
