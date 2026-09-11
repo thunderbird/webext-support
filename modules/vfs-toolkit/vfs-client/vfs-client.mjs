@@ -15,6 +15,7 @@ const pendingPickers = new Map();
 
 // Module-level port cache: providerId → { port, pending: Map<id, {resolve,reject}> }
 const _providerPorts = new Map();
+const _localProviders = new Map();
 
 let _isBackground = false;
 let _configStorageKey = null;
@@ -166,6 +167,28 @@ async function _addConnection(providerId, storageId, name, capabilities) {
   });
 }
 
+function _handleConnectionMessage(msg, sender) {
+  if (msg?.type !== 'vfs-toolkit-add-connection' &&
+      msg?.type !== 'vfs-toolkit-remove-connection') {
+    return false;
+  }
+  return _readProviderList().then(list => {
+    if (!list.some(provider => provider.providerId === sender.id)) return;
+    switch (msg.type) {
+      case 'vfs-toolkit-add-connection':
+        return _addConnection(sender.id, msg.storageId, msg.name, msg.capabilities);
+      case 'vfs-toolkit-remove-connection':
+        return _removeConnection(sender.id, msg.storageId).then(() => {
+          browser.runtime.sendMessage({
+            type: 'vfs-remove-connection',
+            providerId: sender.id,
+            storageId: msg.storageId,
+          }).catch(() => { });
+        });
+    }
+  });
+}
+
 
 /**
  * Probes a single extension to check if it is a vfs-toolkit provider.
@@ -208,7 +231,8 @@ async function _probeExtension(id, options = {}) {
  *   external storage backend providers. Requires the `management` and `storage`
  *   permissions. When true, `configStorageKey` is required.
  * @param {string} [options.configStorageKey] - Storage key used to persist provider
- *   connection data. Required when `enableExternalProviders` is true.
+ *   connection data. Required when `enableExternalProviders` is true and when a
+ *   provider is registered from this add-on.
  */
 export function init(options = {}) {
   const bg = browser.extension.getBackgroundPage();
@@ -225,9 +249,34 @@ export function init(options = {}) {
     }
   });
 
+  _configStorageKey = options?.configStorageKey ?? null;
+  if (_configStorageKey) {
+    browser.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+      if (msg?.type === 'vfs-toolkit-get-connections') {
+        _readProviderList().then(list =>
+          sendResponse(list.map(p => ({
+            providerId: p.providerId,
+            name: p.name,
+            icon: p.icon ?? null,
+            hasConfig: p.hasConfig ?? false,
+            connections: (p.connections ?? []).map(c => ({
+              storageRef: { providerId: p.providerId, storageId: c.storageId },
+              name: c.name,
+              capabilities: c.capabilities,
+            })),
+          })))
+        );
+        return true;
+      }
+    });
+    browser.runtime.onMessage.addListener((msg, sender) => {
+      if (sender.id !== browser.runtime.id) return false;
+      return _handleConnectionMessage(msg, sender);
+    });
+  }
+
   if (!options.enableExternalProviders) return;
 
-  _configStorageKey = options?.configStorageKey ?? null;
   if (!_configStorageKey) {
     throw new Error('[vfs-toolkit] configStorageKey is required when enableExternalProviders is true.');
   }
@@ -246,51 +295,36 @@ export function init(options = {}) {
   browser.management.onDisabled.addListener(ext => _removeProvider(ext.id));
   browser.management.onUninstalled.addListener(ext => _removeProvider(ext.id));
 
-  browser.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
-    if (msg?.type === 'vfs-toolkit-get-connections') {
-      _readProviderList().then(list =>
-        sendResponse(list.map(p => ({
-          providerId: p.providerId,
-          name: p.name,
-          icon: p.icon ?? null,
-          hasConfig: p.hasConfig ?? false,
-          connections: (p.connections ?? []).map(c => ({
-            storageRef: { providerId: p.providerId, storageId: c.storageId },
-            name: c.name,
-            capabilities: c.capabilities,
-          })),
-        })))
-      );
-      return true;
-    }
-  });
+  browser.runtime.onMessageExternal.addListener(_handleConnectionMessage);
+}
 
-  // Listen for providers reporting new or removed connections.
-  browser.runtime.onMessageExternal.addListener((msg, sender) => {
-    // Only claim our own message types. Returning false for everything else
-    // lets other onMessageExternal listeners respond instead.
-    if (msg?.type !== 'vfs-toolkit-add-connection' && msg?.type !== 'vfs-toolkit-remove-connection') {
-      return false;
-    }
-    // Only accept messages from known providers.
-    return _readProviderList().then(list => {
-      if (!list.some(p => p.providerId === sender.id)) return;
-      switch (msg.type) {
-        case 'vfs-toolkit-add-connection':
-          // New connections are picked up automatically when the user next opens the
-          // provider dropdown - no broadcast needed.
-          _addConnection(sender.id, msg.storageId, msg.name, msg.capabilities);
-          break;
-        case 'vfs-toolkit-remove-connection':
-          // Removed connections must be broadcast immediately so that any picker
-          // currently showing the removed connection can switch away from it.
-          _removeConnection(sender.id, msg.storageId).then(() => {
-            browser.runtime.sendMessage({ type: 'vfs-remove-connection', providerId: sender.id, storageId: msg.storageId }).catch(() => { });
-          });
-          break;
-      }
-    });
-  });
+/**
+ * Registers a provider implemented by the same add-on as this client.
+ *
+ * @param {object} descriptor
+ * @param {string} descriptor.providerId
+ * @param {string} descriptor.name
+ * @param {Array<{storageId:string,name:string,capabilities:object}>} descriptor.connections
+ * @param {Blob|null} [descriptor.icon]
+ * @param {boolean} [descriptor.hasConfig]
+ * @param {function(): browser.runtime.Port} connect
+ */
+export async function registerLocalProvider(descriptor, connect) {
+  if (!_isBackground || !_configStorageKey) {
+    throw new Error('[vfs-toolkit] init() requires configStorageKey before local provider registration.');
+  }
+  const providerId = String(descriptor?.providerId ?? '');
+  if (providerId !== browser.runtime.id || typeof connect !== 'function') {
+    throw new Error('[vfs-toolkit] Invalid local provider registration.');
+  }
+  _localProviders.set(providerId, { connect });
+  await _updateProvider(
+    providerId,
+    String(descriptor?.name ?? providerId),
+    Array.isArray(descriptor?.connections) ? descriptor.connections : [],
+    descriptor?.icon ?? null,
+    descriptor?.hasConfig === true
+  );
 }
 
 /**
@@ -377,6 +411,33 @@ export async function fetchProviderConnections() {
   }
 }
 
+async function _hasProviderConnection(providerId, storageId) {
+  const providers = await fetchProviderConnections();
+  return providers.some(provider =>
+    provider.providerId === providerId &&
+    provider.connections.some(connection =>
+      connection.storageRef.storageId === storageId
+    )
+  );
+}
+
+async function _waitForProviderConnection(providerId, storageId) {
+  if (await _hasProviderConnection(providerId, storageId)) return;
+  await new Promise(resolve => {
+    let settled = false;
+    const check = async () => {
+      if (settled || !await _hasProviderConnection(providerId, storageId)) return;
+      settled = true;
+      _connectionsChangedEvent.removeListener(check);
+      resolve();
+    };
+    _connectionsChangedEvent.addListener(check);
+    // Check again after registration so an update between the first check and
+    // listener installation cannot be missed.
+    void check();
+  });
+}
+
 /**
  * Asks the provider to open its setup page as a popup window. Resolves to
  * `{providerId, storageId}` after the user completes the setup, or rejects
@@ -389,6 +450,10 @@ export async function fetchProviderConnections() {
 export async function openProviderSetup(providerId, addonName = '') {
   const addonId = browser.runtime.id;
   const storageId = await _providerSend(providerId, 'openSetup', { addonId, addonName });
+  if (typeof storageId !== 'string' || !storageId) {
+    throw new Error('Provider setup returned an invalid storage ID');
+  }
+  await _waitForProviderConnection(providerId, storageId);
   return { providerId, storageId };
 }
 
@@ -413,6 +478,14 @@ export async function deleteProviderConnection(storageRef) {
   const { providerId, storageId } = storageRef;
   const addonId = browser.runtime.id;
   await _providerSend(providerId, 'deleteConnection', { storageId, addonId });
+  if (providerId === browser.runtime.id) {
+    const message = { type: 'vfs-toolkit-remove-connection', storageId };
+    if (_isBackground) {
+      await _handleConnectionMessage(message, { id: providerId });
+    } else {
+      await browser.runtime.sendMessage(message);
+    }
+  }
 }
 
 /**
@@ -442,7 +515,10 @@ export const onConnectionsChanged = {
 
 function _getProviderPort(providerId) {
   if (_providerPorts.has(providerId)) return _providerPorts.get(providerId);
-  const port = browser.runtime.connect(providerId, { name: 'vfs-toolkit' });
+  const localProvider = _localProviders.get(providerId);
+  const port = localProvider
+    ? localProvider.connect()
+    : browser.runtime.connect(providerId, { name: 'vfs-toolkit' });
   const pending = new Map();
   port.onMessage.addListener(msg => {
     if (msg.type === 'vfs-progress') {
@@ -491,13 +567,53 @@ function _getProviderPort(providerId) {
   return entry;
 }
 
-async function _providerSend(providerId, cmd, args = {}, onProgress) {
+async function _providerSend(providerId, cmd, args = {}, onProgress, signal = null) {
+  if (signal?.aborted) throw new DOMException('Cancelled', 'AbortError');
   const { port, pending } = _getProviderPort(providerId);
   const requestId = crypto.randomUUID();
   if (onProgress) _progressCallbacks.set(requestId, onProgress);
   return new Promise((resolve, reject) => {
-    pending.set(requestId, { resolve, reject });
-    port.postMessage({ requestId, cmd, ...args });
+    const cleanup = () => {
+      signal?.removeEventListener('abort', abortHandler);
+      _progressCallbacks.delete(requestId);
+    };
+    const abortHandler = () => {
+      if (!pending.has(requestId)) return;
+      pending.delete(requestId);
+      cleanup();
+      try {
+        port.postMessage({
+          requestId: crypto.randomUUID(),
+          cmd: 'cancel',
+          canceledRequestId: requestId,
+        });
+      } catch {
+        // Reject locally even if the provider disconnected before the notice.
+      }
+      reject(new DOMException('Cancelled', 'AbortError'));
+    };
+    pending.set(requestId, {
+      resolve(value) {
+        cleanup();
+        resolve(value);
+      },
+      reject(error) {
+        cleanup();
+        reject(error);
+      },
+    });
+    signal?.addEventListener('abort', abortHandler, { once: true });
+    if (signal?.aborted) {
+      abortHandler();
+      return;
+    }
+    try {
+      port.postMessage({ requestId, cmd, ...args });
+    } catch (error) {
+      pending.delete(requestId);
+      cleanup();
+      reject(error);
+    }
   });
 }
 
@@ -516,7 +632,15 @@ export function abort(storageRef) {
   if (!entry) return;
   const { port, pending } = entry;
   for (const [requestId, { reject }] of pending) {
-    port.postMessage({ cmd: 'cancel', canceledRequestId: requestId });
+    try {
+      port.postMessage({
+        requestId: crypto.randomUUID(),
+        cmd: 'cancel',
+        canceledRequestId: requestId,
+      });
+    } catch {
+      // The local rejection below is authoritative for the caller.
+    }
     _progressCallbacks.delete(requestId);
     reject(new DOMException('Cancelled', 'AbortError'));
   }
@@ -542,14 +666,15 @@ export function abort(storageRef) {
  * @param {Entry} [entry={path:'/'}]
  * @param {object} [options={}]
  * @param {Function} [options.onProgress]
+ * @param {AbortSignal} [options.signal]
  * @returns {Promise<Entry[]>} - Each item includes `name`, `kind`, `storageRef`, and (for files) `size` and `lastModified`.
  */
 export async function list(entry = {}, options = {}) {
   const { path = '/', storageRef = null } = entry;
   const { providerId, storageId } = storageRef ?? {};
-  const { onProgress } = options;
+  const { onProgress, signal = null } = options;
   const items = storageRef
-    ? await _providerSend(providerId, 'list', { path, storageId }, onProgress)
+    ? await _providerSend(providerId, 'list', { path, storageId }, onProgress, signal)
     : await opfsProvider.list(path, onProgress);
   return items.map(item => ({ ...item, storageRef }));
 }
@@ -560,16 +685,17 @@ export async function list(entry = {}, options = {}) {
  * @param {Entry} entry
  * @param {object} [options={}]
  * @param {Function} [options.onProgress]
+ * @param {AbortSignal} [options.signal]
  * @returns {Promise<File>}
  */
 export async function readFile(entry, options = {}) {
   const { path, storageRef = null } = entry;
   const { providerId, storageId } = storageRef ?? {};
-  const { onProgress } = options;
+  const { onProgress, signal = null } = options;
   if (!storageRef) {
     return opfsProvider.readFile(path, onProgress);
   }
-  return _providerSend(providerId, 'readFile', { path, storageId }, onProgress);
+  return _providerSend(providerId, 'readFile', { path, storageId }, onProgress, signal);
 }
 
 /**
@@ -874,13 +1000,14 @@ export async function getStorageUsage(storageRef = null) {
  *   Has no effect on external providers, which use their own reported name.
  * @param {boolean} [options.multiple=false] - Allow selecting multiple files. When false
  *   (default), the returned array always contains exactly one entry.
+ * @param {AbortSignal} [options.signal] - Closes and rejects only this picker when aborted.
  * @returns {Promise<Entry[]|null>} Array of `Entry` objects (each with `path` and `storageRef`), or null if cancelled.
  */
 export function showSelectFilePicker(options = {}) {
   // mode=open is the default, no extra param needed
   return new Promise((resolve, reject) => {
     const sessionId = crypto.randomUUID();
-    const { types = null, excludeAcceptAllOption = false, width = 800, height = 600, storageRef = null, lockStorage = null, multiple = false, id = null, startIn = null, opfsStorageName = null, buttons = null } = options;
+    const { types = null, excludeAcceptAllOption = false, width = 800, height = 600, storageRef = null, lockStorage = null, multiple = false, id = null, startIn = null, opfsStorageName = null, buttons = null, signal = null } = options;
 
     pendingPickers.set(sessionId, { resolve, reject, defaultValue: [] });
 
@@ -897,7 +1024,7 @@ export function showSelectFilePicker(options = {}) {
     if (opfsStorageName) pickerParams.set('opfsStorageName', opfsStorageName);
     if (buttons?.length) pickerParams.set('buttons', JSON.stringify(buttons));
 
-    _openPopupWindow(sessionId, pickerParams, width, height).catch(reject);
+    _openPopupWindow(sessionId, pickerParams, width, height, signal).catch(reject);
   });
 }
 
@@ -1017,13 +1144,14 @@ export function showSaveFilePicker(options = {}) {
  * @param {string} [options.opfsStorageName]
  * @param {number} [options.width=800]
  * @param {number} [options.height=600]
+ * @param {AbortSignal} [options.signal] - Closes and rejects only this picker when aborted.
  * @returns {Promise<Entry|null>}
  */
 export function showDirectoryPicker(options = {}) {
   return new Promise((resolve, reject) => {
     const sessionId = crypto.randomUUID();
     const { width = 800, height = 600, storageRef = null, lockStorage = null, id = null,
-      startIn = null, opfsStorageName = null, buttons = null } = options;
+      startIn = null, opfsStorageName = null, buttons = null, signal = null } = options;
 
     pendingPickers.set(sessionId, { resolve, reject, defaultValue: null });
 
@@ -1038,7 +1166,7 @@ export function showDirectoryPicker(options = {}) {
     if (opfsStorageName) pickerParams.set('opfsStorageName', opfsStorageName);
     if (buttons?.length) pickerParams.set('buttons', JSON.stringify(buttons));
 
-    _openPopupWindow(sessionId, pickerParams, width, height).catch(reject);
+    _openPopupWindow(sessionId, pickerParams, width, height, signal).catch(reject);
   });
 }
 
@@ -1302,7 +1430,43 @@ function _pickerBaseUrl() {
   return new URL('picker.html', import.meta.url).href;
 }
 
-async function _openPopupWindow(sessionId, pickerParams, width, height) {
+async function _openPopupWindow(sessionId, pickerParams, width, height, signal = null) {
+  const pendingPicker = pendingPickers.get(sessionId);
+  if (!pendingPicker) return;
+  const { resolve, reject, defaultValue } = pendingPicker;
+  let windowId = null;
+  let closedHandler = null;
+  let aborted = false;
+
+  const cleanup = () => {
+    browser.runtime.onMessage.removeListener(messageHandler);
+    if (closedHandler) browser.windows.onRemoved.removeListener(closedHandler);
+    signal?.removeEventListener('abort', abortHandler);
+    pendingPickers.delete(sessionId);
+  };
+  const settle = (callback, value) => {
+    if (!pendingPickers.has(sessionId)) return;
+    cleanup();
+    callback(value);
+  };
+  const abortHandler = () => {
+    aborted = true;
+    if (windowId != null) browser.windows.remove(windowId).catch(() => { });
+    settle(reject, new DOMException('Cancelled', 'AbortError'));
+  };
+  function messageHandler(msg) {
+    if (msg && msg.type === 'vfs-picker-result' && msg.session === sessionId) {
+      settle(resolve, msg.result ?? defaultValue);
+    }
+  }
+
+  browser.runtime.onMessage.addListener(messageHandler);
+  signal?.addEventListener('abort', abortHandler, { once: true });
+  if (signal?.aborted) {
+    abortHandler();
+    return;
+  }
+
   // Auto-inject action button registered via parseManifest.
   // When called from a page context (not background), _actionButton is null because
   // parseManifest was called in a different module instance. Ask the background instead.
@@ -1315,48 +1479,33 @@ async function _openPopupWindow(sessionId, pickerParams, width, height) {
     pickerParams.set('buttons', JSON.stringify([...existing, actionBtn]));
   }
 
+  if (aborted || !pendingPickers.has(sessionId)) return;
+
   const popupUrl = _pickerBaseUrl() + '?' + pickerParams.toString();
-  const { resolve, reject, defaultValue } = pendingPickers.get(sessionId);
-  let windowId = null;
-
-  // Listen for result via runtime messaging.
-  function messageHandler(msg) {
-    if (msg && msg.type === 'vfs-picker-result' && msg.session === sessionId) {
-      browser.runtime.onMessage.removeListener(messageHandler);
-      pendingPickers.delete(sessionId);
-      // The picker window should be closed by the caller.
-      resolve(msg.result ?? defaultValue);
-    }
-  }
-
-  browser.runtime.onMessage.addListener(messageHandler);
-
-  browser.windows.create({
-    type: 'popup',
-    url: popupUrl,
-    width,
-    height,
-    allowScriptsToClose: true,
-  }).then(win => {
+  try {
+    const win = await browser.windows.create({
+      type: 'popup',
+      url: popupUrl,
+      width,
+      height,
+      allowScriptsToClose: true,
+    });
     windowId = win.id;
+    if (aborted || !pendingPickers.has(sessionId)) {
+      await browser.windows.remove(windowId).catch(() => { });
+      return;
+    }
 
     // If the popup window is closed without a result (user closed it manually),
     // clean up and resolve with the default value.
-    function closedHandler(closedWindowId) {
+    closedHandler = closedWindowId => {
       if (closedWindowId === windowId) {
-        browser.windows.onRemoved.removeListener(closedHandler);
-        if (pendingPickers.has(sessionId)) {
-          browser.runtime.onMessage.removeListener(messageHandler);
-          pendingPickers.delete(sessionId);
-          resolve(defaultValue);
-        }
+        settle(resolve, defaultValue);
       }
-    }
+    };
 
     browser.windows.onRemoved.addListener(closedHandler);
-  }).catch(err => {
-    browser.runtime.onMessage.removeListener(messageHandler);
-    pendingPickers.delete(sessionId);
-    reject(err);
-  });
+  } catch (error) {
+    settle(reject, error);
+  }
 }
