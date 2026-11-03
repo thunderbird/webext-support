@@ -48,6 +48,7 @@ The `modules` folder contains the following helper modules:
 | [messageLists](modules/messageLists/) | Convenient wrapper functions for handling `MessageLists` and the pagination mechanism, simplifying the process of looping over messages |
 | [preferences](modules/preferences/)   | Convenient wrapper functions to manager add-on preferences. |
 | [webExtensionStorageEditor](modules/webExtensionStorageEditor) | Storage Editor for WebExtensions, inspired by the `about:config` UI |
+| [zipOpfsStream](modules/zipOpfsStream/) | Read and write ZIP archives of any size without loading them into memory (a 9 GB ZIP needs only a fraction of that in RAM), streaming through the OPFS. |
 
 ## Tools
 
